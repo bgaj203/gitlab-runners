@@ -7,7 +7,7 @@
 
 ## ASG and HA Features
 * Spot support (or On-Demand Fleet)
-* ASG Lifecycle Hook for provisioning - to support patching, software install and rebooting
+* ASG Lifecycle Hook for provisioning - to support patching, software install and rebooting before placing into InService and heath checks occur
 * ASG Lifecycle Hook for deprovisioning during termination
 * Pseudo HA by ASG Recovery (1 node ASG)
 * True HA (at least 2 nodes)
