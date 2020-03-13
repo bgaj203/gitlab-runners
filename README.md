@@ -1,7 +1,5 @@
 # Ultimate AWS ASG Lab Kit with Spot Support
 
-Baseline new features:
-
 ## Operating System
 * All features work both Linux (Yum packaging) and Windows using the same CloudFormation template
 * Run security updates - select all updates or only security (win/lin)
