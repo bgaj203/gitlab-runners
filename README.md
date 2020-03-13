@@ -2,6 +2,10 @@
 
 Baseline new features:
 
+## Operating System
+* All features work both Linux (Yum packaging) and Windows using the same CloudFormation template
+* Run security updates - select all updates or only security (win/lin)
+* install basic utils for non-AWS AMIs (aws cli, pip, cfn-bootstrap)
 
 ## ASG and HA Features
 * Spot support (or On-Demand Fleet)
@@ -23,11 +27,6 @@ Baseline new features:
 * logit function logs to common locations on a per-platform basis
 * Latest AWS AMI Lookup for your platform or peg to a specific AMI
 * Least AWS resources creation - only creates AWS stuff if you've configured it to be used
-
-## Operating System
-* All of the below for both Linux (Yum packaging) and Windows using the same CloudFormation template
-* Run security updates - select all updates or only security (win/lin)
-* install basic utils for non-AWS AMIs (aws cli, pip, cfn-bootstrap)
 
 
 ## Scaling Testing
