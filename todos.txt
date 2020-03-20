@@ -1,0 +1,27 @@
+
+Add EBS Warming with:
+
+  1OSWarmAllEBSVolumes:
+    Description: >
+      Warm all EBS volumes using an immutable parallel process (Launching Lifecycle Hook does not wait for this to complete) using the code discussed here: https://cloudywindows.io/post/fully-automated-on-demand-ebs-initialization-in-both-bash-for-linux-and-powershell-for-windows/
+    Type: String
+    Default: false
+    AllowedValues: 
+      - true
+      - false  
+
+
+
+  if [[ "${1OSWarmAllEBSVolumes}" == "true" ]]; then
+    logit "EBS volume warming was configured, setting it up..."
+    logit "Read more in the script comments and here: https://cloudywindows.io/post/fully-automated-on-demand-ebs-initialization-in-both-bash-for-linux-and-powershell-for-windows/"
+    wget https://raw.githubusercontent.com/DarwinJS/DevOpsAutomationCode/master/InitializeDisksWithFIO.sh -O /tmp/InitializeDisksWithFIO.sh ; sudo bash /tmp/InitializeDisksWithFIO.sh -r 5
+  fi 
+
+
+
+  if ( "${1OSWarmAllEBSVolumes}" -eq "true" ) {
+    logit "EBS volume warming was configured, setting it up..."
+    logit "Read more in the script comments and here: https://cloudywindows.io/post/fully-automated-on-demand-ebs-initialization-in-both-bash-for-linux-and-powershell-for-windows/"
+    invoke-webrequest -uri 'https://raw.githubusercontent.com/DarwinJS/DevOpsAutomationCode/master/InitializeDisksWithFIO.ps1' -outfile $env:public\InitializeDisksWithFIO.ps1 ; & $env:public\InitializeDisksWithFIO.ps1 -RepeatIntervalMinutes 5
+  }

@@ -83,10 +83,16 @@ Parameters:
       How often in minutes should the instance check if it is being asked to terminate so it can run a clean up script.
       Terminations initiated by spot occur two minutes after notification, so this value should less than that for spot implementations.
       AWS and instance resources for monitoring termination are not created if this value is not provided.
-    Type: Number
+      It is best practice to delete this if a termination hook truely is not needed for cleanup.
+    Type: String
     Default: 1
-    MinValue: 1
-    MaxValue: 5
+    AllowedValues:
+     - 1
+     - 2
+     - 3
+     - 4
+     - 5
+     - Disabled
   5ASGAutoScalingSetScaleOutCPUThreshold:
     Description: >
       What ASG-wide CPU threshold triggers scaling up via step-scaling? Requires 5ASGAutoScalingEnabled=true.
@@ -229,7 +235,7 @@ Conditions:
   Provided5SPOTInstanceType2: !Not [ !Equals [ !Ref 5SPOTInstanceType2, "" ]]
   Provided5SPOTInstanceType3: !Not [ !Equals [ !Ref 5SPOTInstanceType3, "" ]]
   Provided5SPOTInstanceType4: !Not [ !Equals [ !Ref 5SPOTInstanceType4, "" ]]
-  EnableSelfTerminationMonitoring: !Not [ !Equals [ !Ref 5ASGSelfMonitorTerminationInterval, "" ]]
+  EnableSelfTerminationMonitoring: !Not [ !Equals [ !Ref 5ASGSelfMonitorTerminationInterval, "Disabled" ]]
 Resources:
   ASGRebootRole:
     Type: AWS::IAM::Role
@@ -627,7 +633,7 @@ Resources:
                 
                 logit "Continuing..."
                 if [ ! -z $NAMEOFASG ]; then
-                  logit "Sending a heart beat to reset the timeout counter while doing more things..."
+                  logit "Sending a heart beat to reset the timeout counter while doing more things (just as an example)..."
                   aws autoscaling record-lifecycle-action-heartbeat --region $AWS_REGION --instance-id $MYINSTANCEID --lifecycle-hook-name instance-patching-reboot --auto-scaling-group-name $NAMEOFASG
                 fi
 
@@ -678,7 +684,7 @@ Resources:
                 #This approach for termination hook is much simpler than those involving SNS or CloudWatch, but when deployed 
                 # on many instances it can result in a lot of ASG Describe API calls (which may be rate limited).
                 ASGSelfMonitorTerminationInterval=${5ASGSelfMonitorTerminationInterval}
-                if [ ! -z "$NAMEOFASG" ] && [ "$ASGSelfMonitorTerminationInterval" != "" ] && [ "$WaitingForReboot" != "true" ]; then
+                if [ ! -z "$NAMEOFASG" ] && [ "$ASGSelfMonitorTerminationInterval" != "Disabled" ] && [ "$WaitingForReboot" != "true" ]; then
                   logit "Setting up termination monitoring because 5ASGSelfMonitorTerminationInterval is set to $ASGSelfMonitorTerminationInterval"
                   SCRIPTNAME=/etc/cron.d/MonitorTerminationHook.sh
                   SCRIPTFOLDER=$(dirname $SCRIPTNAME)
@@ -827,7 +833,7 @@ Resources:
 
                   If ($LatestNGENBinary) {
                     logit "Running Native Assembly Generation to process .NET updates immediately. Most errors can be ignored."
-                    Start-Process $LatestNGENBinary -ArgumentList 'update /force' -nonewwindow -wait
+                    Start-Process $LatestNGENBinary -ArgumentList 'update' -nonewwindow -wait
                     logit "Native Assembly Generation Complete. Most errors can be ignored."
                   } else {
                     logit -MsgType 'Warning' -ID 7 "Warning ngen.exe was not found, which means .NET may not be installed - a highly unusual situation."
@@ -901,7 +907,7 @@ Resources:
                 # on many instances it can result in a lot of ASG Describe API calls (which may be rate limited).
                 # variables identifying the instance and asg are hard coded into the script to reduce api calls.
                 $ASGSelfMonitorTerminationInterval=${5ASGSelfMonitorTerminationInterval}
-                if ($NAMEOFASG -AND $ASGSelfMonitorTerminationInterval -AND (!$WaitingForReboot -eq $True)) {
+                if ($NAMEOFASG -AND ($ASGSelfMonitorTerminationInterval -ne "Disabled") -AND (!$WaitingForReboot -eq $True)) {
                   logit "Setting up termination monitoring because 5ASGSelfMonitorTerminationInterval is set to $ASGSelfMonitorTerminationInterval"
                   $SCRIPTNAME="$env:public\MonitorTerminationHook.ps1"
                   
