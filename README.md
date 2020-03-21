@@ -203,7 +203,7 @@ If you set SetupPseudoWebApp to true, the following is done: 1) A port 80 ingres
 
 # Code for This Post
 
-[CloudFormationUltimateAWSASGLabKit.yaml](https://gitlab.com/DarwinJS/ultimate-aws-asg-lab-kit/CloudFormationUltimateAWSASGLabKit.yml)
+[CloudFormationUltimateAWSASGLabKit.yaml](https://github.com/DarwinJS/DevOpsAutomationCode/blob/master/CloudFormationUltimateAWSASGLabKit.yaml)
 
 [Create Now in CloudFormation Console](https://us-east-1.console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/create/review?templateURL=https://s3.amazonaws.com/cloudywindows.io/files/CloudFormationRebootRequiredPatchinginASG.yaml)
 
