@@ -194,7 +194,7 @@ tail -f /var/log/messages
 On Windows you can use (it is also a good generic EventLog tailing function):
 
 ```powershell
-Function Tail ($logspec="Application",$pastmins=5) {$lastdate=$(Get-date).addminutes(-$pastmins);while ($True) {$newdate=get-date;get-winevent $logspec -ea 0 | ? {$_.TimeCreated -ge $lastdate -AND $_.TimeCreated -le $newdate};$lastdate=$newdate;start-sleep -milliseconds 330}}; Tail
+Function Tail ($logspec="Application",$pastmins=5,$computer=$env:computername) {$lastdate=$(Get-date).addminutes(-$pastmins);while ($True) {$newdate=get-date;get-winevent $logspec -ComputerName $computer -ea 0 | ? {$_.TimeCreated -ge $lastdate -AND $_.TimeCreated -le $newdate};$lastdate=$newdate;start-sleep -milliseconds 330}}; Tail
 ```
 
 ## Observing Pseudo Web App
