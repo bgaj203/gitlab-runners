@@ -11,9 +11,10 @@ Since the last team I managed had to do all of our automation work for both Wind
 <!--more-->
 <!-- TOC -->
 
+- [Ultimate AWS ASG Lab Kit with Spot Support](#ultimate-aws-asg-lab-kit-with-spot-support)
 - [TL;DR Feature Summary](#tldr-feature-summary)
-  - [Previously Existing Features](#previously-existing-features)
-  - [New Features (all for both Windows and Linux):](#new-features-all-for-both-windows-and-linux)
+    - [Previously Existing Features](#previously-existing-features)
+    - [New Features (all for both Windows and Linux):](#new-features-all-for-both-windows-and-linux)
 - [Technical Design](#technical-design)
   - [Minimal but Completely Working Template](#minimal-but-completely-working-template)
   - [Tested With Both ASG Updatepolicy Settings](#tested-with-both-asg-updatepolicy-settings)
@@ -203,7 +204,7 @@ If you set SetupPseudoWebApp to true, the following is done: 1) A port 80 ingres
 
 # Code for This Post
 
-[CloudFormationUltimateAWSASGLabKit.yaml](https://github.com/DarwinJS/DevOpsAutomationCode/blob/master/CloudFormationUltimateAWSASGLabKit.yaml)
+[CloudFormationUltimateAWSASGLabKit.yaml](https://gitlab.com/DarwinJS/ultimate-aws-asg-lab-kit/-/blob/master/CloudFormationUltimateAWSASGLabKit.yml)
 
 [Create Now in CloudFormation Console](https://us-east-1.console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/create/review?templateURL=https://s3.amazonaws.com/cloudywindows.io/files/CloudFormationRebootRequiredPatchinginASG.yaml)
 
