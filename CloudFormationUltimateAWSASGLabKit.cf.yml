@@ -1,7 +1,8 @@
 ---
 AWSTemplateFormatVersion: '2010-09-09'
 Description: >
-  https://gitlab.com/DarwinJS/ultimate-aws-asg-lab-kit/-/blob/master/README.md
+  AWSASGLabKitVersion: 1.1:
+  More Information https://gitlab.com/DarwinJS/ultimate-aws-asg-lab-kit/-/blob/master/README.md
 Parameters:
   1AAAReadmeBlogPost:
     Description: Read the following post to learn why this template is helpful - Darwin.
@@ -559,15 +560,17 @@ Resources:
               Fn::Base64: !Sub | 
                 #!/bin/bash
                 set -xv
-                echo "Building Linux Instance..."
-                echo "Logs for this are found in /var/log/cloud-init-output.log or /var/log/messsages (non amazon linux)"
-                echo "Rendered script found in /var/lib/cloud/instance/scripts/part-001"
+                AWSASGLabKitVersion="1.1"
                 function logit() {
                   LOGSTRING="$(date +"%_b %e %H:%M:%S") $(hostname) USERDATA_SCRIPT: $1"
                   echo "$LOGSTRING"
                   #For CloudFormation, if you already collect /var/log/cloud-init-output.log or /var/log/messsages (non amazon linux), then you could mute the next logging line
                   echo "$LOGSTRING" >> /var/log/messages
-                }               
+                }                     
+                logit "Building Linux Instance... with AWS ASG Lab Kit Version: $AWSASGLabKitVersion"
+                logit "Learn more at: $1AAAReadmeBlogPost"
+                logit "Logs for this are found in /var/log/cloud-init-output.log or /var/log/messsages (non amazon linux)"
+                logit "Rendered script found in /var/lib/cloud/instance/scripts/part-001"          
                 if [[ "${8DBGTroubleShootingMode}" == "true" ]]; then
                   if ! ps -ef | grep -q '[a]mazon-ssm-agent'; then
                     logit "8DBGTroubleShootingMode is true - and SSM is not installed, Installing SSM for Session Manager Access..."
@@ -622,7 +625,7 @@ Resources:
                     yum --security update -y
                     logit "Completed Patching."
                   elif [[ "${1OSPatchScope}" == "NoPatching-OnlyForDebugging" ]]; then
-                    echo "No patching will be done - this setting is for debugging only (patch dates will still be set)"
+                    logit "No patching will be done - this setting is for debugging only (patch dates will still be set)"
                   fi
                   logit "ACTUAL_PATCH_DATE may be newer because this instance was autoscaled after the LAST_CF_PATCH_RUN"
                   logit "LAST_CF_PATCH_RUN: $LAST_CF_PATCH_RUN"
@@ -712,12 +715,12 @@ Resources:
 
                 EndOfScript
 
-                  echo "SCHEDULING: $SCRIPTNAME for every $ASGSelfMonitorTerminationInterval minutes to check for termination hook."
+                  logit "SCHEDULING: $SCRIPTNAME for every $ASGSelfMonitorTerminationInterval minutes to check for termination hook."
 
                   chown root:root "$SCRIPTNAME"
                   chmod 644 "$SCRIPTNAME"
-                  echo "Adding cron job"
-                  echo "*/$ASGSelfMonitorTerminationInterval * * * * root bash $SCRIPTNAME" | $SUDO tee -a /etc/crontab > /dev/null
+                  logit "Adding cron job"
+                  logit "*/$ASGSelfMonitorTerminationInterval * * * * root bash $SCRIPTNAME" | $SUDO tee -a /etc/crontab > /dev/null
                   chown root:root /etc/crontab
                   chmod 644 /etc/crontab
                 fi
@@ -752,15 +755,19 @@ Resources:
               # Windows UserData
               Fn::Base64: !Sub | 
                 <powershell>
-                Write-Host "On 2016 and later (Ec2Launch) errors are logged to C:\programdata\Amazon\ec2-windows\launch\log\UserdataExecution.log" 
-                Write-Host "Rendered script on an instance will be found at: C:\Windows\TEMP\UserScript.ps1"               
+                $AWSASGLabKitVersion="1.1"
                 Function logit ($Msg, $MsgType='Information', $ID='1') {
                   If ($script:PSCommandPath -ne '' ) { $SourcePathName = $script:PSCommandPath ; $SourceName = split-path -leaf $SourcePathName } else { $SourceName = "Automation Code"; $SourcePathName = "Unknown" }
                   Write-Host "[$(Get-date -format 'yyyy-MM-dd HH:mm:ss zzz')] $MsgType : From: $SourcePathName : $Msg"
                   $applog = New-Object -TypeName System.Diagnostics.EventLog -argumentlist Application
                   $applog.Source="$SourceName"
                   $applog.WriteEntry("From: $SourcePathName : $Msg", $MsgType, $ID)
-                }
+                }                
+                logit "Building Instance... with AWS ASG Lab Kit Version: $AWSASGLabKitVersion"
+                logit "Learn more at: $1AAAReadmeBlogPost"
+                logit "On 2016 and later (Ec2Launch) errors are logged to C:\programdata\Amazon\ec2-windows\launch\log\UserdataExecution.log" 
+                logit "Rendered script on an instance will be found at: C:\Windows\TEMP\UserScript.ps1"               
+
                 If ((![bool](get-process amazon-ssm-agent -ErrorAction SilentlyContinue)) -AND ($8DBGTroubleShootingMode -eq 'true')) {
                   logit "8DBGTroubleShootingMode is true and SSM is not present - Installing SSM for Session Manager Access..."
                   Invoke-WebRequest https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/windows_amd64/AmazonSSMAgentSetup.exe -OutFile $env:USERPROFILE\SSMAgent_latest.exe
@@ -933,7 +940,7 @@ Resources:
 
                 "@
 
-                  echo "SCHEDULING: $SCRIPTNAME for every $ASGSelfMonitorTerminationInterval minutes to check for termination hook."
+                  logit "SCHEDULING: $SCRIPTNAME for every $ASGSelfMonitorTerminationInterval minutes to check for termination hook."
                   schtasks.exe /create /sc MINUTE /MO $ASGSelfMonitorTerminationInterval /tn "MonitorTerminationHook.ps1" /ru SYSTEM /tr "powershell.exe -file $SCRIPTNAME"
 
                 }
