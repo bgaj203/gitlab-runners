@@ -1,7 +1,7 @@
 ---
 AWSTemplateFormatVersion: '2010-09-09'
 Description: >
-  AWSASGLabKitVersion: 1.1:
+  AWSASGLabKitVersion: 1.2:
   More Information https://gitlab.com/DarwinJS/ultimate-aws-asg-lab-kit/-/blob/master/README.md
 Parameters:
   1AAAReadmeBlogPost:
@@ -45,7 +45,8 @@ Parameters:
   3INSTConfigurationScript:
     Description: >
       Allows additional script commands during startup. This is parameterized for testing new versions and to enable one
-      CloudFormation template codebase to be used for many different Autoscaling groups. 
+      CloudFormation template codebase to be used for many different Autoscaling groups. It also allows you to use this template
+      without customizing it so that you can take future updates without headache.
       1) "Embedded" uses the code right in this template and does not use external files at all.
       2) Enter a URL starting with s3://, http:// or https:// to dynamically source one during instance provisioning.
       s3 allows easy private file storage.  http/s enables usage of git raw urls (whether public or private).
@@ -574,7 +575,7 @@ Resources:
               Fn::Base64: !Sub | 
                 #!/bin/bash
                 set -xv
-                AWSASGLabKitVersion="1.1"
+                AWSASGLabKitVersion="1.2"
                 function logit() {
                   LOGSTRING="$(date +"%_b %e %H:%M:%S") $(hostname) USERDATA_SCRIPT: $1"
                   echo "$LOGSTRING"
@@ -824,7 +825,7 @@ Resources:
               # Windows UserData
               Fn::Base64: !Sub | 
                 <powershell>
-                $AWSASGLabKitVersion="1.1"
+                $AWSASGLabKitVersion="1.2"
                 Function logit ($Msg, $MsgType='Information', $ID='1') {
                   If ($script:PSCommandPath -ne '' ) { $SourcePathName = $script:PSCommandPath ; $SourceName = split-path -leaf $SourcePathName } else { $SourceName = "Automation Code"; $SourcePathName = "Unknown" }
                   Write-Host "[$(Get-date -format 'yyyy-MM-dd HH:mm:ss zzz')] $MsgType : From: $SourcePathName : $Msg"
