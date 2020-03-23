@@ -42,6 +42,20 @@ Parameters:
       - SecurityOnly
       - NoPatching-OnlyForDebugging   
       #For "NoPatching-OnlyForDebugging" - No patching will be done - this setting is for debugging only (patch dates will still be set)   
+  3INSTConfigurationScript:
+    Description: >
+      Allows additional script commands during startup. This is parameterized for testing new versions and to enable one
+      CloudFormation template codebase to be used for many different Autoscaling groups. 
+      1) "Embedded" uses the code right in this template and does not use external files at all.
+      2) Enter a URL starting with s3://, http:// or https:// to dynamically source one during instance provisioning.
+      s3 allows easy private file storage.  http/s enables usage of git raw urls (whether public or private).
+      3) Enter a file pathname on the local instance. The file must be present in the location by the time Userdata processes
+      (e.g. via a custom AMI)
+      The instance must have a network route and permission to any remote locations.
+      The code you write must be idempotent so that it does the correct thing when run again after a patching reboot.
+      There is an example at: https://gitlab.com/DarwinJS/ultimate-aws-asg-lab-kit/-/raw/master/CustomInstanceConfigurationScriptSample.sh_and_ps1
+    Type: String
+    Default: Embedded
   3INSTInstallCodeDeploy:
     Description: Installs CodeDeploy so it can be used for initial deployments and updates.
     Type: String
@@ -671,6 +685,61 @@ Resources:
                   chmod +x ./install
                   ./install auto
                 fi
+
+                DefaultLocalCachedConfigScript="custom_instance_configuration_script.sh"
+                logit "##########################################"
+                logit "RUNNING CUSTOM INSTANCE CONFIGURATION CODE"
+
+                #If indicated as embedded, run it.
+                if [[ "${3INSTConfigurationScript}" == "Embedded" ]]; then
+                  logit "CUSTOM CONFIG: Running embedded custom instance configuration script."
+                  #############################################
+                  # YOUR CODE HERE
+                  #############################################
+
+                elif [[ "${3INSTConfigurationScript}" == "http://"* || "${3INSTConfigurationScript}" == "https://"* ]]; then
+                  logit "CUSTOM CONFIG: Retrieving custom instance configuration script from ${3INSTConfigurationScript}"
+                  if [ ! -f $DefaultLocalCachedConfigScript ]; then
+                      logit "Pulling and executing from \"${3INSTConfigurationScript}\""
+                      if [ -n "$(command -v curl)" ]; then
+                          logit "found and using curl"
+                          curl -o $DefaultLocalCachedConfigScript -s ${3INSTConfigurationScript}
+                      elif [ -n "$(command -v wget)" ]; then
+                          logit "found and using wget"
+                          wget -O $DefaultLocalCachedConfigScript -s ${3INSTConfigurationScript}
+                      else
+                          logit "Could not find curl or wget, install one of these or manually copy \"${3INSTConfigurationScript}\""
+                      fi
+                  fi
+
+                elif [[ "${3INSTConfigurationScript}" == "s3://"* ]]; then
+                  logit "CUSTOM CONFIG: Retrieving custom instance configuration script from ${3INSTConfigurationScript}"
+                  if [ ! -f $DefaultLocalCachedConfigScript ]; then
+                      logit "Pulling and executing from \"${3INSTConfigurationScript}\""
+                      aws s3 cp ${3INSTConfigurationScript} $DefaultLocalCachedConfigScript
+                  fi
+                else
+                  logit "CUSTOM CONFIG: Running custom instance configuration script in the local file named ${3INSTConfigurationScript}"
+                  if [ -f $DefaultLocalCachedConfigScript ]; then
+                    logit "Pointing \$DefaultLocalCachedConfigScript to ${3INSTConfigurationScript}"
+                    DefaultLocalCachedConfigScript=${3INSTConfigurationScript}
+                  else
+                    logit "${3INSTConfigurationScript} was not found, will error out."
+                  fi
+                fi
+
+                if [ "${3INSTConfigurationScript}" != "Embedded" ]; then
+                  logit "Execution of the Non-Embedded Instance Configuration Script \"$DefaultLocalCachedConfigScript\" has been requested."
+                  if [ -f "$DefaultLocalCachedConfigScript" ]; then
+                    . "$DefaultLocalCachedConfigScript"
+                  else
+                    logit "ERROR: $DefaultLocalCachedConfigScript was not found, but is needed to complete instance setup."
+                    exit 9
+                  fi
+                fi
+
+                # END OF "RUNNING CUSTOM INSTANCE CONFIGURATION CODE"
+                # ###################################################
 
                 needs-restarting -r 
                 if [ $? -gt 0 ]; then
