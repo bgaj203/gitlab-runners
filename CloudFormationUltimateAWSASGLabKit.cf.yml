@@ -1,7 +1,7 @@
 ---
 AWSTemplateFormatVersion: '2010-09-09'
 Description: >
-  AWSASGLabKitVersion: 1.1:
+  AWSASGLabKitVersion: 1.2:
   More Information https://gitlab.com/DarwinJS/ultimate-aws-asg-lab-kit/-/blob/master/README.md
 Parameters:
   1AAAReadmeBlogPost:
@@ -42,6 +42,22 @@ Parameters:
       - SecurityOnly
       - NoPatching-OnlyForDebugging   
       #For "NoPatching-OnlyForDebugging" - No patching will be done - this setting is for debugging only (patch dates will still be set)   
+  3INSTConfigurationScript:
+    Description: >
+      Allows additional script commands during startup. This is parameterized for testing new versions and to enable one
+      CloudFormation template codebase to be used for many different Autoscaling groups. It also allows you to use this template
+      without customizing it so that you can take future updates without headache. Windows 2012 and earlier also have a userdata size
+      limit of 16Kb - this method gets around that.
+      1) "Embedded" uses the code right in this template and does not use external files at all.
+      2) Enter a URL starting with s3://, http:// or https:// to dynamically source one during instance provisioning.
+      s3 allows easy private file storage.  http/s enables usage of git raw urls (whether public or private).
+      3) Enter a file pathname on the local instance. The file must be present in the location by the time Userdata processes
+      (e.g. via a custom AMI)
+      The instance must have a network route and permission to any remote locations.
+      The code you write must be idempotent so that it does the correct thing when run again after a patching reboot.
+      There is an example at: https://gitlab.com/DarwinJS/ultimate-aws-asg-lab-kit/-/raw/master/CustomInstanceConfigurationScriptSample.sh_and_ps1
+    Type: String
+    Default: Embedded
   3INSTInstallCodeDeploy:
     Description: Installs CodeDeploy so it can be used for initial deployments and updates.
     Type: String
@@ -257,7 +273,7 @@ Resources:
           - 
             - arn:aws:iam::aws:policy/service-role/AmazonSSMMaintenanceWindowRole
             - arn:aws:iam::aws:policy/service-role/AmazonSSMAutomationRole
-            - arn:aws:iam::aws:policy/service-role/AmazonEC2RoleforSSM        
+            - arn:aws:iam::aws:policy/service-role/AmazonEC2RoleforSSM       
           - !Ref "AWS::NoValue"
 
   #IAM Policies for Instance Profile:
@@ -560,7 +576,7 @@ Resources:
               Fn::Base64: !Sub | 
                 #!/bin/bash
                 set -xv
-                AWSASGLabKitVersion="1.1"
+                AWSASGLabKitVersion="1.2"
                 function logit() {
                   LOGSTRING="$(date +"%_b %e %H:%M:%S") $(hostname) USERDATA_SCRIPT: $1"
                   echo "$LOGSTRING"
@@ -672,18 +688,6 @@ Resources:
                   ./install auto
                 fi
 
-                needs-restarting -r 
-                if [ $? -gt 0 ]; then
-                  logit "Detected that a reboot is required, rebooting..."
-                  logit "Resetting userdata semaphore..."
-                  rm /var/lib/cloud/instances/*/sem/config_scripts_user
-                  touch $PATCHDONEFLAG
-                  reboot
-                  logit "Waiting for reboot to complete..."
-                  sleep 30
-                  WaitingForReboot=true
-                fi
-
                 #This approach for termination hook is much simpler than those involving SNS or CloudWatch, but when deployed 
                 # on many instances it can result in a lot of ASG Describe API calls (which may be rate limited).
                 ASGSelfMonitorTerminationInterval=${5ASGSelfMonitorTerminationInterval}
@@ -725,6 +729,73 @@ Resources:
                   chmod 644 /etc/crontab
                 fi
 
+                DefaultLocalCachedConfigScript="custom_instance_configuration_script.sh"
+                logit "##########################################"
+                logit "RUNNING CUSTOM INSTANCE CONFIGURATION CODE"
+
+                #If indicated as embedded, run it.
+                if [[ "${3INSTConfigurationScript}" == "Embedded" ]]; then
+                  logit "CUSTOM CONFIG: Running embedded custom instance configuration script."
+                  #############################################
+                  # YOUR CODE HERE
+                  #############################################
+
+                elif [[ "${3INSTConfigurationScript}" == "http://"* || "${3INSTConfigurationScript}" == "https://"* ]]; then
+                  logit "CUSTOM CONFIG: Retrieving custom instance configuration script from ${3INSTConfigurationScript}"
+                  if [ ! -f $DefaultLocalCachedConfigScript ]; then
+                      logit "Pulling and executing from \"${3INSTConfigurationScript}\""
+                      if [ -n "$(command -v curl)" ]; then
+                          logit "found and using curl"
+                          curl -o $DefaultLocalCachedConfigScript -s ${3INSTConfigurationScript}
+                      elif [ -n "$(command -v wget)" ]; then
+                          logit "found and using wget"
+                          wget -O $DefaultLocalCachedConfigScript -s ${3INSTConfigurationScript}
+                      else
+                          logit "Could not find curl or wget, install one of these or manually copy \"${3INSTConfigurationScript}\""
+                      fi
+                  fi
+
+                elif [[ "${3INSTConfigurationScript}" == "s3://"* ]]; then
+                  logit "CUSTOM CONFIG: Retrieving custom instance configuration script from ${3INSTConfigurationScript}"
+                  if [ ! -f $DefaultLocalCachedConfigScript ]; then
+                      logit "Pulling and executing from \"${3INSTConfigurationScript}\""
+                      aws s3 cp ${3INSTConfigurationScript} $DefaultLocalCachedConfigScript
+                  fi
+                else
+                  logit "CUSTOM CONFIG: Running custom instance configuration script in the local file named ${3INSTConfigurationScript}"
+                  if [ -f $DefaultLocalCachedConfigScript ]; then
+                    logit "Pointing \$DefaultLocalCachedConfigScript to ${3INSTConfigurationScript}"
+                    DefaultLocalCachedConfigScript=${3INSTConfigurationScript}
+                  else
+                    logit "${3INSTConfigurationScript} was not found, will error out."
+                  fi
+                fi
+
+                if [ "${3INSTConfigurationScript}" != "Embedded" ]; then
+                  logit "Execution of the Non-Embedded Instance Configuration Script \"$DefaultLocalCachedConfigScript\" has been requested."
+                  if [ -f "$DefaultLocalCachedConfigScript" ]; then
+                    source "$DefaultLocalCachedConfigScript"
+                  else
+                    logit "ERROR: $DefaultLocalCachedConfigScript was not found, but is needed to complete instance setup."
+                    exit 9
+                  fi
+                fi
+
+                # END OF "RUNNING CUSTOM INSTANCE CONFIGURATION CODE"
+                # ###################################################
+
+                needs-restarting -r 
+                if [ $? -gt 0 ]; then
+                  logit "Detected that a reboot is required, rebooting..."
+                  logit "Resetting userdata semaphore..."
+                  rm /var/lib/cloud/instances/*/sem/config_scripts_user
+                  touch $PATCHDONEFLAG
+                  reboot
+                  logit "Waiting for reboot to complete..."
+                  sleep 30
+                  WaitingForReboot=true
+                fi
+
                 if [ ! -z "$NAMEOFASG" ] && [ "$WaitingForReboot" != "true" ]; then
                   logit "Completing lifecycle action hook so that ASG knows we are ready to be placed InService..."
                   aws autoscaling complete-lifecycle-action --region $AWS_REGION --lifecycle-action-result CONTINUE --instance-id $MYINSTANCEID --lifecycle-hook-name instance-patching-reboot --auto-scaling-group-name $NAMEOFASG
@@ -755,7 +826,7 @@ Resources:
               # Windows UserData
               Fn::Base64: !Sub | 
                 <powershell>
-                $AWSASGLabKitVersion="1.1"
+                $AWSASGLabKitVersion="1.2"
                 Function logit ($Msg, $MsgType='Information', $ID='1') {
                   If ($script:PSCommandPath -ne '' ) { $SourcePathName = $script:PSCommandPath ; $SourceName = split-path -leaf $SourcePathName } else { $SourceName = "Automation Code"; $SourcePathName = "Unknown" }
                   Write-Host "[$(Get-date -format 'yyyy-MM-dd HH:mm:ss zzz')] $MsgType : From: $SourcePathName : $Msg"
@@ -765,7 +836,7 @@ Resources:
                 }                
                 logit "Building Instance... with AWS ASG Lab Kit Version: $AWSASGLabKitVersion"
                 logit "Learn more at: $1AAAReadmeBlogPost"
-                logit "On 2016 and later (Ec2Launch) errors are logged to C:\programdata\Amazon\ec2-windows\launch\log\UserdataExecution.log" 
+                logit "On 2016 and later (Ec2Launch) errors are logged to cat C:\programdata\Amazon\EC2-Windows\Launch\Log\UserdataExecution.log" 
                 logit "Rendered script on an instance will be found at: C:\Windows\TEMP\UserScript.ps1"               
 
                 If ((![bool](get-process amazon-ssm-agent -ErrorAction SilentlyContinue)) -AND ($8DBGTroubleShootingMode -eq 'true')) {
@@ -876,39 +947,9 @@ Resources:
 
                 if (("${3INSTInstallCodeDeploy}" -eq "true") -AND (![bool](get-service codedeployagent -ErrorAction SilentlyContinue))) {
                   logit "Code deploy is requested, but not present, installing CodeDeploy"
-
-                  #if ($True) {
-                  #  Invoke-WebRequest https://github.com/oneclick/rubyinstaller2/releases/download/RubyInstaller-2.4.9-1/rubyinstaller-2.4.9-1-x64.exe -OutFile $env:USERPROFILE\rubyinstaller-x64.exe
-                  #  Start-Process $env:USERPROFILE\rubyinstaller-x64.exe -argumentlist "/silent /tasks=`"assocfiles,modpath`" /LOG=`"$env:USERPROFILE\rubyinstaller.log`"" -nonewwindow - wait
-                  #}
                   aws s3 cp s3://aws-codedeploy-$AWS_REGION/latest/codedeploy-agent.msi $env:USERPROFILE\codedeploy-agent.msi  --region $AWS_REGION
                   Start-Process	 -wait -nonewwindow -FilePath "msiexec.exe" -ArgumentList "/i $env:USERPROFILE\codedeploy-agent.msi /l*v $env:USERPROFILE\codedeploy-agent.log /qn"
                 }
-
-                If (Test-PendingReboot)
-                  {
-                    logit "Reboot pending, shutting down in 10 seconds (giving time for orchestrating automation to close out)..."
-                    $WaitingForReboot=$True
-                    logit "Ensuring userdata will be processed again"
-                    $path = 'C:\Program Files\Amazon\Ec2ConfigService\Settings\config.xml'
-                    if (Test-Path $path) {
-                      logit "Reseting Ec2Config userdata"
-                      $xml = [xml](Get-Content $path)
-                      $state = $xml.Ec2ConfigurationSettings.Plugins.Plugin | where {$_.Name -eq 'Ec2HandleUserData'}
-                      $state.State = 'Disabled'
-                      $xml.Save($path)
-                    }
-                    $path = 'C:\ProgramData\Amazon\Ec2-Windows\Launch\Config\LaunchConfig.json'
-                    if (Test-Path $path) {
-                      $ec2launchconfig = get-content $path | convertfrom-json
-                      if (!$($ec2launchconfig.handleUserData)) {
-                        logit "Reseting Ec2Launch userdata"
-                        $ec2launchconfig.handleUserData = $True
-                        $ec2launchconfig | convertto-json | set-content $path
-                      }
-                    }
-                    shutdown.exe /r /t 10
-                  } Else {Write-Host "A reboot is not pending, no action taken."}
 
                 #This approach for termination hook is much simpler than those involving SNS or CloudWatch, but when deployed 
                 # on many instances it can result in a lot of ASG Describe API calls (which may be rate limited).
@@ -944,6 +985,80 @@ Resources:
                   schtasks.exe /create /sc MINUTE /MO $ASGSelfMonitorTerminationInterval /tn "MonitorTerminationHook.ps1" /ru SYSTEM /tr "powershell.exe -file $SCRIPTNAME"
 
                 }
+
+                $DefaultLocalCachedConfigScript="$env:public\custom_instance_configuration_script.ps1"
+                $INSTConfigurationScript="${3INSTConfigurationScript}"
+                logit "####"
+                logit "RUNNING CUSTOM INSTANCE CONFIGURATION CODE"
+
+                #If indicated as embedded, run it.
+                if ( $INSTConfigurationScript -eq "Embedded" ) {
+                  logit "CUSTOM CONFIG: Running embedded custom instance configuration script."
+                  ######
+                  # YOUR INSTANCE CONFIG CODE HERE
+
+                } elseif (($INSTConfigurationScript -ilike "http://*") -OR ($INSTConfigurationScript -ilike "https://*" )) {
+                  logit "CUSTOM CONFIG: Retrieving custom instance configuration script from $INSTConfigurationScript"
+                  if (!(Test-Path $DefaultLocalCachedConfigScript)) {
+                      logit "Pulling and executing from `"$INSTConfigurationScript`""
+                      [Net.ServicePointManager]::SecurityProtocol = "tls12, tls11, tls"
+                      Invoke-RestMethod -OutFile $DefaultLocalCachedConfigScript -Uri $INSTConfigurationScript
+                    }
+                } elseif ( $INSTConfigurationScript -ilike "s3://*" ) {
+                  logit "CUSTOM CONFIG: Retrieving custom instance configuration script from $INSTConfigurationScript"
+                  if (!(Test-Path $DefaultLocalCachedConfigScript)) {
+                      aws s3 cp $INSTConfigurationScript $DefaultLocalCachedConfigScript
+                  } else {
+                    logit "$DefaultLocalCachedConfigScript was not found, will error out."
+                  }                  
+                } else {
+                  logit "CUSTOM CONFIG: Running custom instance configuration script in the local file named $INSTConfigurationScript"
+                  if (!(Test-Path $DefaultLocalCachedConfigScript)) {
+                    logit "Pointing \$DefaultLocalCachedConfigScript to $INSTConfigurationScript"
+                    DefaultLocalCachedConfigScript=$INSTConfigurationScript
+                  } else {
+                    logit "$DefaultLocalCachedConfigScript was not found, will error out."
+                  }
+                }
+
+                if ( $INSTConfigurationScript -ne "Embedded") {
+                  logit "Execution of the Non-Embedded Instance Configuration Script `"$DefaultLocalCachedConfigScript`" has been requested."
+                  if (Test-Path $DefaultLocalCachedConfigScript) {
+                    . "$DefaultLocalCachedConfigScript"
+                  } else {
+                    throw "ERROR: $DefaultLocalCachedConfigScript was not found, but is needed to complete instance setup."
+                    exit 9
+                  }
+                }
+                # END OF CUSTOM INSTANCE CONFIGURATION CODE"
+
+                If (Test-PendingReboot)
+                  {
+                    logit "Reboot pending, shutting down in 10 seconds (giving time for orchestrating automation to close out)..."
+                    $WaitingForReboot=$True
+                    logit "Ensuring userdata will be processed again"
+                    $path = 'C:\Program Files\Amazon\Ec2ConfigService\Settings\config.xml'
+                    if (Test-Path $path) {
+                      logit "Reseting Ec2Config userdata"
+                      $xml = [xml](Get-Content $path)
+                      $state = $xml.Ec2ConfigurationSettings.Plugins.Plugin | where {$_.Name -eq 'Ec2HandleUserData'}
+                      $state.State = 'Disabled'
+                      $xml.Save($path)
+                    }
+                    $path = 'C:\ProgramData\Amazon\Ec2-Windows\Launch\Config\LaunchConfig.json'
+                    if (Test-Path $path) {
+                      $ec2launchconfig = get-content $path | convertfrom-json
+                      if (!$($ec2launchconfig.handleUserData)) {
+                        logit "Reseting Ec2Launch userdata"
+                        $ec2launchconfig.handleUserData = $True
+                        $ec2launchconfig | convertto-json | set-content $path
+                      }
+                    }
+                    shutdown.exe /r /t 10
+                  } Else {
+                    Write-Host "A reboot is not pending, no action taken."
+                  }
+
 
                 if ($NAMEOFASG -AND !$WaitingForReboot) {
                   logit "Completing lifecycle action hook so that ASG knows we are ready to be placed InService..."
