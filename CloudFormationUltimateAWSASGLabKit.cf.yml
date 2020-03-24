@@ -46,7 +46,8 @@ Parameters:
     Description: >
       Allows additional script commands during startup. This is parameterized for testing new versions and to enable one
       CloudFormation template codebase to be used for many different Autoscaling groups. It also allows you to use this template
-      without customizing it so that you can take future updates without headache.
+      without customizing it so that you can take future updates without headache. Windows 2012 and earlier also have a userdata size
+      limit of 16Kb - this method gets around that.
       1) "Embedded" uses the code right in this template and does not use external files at all.
       2) Enter a URL starting with s3://, http:// or https:// to dynamically source one during instance provisioning.
       s3 allows easy private file storage.  http/s enables usage of git raw urls (whether public or private).
@@ -272,7 +273,7 @@ Resources:
           - 
             - arn:aws:iam::aws:policy/service-role/AmazonSSMMaintenanceWindowRole
             - arn:aws:iam::aws:policy/service-role/AmazonSSMAutomationRole
-            - arn:aws:iam::aws:policy/service-role/AmazonEC2RoleforSSM        
+            - arn:aws:iam::aws:policy/service-role/AmazonEC2RoleforSSM       
           - !Ref "AWS::NoValue"
 
   #IAM Policies for Instance Profile:
@@ -687,6 +688,47 @@ Resources:
                   ./install auto
                 fi
 
+                #This approach for termination hook is much simpler than those involving SNS or CloudWatch, but when deployed 
+                # on many instances it can result in a lot of ASG Describe API calls (which may be rate limited).
+                ASGSelfMonitorTerminationInterval=${5ASGSelfMonitorTerminationInterval}
+                if [ ! -z "$NAMEOFASG" ] && [ "$ASGSelfMonitorTerminationInterval" != "Disabled" ] && [ "$WaitingForReboot" != "true" ]; then
+                  logit "Setting up termination monitoring because 5ASGSelfMonitorTerminationInterval is set to $ASGSelfMonitorTerminationInterval"
+                  SCRIPTNAME=/etc/cron.d/MonitorTerminationHook.sh
+                  SCRIPTFOLDER=$(dirname $SCRIPTNAME)
+                  SCRIPTBASENAME=$(basename $SCRIPTNAME)
+                  yum install -y jq
+                  
+                  #Heredoc script
+                  cat << EndOfScript > $SCRIPTNAME
+                    function logit() {
+                      LOGSTRING="\$(date +"%_b %e %H:%M:%S") \$(hostname) TERMINATIONMON_SCRIPT: \$1"
+                      echo "\$LOGSTRING"
+                      echo "\$LOGSTRING" >> /var/log/messages
+                    }
+                    #These are resolved at script creation time to reduce api calls when this script runs every minute on instances.
+               
+                    if [[ "\$(aws autoscaling describe-auto-scaling-instances --instance-ids $MYINSTANCEID --region $AWS_REGION | jq --raw-output '.AutoScalingInstances[0] .LifecycleState')" == *"Terminating"* ]]; then
+                      logit "This instance ($MYINSTANCEID) is being terminated, perform cleanup..."
+
+                      #### PUT YOUR CLEANUP CODE HERE, DECIDE IF CLEANUP CODE SHOULD ERROR OUT OR SILENTLY FAIL (best effort cleanup)
+
+                      aws autoscaling complete-lifecycle-action --region $AWS_REGION --lifecycle-action-result CONTINUE --instance-id $MYINSTANCEID --lifecycle-hook-name instance-terminating --auto-scaling-group-name $NAMEOFASG
+                      logit "This instance ($MYINSTANCEID) is ready for termination"
+                      logit "Lifecycle CONTINUE was sent to termination hook in ASG: $NAMEOFASG for this instance ($MYINSTANCEID)."
+                    fi
+
+                EndOfScript
+
+                  logit "SCHEDULING: $SCRIPTNAME for every $ASGSelfMonitorTerminationInterval minutes to check for termination hook."
+
+                  chown root:root "$SCRIPTNAME"
+                  chmod 644 "$SCRIPTNAME"
+                  logit "Adding cron job"
+                  logit "*/$ASGSelfMonitorTerminationInterval * * * * root bash $SCRIPTNAME" | $SUDO tee -a /etc/crontab > /dev/null
+                  chown root:root /etc/crontab
+                  chmod 644 /etc/crontab
+                fi
+
                 DefaultLocalCachedConfigScript="custom_instance_configuration_script.sh"
                 logit "##########################################"
                 logit "RUNNING CUSTOM INSTANCE CONFIGURATION CODE"
@@ -732,7 +774,7 @@ Resources:
                 if [ "${3INSTConfigurationScript}" != "Embedded" ]; then
                   logit "Execution of the Non-Embedded Instance Configuration Script \"$DefaultLocalCachedConfigScript\" has been requested."
                   if [ -f "$DefaultLocalCachedConfigScript" ]; then
-                    . "$DefaultLocalCachedConfigScript"
+                    source "$DefaultLocalCachedConfigScript"
                   else
                     logit "ERROR: $DefaultLocalCachedConfigScript was not found, but is needed to complete instance setup."
                     exit 9
@@ -752,47 +794,6 @@ Resources:
                   logit "Waiting for reboot to complete..."
                   sleep 30
                   WaitingForReboot=true
-                fi
-
-                #This approach for termination hook is much simpler than those involving SNS or CloudWatch, but when deployed 
-                # on many instances it can result in a lot of ASG Describe API calls (which may be rate limited).
-                ASGSelfMonitorTerminationInterval=${5ASGSelfMonitorTerminationInterval}
-                if [ ! -z "$NAMEOFASG" ] && [ "$ASGSelfMonitorTerminationInterval" != "Disabled" ] && [ "$WaitingForReboot" != "true" ]; then
-                  logit "Setting up termination monitoring because 5ASGSelfMonitorTerminationInterval is set to $ASGSelfMonitorTerminationInterval"
-                  SCRIPTNAME=/etc/cron.d/MonitorTerminationHook.sh
-                  SCRIPTFOLDER=$(dirname $SCRIPTNAME)
-                  SCRIPTBASENAME=$(basename $SCRIPTNAME)
-                  yum install -y jq
-                  
-                  #Heredoc script
-                  cat << EndOfScript > $SCRIPTNAME
-                    function logit() {
-                      LOGSTRING="\$(date +"%_b %e %H:%M:%S") \$(hostname) TERMINATIONMON_SCRIPT: \$1"
-                      echo "\$LOGSTRING"
-                      echo "\$LOGSTRING" >> /var/log/messages
-                    }
-                    #These are resolved at script creation time to reduce api calls when this script runs every minute on instances.
-               
-                    if [[ "\$(aws autoscaling describe-auto-scaling-instances --instance-ids $MYINSTANCEID --region $AWS_REGION | jq --raw-output '.AutoScalingInstances[0] .LifecycleState')" == *"Terminating"* ]]; then
-                      logit "This instance ($MYINSTANCEID) is being terminated, perform cleanup..."
-
-                      #### PUT YOUR CLEANUP CODE HERE, DECIDE IF CLEANUP CODE SHOULD ERROR OUT OR SILENTLY FAIL (best effort cleanup)
-
-                      aws autoscaling complete-lifecycle-action --region $AWS_REGION --lifecycle-action-result CONTINUE --instance-id $MYINSTANCEID --lifecycle-hook-name instance-terminating --auto-scaling-group-name $NAMEOFASG
-                      logit "This instance ($MYINSTANCEID) is ready for termination"
-                      logit "Lifecycle CONTINUE was sent to termination hook in ASG: $NAMEOFASG for this instance ($MYINSTANCEID)."
-                    fi
-
-                EndOfScript
-
-                  logit "SCHEDULING: $SCRIPTNAME for every $ASGSelfMonitorTerminationInterval minutes to check for termination hook."
-
-                  chown root:root "$SCRIPTNAME"
-                  chmod 644 "$SCRIPTNAME"
-                  logit "Adding cron job"
-                  logit "*/$ASGSelfMonitorTerminationInterval * * * * root bash $SCRIPTNAME" | $SUDO tee -a /etc/crontab > /dev/null
-                  chown root:root /etc/crontab
-                  chmod 644 /etc/crontab
                 fi
 
                 if [ ! -z "$NAMEOFASG" ] && [ "$WaitingForReboot" != "true" ]; then
@@ -835,7 +836,7 @@ Resources:
                 }                
                 logit "Building Instance... with AWS ASG Lab Kit Version: $AWSASGLabKitVersion"
                 logit "Learn more at: $1AAAReadmeBlogPost"
-                logit "On 2016 and later (Ec2Launch) errors are logged to C:\programdata\Amazon\ec2-windows\launch\log\UserdataExecution.log" 
+                logit "On 2016 and later (Ec2Launch) errors are logged to cat C:\programdata\Amazon\EC2-Windows\Launch\Log\UserdataExecution.log" 
                 logit "Rendered script on an instance will be found at: C:\Windows\TEMP\UserScript.ps1"               
 
                 If ((![bool](get-process amazon-ssm-agent -ErrorAction SilentlyContinue)) -AND ($8DBGTroubleShootingMode -eq 'true')) {
@@ -946,39 +947,9 @@ Resources:
 
                 if (("${3INSTInstallCodeDeploy}" -eq "true") -AND (![bool](get-service codedeployagent -ErrorAction SilentlyContinue))) {
                   logit "Code deploy is requested, but not present, installing CodeDeploy"
-
-                  #if ($True) {
-                  #  Invoke-WebRequest https://github.com/oneclick/rubyinstaller2/releases/download/RubyInstaller-2.4.9-1/rubyinstaller-2.4.9-1-x64.exe -OutFile $env:USERPROFILE\rubyinstaller-x64.exe
-                  #  Start-Process $env:USERPROFILE\rubyinstaller-x64.exe -argumentlist "/silent /tasks=`"assocfiles,modpath`" /LOG=`"$env:USERPROFILE\rubyinstaller.log`"" -nonewwindow - wait
-                  #}
                   aws s3 cp s3://aws-codedeploy-$AWS_REGION/latest/codedeploy-agent.msi $env:USERPROFILE\codedeploy-agent.msi  --region $AWS_REGION
                   Start-Process	 -wait -nonewwindow -FilePath "msiexec.exe" -ArgumentList "/i $env:USERPROFILE\codedeploy-agent.msi /l*v $env:USERPROFILE\codedeploy-agent.log /qn"
                 }
-
-                If (Test-PendingReboot)
-                  {
-                    logit "Reboot pending, shutting down in 10 seconds (giving time for orchestrating automation to close out)..."
-                    $WaitingForReboot=$True
-                    logit "Ensuring userdata will be processed again"
-                    $path = 'C:\Program Files\Amazon\Ec2ConfigService\Settings\config.xml'
-                    if (Test-Path $path) {
-                      logit "Reseting Ec2Config userdata"
-                      $xml = [xml](Get-Content $path)
-                      $state = $xml.Ec2ConfigurationSettings.Plugins.Plugin | where {$_.Name -eq 'Ec2HandleUserData'}
-                      $state.State = 'Disabled'
-                      $xml.Save($path)
-                    }
-                    $path = 'C:\ProgramData\Amazon\Ec2-Windows\Launch\Config\LaunchConfig.json'
-                    if (Test-Path $path) {
-                      $ec2launchconfig = get-content $path | convertfrom-json
-                      if (!$($ec2launchconfig.handleUserData)) {
-                        logit "Reseting Ec2Launch userdata"
-                        $ec2launchconfig.handleUserData = $True
-                        $ec2launchconfig | convertto-json | set-content $path
-                      }
-                    }
-                    shutdown.exe /r /t 10
-                  } Else {Write-Host "A reboot is not pending, no action taken."}
 
                 #This approach for termination hook is much simpler than those involving SNS or CloudWatch, but when deployed 
                 # on many instances it can result in a lot of ASG Describe API calls (which may be rate limited).
@@ -1014,6 +985,80 @@ Resources:
                   schtasks.exe /create /sc MINUTE /MO $ASGSelfMonitorTerminationInterval /tn "MonitorTerminationHook.ps1" /ru SYSTEM /tr "powershell.exe -file $SCRIPTNAME"
 
                 }
+
+                $DefaultLocalCachedConfigScript="$env:public\custom_instance_configuration_script.ps1"
+                $INSTConfigurationScript="${3INSTConfigurationScript}"
+                logit "####"
+                logit "RUNNING CUSTOM INSTANCE CONFIGURATION CODE"
+
+                #If indicated as embedded, run it.
+                if ( $INSTConfigurationScript -eq "Embedded" ) {
+                  logit "CUSTOM CONFIG: Running embedded custom instance configuration script."
+                  ######
+                  # YOUR INSTANCE CONFIG CODE HERE
+
+                } elseif (($INSTConfigurationScript -ilike "http://*") -OR ($INSTConfigurationScript -ilike "https://*" )) {
+                  logit "CUSTOM CONFIG: Retrieving custom instance configuration script from $INSTConfigurationScript"
+                  if (!(Test-Path $DefaultLocalCachedConfigScript)) {
+                      logit "Pulling and executing from `"$INSTConfigurationScript`""
+                      [Net.ServicePointManager]::SecurityProtocol = "tls12, tls11, tls"
+                      Invoke-RestMethod -OutFile $DefaultLocalCachedConfigScript -Uri $INSTConfigurationScript
+                    }
+                } elseif ( $INSTConfigurationScript -ilike "s3://*" ) {
+                  logit "CUSTOM CONFIG: Retrieving custom instance configuration script from $INSTConfigurationScript"
+                  if (!(Test-Path $DefaultLocalCachedConfigScript)) {
+                      aws s3 cp $INSTConfigurationScript $DefaultLocalCachedConfigScript
+                  } else {
+                    logit "$DefaultLocalCachedConfigScript was not found, will error out."
+                  }                  
+                } else {
+                  logit "CUSTOM CONFIG: Running custom instance configuration script in the local file named $INSTConfigurationScript"
+                  if (!(Test-Path $DefaultLocalCachedConfigScript)) {
+                    logit "Pointing \$DefaultLocalCachedConfigScript to $INSTConfigurationScript"
+                    DefaultLocalCachedConfigScript=$INSTConfigurationScript
+                  } else {
+                    logit "$DefaultLocalCachedConfigScript was not found, will error out."
+                  }
+                }
+
+                if ( $INSTConfigurationScript -ne "Embedded") {
+                  logit "Execution of the Non-Embedded Instance Configuration Script `"$DefaultLocalCachedConfigScript`" has been requested."
+                  if (Test-Path $DefaultLocalCachedConfigScript) {
+                    . "$DefaultLocalCachedConfigScript"
+                  } else {
+                    throw "ERROR: $DefaultLocalCachedConfigScript was not found, but is needed to complete instance setup."
+                    exit 9
+                  }
+                }
+                # END OF CUSTOM INSTANCE CONFIGURATION CODE"
+
+                If (Test-PendingReboot)
+                  {
+                    logit "Reboot pending, shutting down in 10 seconds (giving time for orchestrating automation to close out)..."
+                    $WaitingForReboot=$True
+                    logit "Ensuring userdata will be processed again"
+                    $path = 'C:\Program Files\Amazon\Ec2ConfigService\Settings\config.xml'
+                    if (Test-Path $path) {
+                      logit "Reseting Ec2Config userdata"
+                      $xml = [xml](Get-Content $path)
+                      $state = $xml.Ec2ConfigurationSettings.Plugins.Plugin | where {$_.Name -eq 'Ec2HandleUserData'}
+                      $state.State = 'Disabled'
+                      $xml.Save($path)
+                    }
+                    $path = 'C:\ProgramData\Amazon\Ec2-Windows\Launch\Config\LaunchConfig.json'
+                    if (Test-Path $path) {
+                      $ec2launchconfig = get-content $path | convertfrom-json
+                      if (!$($ec2launchconfig.handleUserData)) {
+                        logit "Reseting Ec2Launch userdata"
+                        $ec2launchconfig.handleUserData = $True
+                        $ec2launchconfig | convertto-json | set-content $path
+                      }
+                    }
+                    shutdown.exe /r /t 10
+                  } Else {
+                    Write-Host "A reboot is not pending, no action taken."
+                  }
+
 
                 if ($NAMEOFASG -AND !$WaitingForReboot) {
                   logit "Completing lifecycle action hook so that ASG knows we are ready to be placed InService..."

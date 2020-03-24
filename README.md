@@ -72,7 +72,7 @@ Here is the previous article if you want to learn more about it's features and d
 * [x] **State based installs** - only trigger installs if the desired software is not present already.
 * [x] **Built-in scaling testing** by including an optional sythentic CPU driving utility and SSM parameter to control it. This allows you to dial-in the CPU utilization load you want the ASG to be under and change it after deployment to completely validate the scaling parameters and smoothness. Following the "Least Resource Creation" principle, the resources to support this are only deployed if you configure the capability.
 * [x] **Allow override of the basic, built-in Instance Profile IAM Role** that the template creates with one that already exists.
-
+* [x] **Allow extension of userdata from an embedded script, local file or a file to download from s3://, http:// or https://
 
 # Technical Design
 
@@ -111,6 +111,22 @@ aws cloudformation update-stack --stack-name "your-asg-stack" --parameters Param
 ## Scheduling Instance Availability
 
 If you are using this template primarily for HA for an instance, you can also consider using skeddly to set the ASG Desired and Minimum counts to zero for the hours that the instance will not be in use.  This assumes that the installed software has it's state data somewhere else and that you use the termination monitoring to perform any orderly application shutdown if it is needed.
+
+## Dynamic Extension of Userdata
+
+Added in Version. 1.2.0
+Allows additional script commands during startup. This is parameterized for testing new versions and to enable one CloudFormation template codebase to be used for many different Autoscaling groups. It also allows you to use this template  without customizing it so that you can take future updates without headache. Windows 2012 and earlier also have a userdata size limit of 16Kb - this method gets around that.
+
+1. "Embedded" uses the code right in this template and does not use external files at all.
+2. Enter a URL starting with s3://.  s3 allows easy private file storage.  
+3. http:// or https:// to dynamically source one during instance provisioning. http/s enables usage of git raw urls (whether public or private).
+4. Enter a file pathname on the local instance. The file must be present in the location by the time Userdata processes (e.g. via a custom AMI)
+
+For all external file sources, the instance must have a network route and permission to any remote locations.
+
+The code you write must be idempotent so that it does the correct thing when run again after a patching reboot.
+
+There is a simple example at: https://gitlab.com/DarwinJS/ultimate-aws-asg-lab-kit/-/raw/master/CustomInstanceConfigurationScriptSample.sh_and_ps1
 
 ## Monitoring and Metrics
 
