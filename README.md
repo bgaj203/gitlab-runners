@@ -24,6 +24,7 @@ Since the last team I managed had to do all of our automation work for both Wind
   - [Patch Maintenance Built-in](#patch-maintenance-built-in)
   - [Scheduled ASG Patching](#scheduled-asg-patching)
   - [Scheduling Instance Availability](#scheduling-instance-availability)
+  - [Dynamic Extension of Userdata](#dynamic-extension-of-userdata)
   - [Monitoring and Metrics](#monitoring-and-metrics)
     - [LAST_CF_PATCH_RUN](#lastcfpatchrun)
     - [ACTUAL_PATCH_DATE](#actualpatchdate)
