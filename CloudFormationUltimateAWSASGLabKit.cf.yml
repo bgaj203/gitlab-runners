@@ -609,22 +609,22 @@ Resources:
                   yum install -y https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-latest.amzn1.noarch.rpm
                   sudo ln -s /usr/local/lib/python2.7/site-packages/cfnbootstrap /usr/lib/python2.7/site-packages/cfnbootstrap
                 fi                                        
-                INSTANCEOSPLATFORM=${1OSInstanceOSPlatform}
+                INSTANCEOSPLATFORM="${1OSInstanceOSPlatform}"
                 LAST_CF_PATCH_RUN="${1OSPatchRunDate}" #Forces change for patching rolling replacement and documents last CF triggered patching
                 ACTUAL_PATCH_DATE=$(date +%Y-%m-%d)
                 MYINSTANCEID="$(wget -q -O - http://169.254.169.254/latest/meta-data/instance-id)"
-                AWS_REGION="$(curl -s 169.254.169.254/latest/meta-data/placement/availability-zone | sed 's/.$//')"
-                NAMEOFASG=$(aws ec2 describe-tags --region $AWS_REGION --filters {"Name=resource-id,Values=$MYINSTANCEID","Name=key,Values=aws:autoscaling:groupName"} --output=text | cut -f5)
+                export AWS_DEFAULT_REGION="$(curl -s 169.254.169.254/latest/meta-data/placement/availability-zone | sed 's/.$//')"
+                NAMEOFASG=$(aws ec2 describe-tags --region $AWS_DEFAULT_REGION --filters {"Name=resource-id,Values=$MYINSTANCEID","Name=key,Values=aws:autoscaling:groupName"} --output=text | cut -f5)
                 NAMEOFSTACK=${AWS::StackName}
                 PATCHDONEFLAG=/root/patchingrebootwasdone.flg
                 logit "Processing userdata script on instance: $MYINSTANCEID"
-                logit "Operating in Region: $AWS_REGION, launched from ASG: $NAMEOFASG"
+                logit "Operating in Region: $AWS_DEFAULT_REGION, launched from ASG: $NAMEOFASG"
                 yum update yum-utils yum-plugin-security
                 uname -r
                 if [ ! -z $NAMEOFASG ]; then
                   logit "Instance is in an ASG, will process lifecycle hooks"
                   logit "Listing hook to verify permissions and hook presence"
-                  aws autoscaling describe-lifecycle-hooks --region $AWS_REGION --auto-scaling-group-name $NAMEOFASG
+                  aws autoscaling describe-lifecycle-hooks --region $AWS_DEFAULT_REGION --auto-scaling-group-name $NAMEOFASG
                 else
                   logit "Instance is not in an ASG or if it is, the instance profile used does not have permissions to its own tags."
                 fi
@@ -654,7 +654,7 @@ Resources:
                 logit "Continuing..."
                 if [ ! -z $NAMEOFASG ]; then
                   logit "Sending a heart beat to reset the timeout counter while doing more things (just as an example)..."
-                  aws autoscaling record-lifecycle-action-heartbeat --region $AWS_REGION --instance-id $MYINSTANCEID --lifecycle-hook-name instance-patching-reboot --auto-scaling-group-name $NAMEOFASG
+                  aws autoscaling record-lifecycle-action-heartbeat --region $AWS_DEFAULT_REGION --instance-id $MYINSTANCEID --lifecycle-hook-name instance-patching-reboot --auto-scaling-group-name $NAMEOFASG
                 fi
 
                 if [[ "${8DBGSetupPseudoWebApp}" == "true" ]]; then
@@ -684,7 +684,7 @@ Resources:
                   logit "Code Deploy Install..."
                   yum install -y ruby
                   cd /tmp
-                  aws s3 cp s3://aws-codedeploy-us-east-1/latest/install . --region $AWS_REGION
+                  aws s3 cp s3://aws-codedeploy-us-east-1/latest/install . --region $AWS_DEFAULT_REGION
                   chmod +x ./install
                   ./install auto
                 fi
@@ -708,12 +708,12 @@ Resources:
                     }
                     #These are resolved at script creation time to reduce api calls when this script runs every minute on instances.
                
-                    if [[ "\$(aws autoscaling describe-auto-scaling-instances --instance-ids $MYINSTANCEID --region $AWS_REGION | jq --raw-output '.AutoScalingInstances[0] .LifecycleState')" == *"Terminating"* ]]; then
+                    if [[ "\$(aws autoscaling describe-auto-scaling-instances --instance-ids $MYINSTANCEID --region $AWS_DEFAULT_REGION | jq --raw-output '.AutoScalingInstances[0] .LifecycleState')" == *"Terminating"* ]]; then
                       logit "This instance ($MYINSTANCEID) is being terminated, perform cleanup..."
 
                       #### PUT YOUR CLEANUP CODE HERE, DECIDE IF CLEANUP CODE SHOULD ERROR OUT OR SILENTLY FAIL (best effort cleanup)
 
-                      aws autoscaling complete-lifecycle-action --region $AWS_REGION --lifecycle-action-result CONTINUE --instance-id $MYINSTANCEID --lifecycle-hook-name instance-terminating --auto-scaling-group-name $NAMEOFASG
+                      aws autoscaling complete-lifecycle-action --region $AWS_DEFAULT_REGION --lifecycle-action-result CONTINUE --instance-id $MYINSTANCEID --lifecycle-hook-name instance-terminating --auto-scaling-group-name $NAMEOFASG
                       logit "This instance ($MYINSTANCEID) is ready for termination"
                       logit "Lifecycle CONTINUE was sent to termination hook in ASG: $NAMEOFASG for this instance ($MYINSTANCEID)."
                     fi
@@ -799,12 +799,12 @@ Resources:
 
                 if [ ! -z "$NAMEOFASG" ] && [ "$WaitingForReboot" != "true" ]; then
                   logit "Completing lifecycle action hook so that ASG knows we are ready to be placed InService..."
-                  aws autoscaling complete-lifecycle-action --region $AWS_REGION --lifecycle-action-result CONTINUE --instance-id $MYINSTANCEID --lifecycle-hook-name instance-patching-reboot --auto-scaling-group-name $NAMEOFASG
+                  aws autoscaling complete-lifecycle-action --region $AWS_DEFAULT_REGION --lifecycle-action-result CONTINUE --instance-id $MYINSTANCEID --lifecycle-hook-name instance-patching-reboot --auto-scaling-group-name $NAMEOFASG
                 fi
                 
                 if [ "$WaitingForReboot" != "true" ]; then
                   logit "Cfn-signaling success..."
-                  /opt/aws/bin/cfn-signal --success true --stack ${AWS::StackName} --resource InstanceASG --region $AWS_REGION
+                  /opt/aws/bin/cfn-signal --success true --stack ${AWS::StackName} --resource InstanceASG --region $AWS_DEFAULT_REGION
                 fi
 
                 DBGCPULoadPercentInitialValue=${8DBGCPULoadPercentInitialValue}
@@ -814,13 +814,13 @@ Resources:
                     amazon-linux-extras install epel -y
                   fi
                   yum install -y curl stress-ng
-                  CPUPercent="$(aws --region=$AWS_REGION ssm get-parameter --name "$NAMEOFSTACK-SyntheticCPULoad" --output text --query Parameter.Value | grep -E ^\-?[0-9]+$)"
+                  CPUPercent="$(aws --region=$AWS_DEFAULT_REGION ssm get-parameter --name "$NAMEOFSTACK-SyntheticCPULoad" --output text --query Parameter.Value | grep -E ^\-?[0-9]+$)"
                   while [ "$CPUPercent" != '' ]; do
                     logit "Stressing for 1 minute at $CPUPercent percent CPU utilization before checking for updated percentage."
                     stress-ng -c 0 -l $CPUPercent --timeout 60
-                    CPUPercent="$(aws --region=$AWS_REGION ssm get-parameter --name "$NAMEOFSTACK-SyntheticCPULoad" --output text --query Parameter.Value | grep -E ^\-?[0-9]+$)"
+                    CPUPercent="$(aws --region=$AWS_DEFAULT_REGION ssm get-parameter --name "$NAMEOFSTACK-SyntheticCPULoad" --output text --query Parameter.Value | grep -E ^\-?[0-9]+$)"
                   done
-                  logit "Stopping CPU stressing due to receving non-numeric value: \"$(aws --region=$AWS_REGION ssm get-parameter --name "$NAMEOFSTACK-SyntheticCPULoad" --output text --query Parameter.Value)\""
+                  logit "Stopping CPU stressing due to receving non-numeric value: \"$(aws --region=$AWS_DEFAULT_REGION ssm get-parameter --name "$NAMEOFSTACK-SyntheticCPULoad" --output text --query Parameter.Value)\""
                 fi              
             - 
               # **************
@@ -872,22 +872,23 @@ Resources:
                   ((Test-Path "HKLM:SYSTEM\CurrentControlSet\Services\Netlogon\JoinDomain") -OR (Test-Path "HKLM:SYSTEM\CurrentControlSet\Services\Netlogon\AvoidSpnSet")))
                 }
 
-                $INSTANCEOSPLATFORM=${1OSInstanceOSPlatform}
+                $INSTANCEOSPLATFORM="${1OSInstanceOSPlatform}"
                 $LAST_CF_PATCH_RUN="${1OSPatchRunDate}" #Forces change for patching rolling replacement and documents last CF triggered patching
                 $ACTUAL_PATCH_DATE="$(date -format 'yyyy-MM-dd')"
                 $MYINSTANCEID="$(invoke-restmethod http://169.254.169.254/latest/meta-data/instance-id)"
-                $AWS_REGION="$($(invoke-restmethod 169.254.169.254/latest/meta-data/placement/availability-zone) -replace '.$')"
-                $NAMEOFASG=$(aws ec2 describe-tags --region $AWS_REGION --filters Name=resource-id,Values=$MYINSTANCEID Name=key,Values=aws:autoscaling:groupName | convertfrom-json).tags.value
+                $AWS_DEFAULT_REGION="$($(invoke-restmethod 169.254.169.254/latest/meta-data/placement/availability-zone) -replace '.$')"
+                $env:AWS_DEFAULT_REGION=$AWS_DEFAULT_REGION
+                $NAMEOFASG=$(aws ec2 describe-tags --region $AWS_DEFAULT_REGION --filters Name=resource-id,Values=$MYINSTANCEID Name=key,Values=aws:autoscaling:groupName | convertfrom-json).tags.value
                 $NAMEOFSTACK="${AWS::StackName}"
                 $PATCHDONEFLAG="$env:USERPROFILE/patchingrebootwasdone.flg"
                 $1OSPatchScopeToUse="${1OSPatchScope}"
 
                 logit "Processing userdata script on instance: $MYINSTANCEID"
-                logit "Operating in Region: $AWS_REGION, launched from ASG: $NAMEOFASG"
+                logit "Operating in Region: $AWS_DEFAULT_REGION, launched from ASG: $NAMEOFASG"
                 if ($NAMEOFASG) {
                   logit "Instance is in an ASG, will process lifecycle hooks"
                   logit "Listing hook to verify permissions and hook presence"
-                  aws --region $AWS_REGION autoscaling describe-lifecycle-hooks --auto-scaling-group-name $NAMEOFASG
+                  aws --region $AWS_DEFAULT_REGION autoscaling describe-lifecycle-hooks --auto-scaling-group-name $NAMEOFASG
                 } else {
                   logit "Instance is not in an ASG or if it is, the instance profile used does not have permissions to its own tags."
                 }
@@ -949,7 +950,7 @@ Resources:
 
                 if (("${3INSTInstallCodeDeploy}" -eq "true") -AND (![bool](get-service codedeployagent -ErrorAction SilentlyContinue))) {
                   logit "Code deploy is requested, but not present, installing CodeDeploy"
-                  aws s3 cp s3://aws-codedeploy-$AWS_REGION/latest/codedeploy-agent.msi $env:USERPROFILE\codedeploy-agent.msi  --region $AWS_REGION
+                  aws s3 cp s3://aws-codedeploy-$AWS_DEFAULT_REGION/latest/codedeploy-agent.msi $env:USERPROFILE\codedeploy-agent.msi  --region $AWS_DEFAULT_REGION
                   Start-Process	 -wait -nonewwindow -FilePath "msiexec.exe" -ArgumentList "/i $env:USERPROFILE\codedeploy-agent.msi /l*v $env:USERPROFILE\codedeploy-agent.log /qn"
                 }
 
@@ -971,12 +972,12 @@ Resources:
                       `$applog.WriteEntry("From: `$SourcePathName : `$Msg", `$MsgType, `$ID)
                     }
                 
-                    if ( (aws autoscaling describe-auto-scaling-instances --instance-ids $MYINSTANCEID --region $AWS_REGION | convertfrom-json).AutoScalingInstances.LifecycleState -ilike "*Terminating*" ) {
+                    if ( (aws autoscaling describe-auto-scaling-instances --instance-ids $MYINSTANCEID --region $AWS_DEFAULT_REGION | convertfrom-json).AutoScalingInstances.LifecycleState -ilike "*Terminating*" ) {
                       logit "This instance ($MYINSTANCEID) is being terminated, perform cleanup..."
 
                       #### PUT YOUR CLEANUP CODE HERE, DECIDE IF CLEANUP CODE SHOULD ERROR OUT OR SILENTLY FAIL (best effort cleanup)
 
-                      aws autoscaling complete-lifecycle-action --region $AWS_REGION --lifecycle-action-result CONTINUE --instance-id $MYINSTANCEID --lifecycle-hook-name instance-terminating --auto-scaling-group-name $NAMEOFASG
+                      aws autoscaling complete-lifecycle-action --region $AWS_DEFAULT_REGION --lifecycle-action-result CONTINUE --instance-id $MYINSTANCEID --lifecycle-hook-name instance-terminating --auto-scaling-group-name $NAMEOFASG
                       logit "This instance ($MYINSTANCEID) is ready for termination"
                       logit "Lifecycle CONTINUE was sent to termination hook in ASG: $NAMEOFASG for this instance ($MYINSTANCEID)."
                     }
@@ -1064,23 +1065,23 @@ Resources:
 
                 if ($NAMEOFASG -AND !$WaitingForReboot) {
                   logit "Completing lifecycle action hook so that ASG knows we are ready to be placed InService..."
-                  aws autoscaling complete-lifecycle-action --region $AWS_REGION --lifecycle-action-result CONTINUE --instance-id $MYINSTANCEID --lifecycle-hook-name instance-patching-reboot --auto-scaling-group-name $NAMEOFASG
+                  aws autoscaling complete-lifecycle-action --region $AWS_DEFAULT_REGION --lifecycle-action-result CONTINUE --instance-id $MYINSTANCEID --lifecycle-hook-name instance-patching-reboot --auto-scaling-group-name $NAMEOFASG
                 }
                 
                 if (!$WaitingForReboot) {
                   logit "Cfn-signaling success..."
-                  cfn-signal --success true --stack ${AWS::StackName} --resource InstanceASG --region $AWS_REGION
+                  cfn-signal --success true --stack ${AWS::StackName} --resource InstanceASG --region $AWS_DEFAULT_REGION
                 }
 
                 $DBGCPULoadPercentInitialValue=${8DBGCPULoadPercentInitialValue}
                 if (($WaitingForReboot -ne $True ) -AND ($DBGCPULoadPercentInitialValue)) {
                   logit "Setting up CPU stressing because 8DBGCPULoadPercentInitialValue was set to $DBGCPULoadPercentInitialValue"
                   Invoke-WebRequest https://github.com/vikyd/go-cpu-load/releases/download/0.0.1/go-cpu-load-win-amd64.exe -UseBasicParsing -outfile go-cpu-load-win-amd64.exe
-                  $CPUPercent="$(aws --region=$AWS_REGION ssm get-parameter --name $NAMEOFSTACK-SyntheticCPULoad --output text --query Parameter.Value)"
+                  $CPUPercent="$(aws --region=$AWS_DEFAULT_REGION ssm get-parameter --name $NAMEOFSTACK-SyntheticCPULoad --output text --query Parameter.Value)"
                   while ( $CPUPercent -match "^[\d\.]+$" ) {
                     logit "Stressing for 1 minutes at $CPUPercent percent CPU utilization."
                     . .\go-cpu-load-win-amd64.exe -p $CPUPercent -t 60
-                    $CPUPercent="$(aws --region=$AWS_REGION ssm get-parameter --name $NAMEOFSTACK-SyntheticCPULoad --output text --query Parameter.Value)"
+                    $CPUPercent="$(aws --region=$AWS_DEFAULT_REGION ssm get-parameter --name $NAMEOFSTACK-SyntheticCPULoad --output text --query Parameter.Value)"
                   }
                   logit "Stopping CPU stressing due to receving non-numeric value: `"$CPUPercent`""
                 }

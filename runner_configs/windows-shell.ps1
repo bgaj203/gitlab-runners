@@ -10,8 +10,8 @@
 #Runner Token List
 $RunnerVersion="latest"
 $RunnerExecutor='shell'
-$RunnerOSTags=$($INSTANCEOSPLATFORM.ToLower())
-$RunnerTagList="a,b"
+$RunnerOSTags="$($INSTANCEOSPLATFORM.ToLower())"
+$RunnerTagList="TagA,TagB"
 $RunnerConfigTomlTemplate #(Embedded, local or s3:// or http*://)
 $RunnerRegTokenList='f3QN1vAeQq-MQx2_u9ML'
 $RunnerGitLabInstanceURL='https://gitlab.demo.i2p.online/'
@@ -19,8 +19,9 @@ $RunnerGitLabInstanceURL='https://gitlab.demo.i2p.online/'
 $RunnerCompleteTagList = $RunnerOSTags, $RunnerExecutor, $RunnerTagList -join ','
 
 $RunnerInstallRoot='C:\GitLab-Runner'
-$MYINSTANCEID="$(invoke-restmethod http://169.254.169.254/latest/meta-data/instance-id)"
-$AWS_REGION="$($(invoke-restmethod 169.254.169.254/latest/meta-data/placement/availability-zone) -replace '.$')"
+
+#$MYINSTANCEID="$(invoke-restmethod http://169.254.169.254/latest/meta-data/instance-id)"
+#$AWS_DEFAULT_REGION="$($(invoke-restmethod 169.254.169.254/latest/meta-data/placement/availability-zone) -replace '.$')"
 $MYIP="$(invoke-restmethod http://169.254.169.254/latest/meta-data/local-ipv4)"
 $MYACCOUNTID="$((invoke-restmethod http://169.254.169.254/latest/dynamic/instance-identity/document).accountId)"
 $RunnerName="$MYINSTANCEID-in-$MYACCOUNTID"
@@ -65,11 +66,7 @@ foreach ($RunnerRegToken in $RunnerRegTokenList.split(',')) {
      --executor $RunnerExecutor
 }
 
-#Add AWS Instance Tags
-#tag with runner name
-#tag with runner tags
-
-aws ec2 create-tags --resources $MYINSTANCEID --tags "Key=`"GitLabRunnerName`",Value=$RunnerName" "Key=`"GitLabURL`",Value=$RunnerGitLabInstanceURL" "Key=`"GitLabRunnerTags`",Value=$($RunnerCompleteTagList.split(',') -join ('\,'))" --region $AWS_REGION
+aws ec2 create-tags --resources $MYINSTANCEID --tags "Key=`"GitLabRunnerName`",Value=$RunnerName" "Key=`"GitLabURL`",Value=$RunnerGitLabInstanceURL" "Key=`"GitLabRunnerTags`",Value=$($RunnerCompleteTagList.split(',') -join ('\,'))" --region $AWS_DEFAULT_REGION
 
 .\gitlab-runner.exe start
 
@@ -85,7 +82,7 @@ Function logit (`$Msg, `$MsgType='Information', `$ID='1') {
   `$applog.WriteEntry("From: `$SourcePathName : `$Msg", `$MsgType, `$ID)
 }
 
-if ( (aws autoscaling describe-auto-scaling-instances --instance-ids $MYINSTANCEID --region $AWS_REGION | convertfrom-json).AutoScalingInstances.LifecycleState -ilike "*Terminating*" ) {
+if ( (aws autoscaling describe-auto-scaling-instances --instance-ids $MYINSTANCEID --region $AWS_DEFAULT_REGION | convertfrom-json).AutoScalingInstances.LifecycleState -ilike "*Terminating*" ) {
   logit "This instance ($MYINSTANCEID) is being terminated, perform cleanup..."
 
   cd $RunnerInstallRoot
@@ -93,7 +90,7 @@ if ( (aws autoscaling describe-auto-scaling-instances --instance-ids $MYINSTANCE
 
   .\gitlab-runner.exe stop
 
-  aws autoscaling complete-lifecycle-action --region $AWS_REGION --lifecycle-action-result CONTINUE --instance-id $MYINSTANCEID --lifecycle-hook-name instance-terminating --auto-scaling-group-name $NAMEOFASG
+  aws autoscaling complete-lifecycle-action --region $AWS_DEFAULT_REGION --lifecycle-action-result CONTINUE --instance-id $MYINSTANCEID --lifecycle-hook-name instance-terminating --auto-scaling-group-name $NAMEOFASG
   logit "This instance ($MYINSTANCEID) is ready for termination"
   logit "Lifecycle CONTINUE was sent to termination hook in ASG: $NAMEOFASG for this instance ($MYINSTANCEID)."
   }
