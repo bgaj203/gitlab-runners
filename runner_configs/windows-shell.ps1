@@ -8,6 +8,10 @@
 # So it does not need to upgrade the runner binary in place or be able to unregister / re-register tokens.
 
 #Runner Token List
+#$INSTANCEOSPLATFORM="Windows"
+#$AWS_DEFAULT_REGION="$($(invoke-restmethod 169.254.169.254/latest/meta-data/placement/availability-zone) -replace '.$')"
+#$NAMEOFASG=$(aws ec2 describe-tags --region $AWS_DEFAULT_REGION --filters Name=resource-id,Values=$MYINSTANCEID Name=key,Values=aws:autoscaling:groupName | convertfrom-json).tags.value
+#$MYINSTANCEID="$(invoke-restmethod http://169.254.169.254/latest/meta-data/instance-id)"
 $RunnerVersion="latest"
 $RunnerExecutor='shell'
 $RunnerOSTags="$($INSTANCEOSPLATFORM.ToLower())"
@@ -20,8 +24,8 @@ $RunnerCompleteTagList = $RunnerOSTags, $RunnerExecutor, $RunnerTagList -join ',
 
 $RunnerInstallRoot='C:\GitLab-Runner'
 
-#$MYINSTANCEID="$(invoke-restmethod http://169.254.169.254/latest/meta-data/instance-id)"
-#$AWS_DEFAULT_REGION="$($(invoke-restmethod 169.254.169.254/latest/meta-data/placement/availability-zone) -replace '.$')"
+
+
 $MYIP="$(invoke-restmethod http://169.254.169.254/latest/meta-data/local-ipv4)"
 $MYACCOUNTID="$((invoke-restmethod http://169.254.169.254/latest/dynamic/instance-identity/document).accountId)"
 $RunnerName="$MYINSTANCEID-in-$MYACCOUNTID"
@@ -53,8 +57,6 @@ cd $RunnerInstallRoot
 
 foreach ($RunnerRegToken in $RunnerRegTokenList.split(',')) {
  
-  $RunnerTagList = $RunnerTagList + ",$RunnerTypeTags"
-
   .\gitlab-runner.exe register `
      --config $RunnerInstallRoot\config.toml `
      $OptionalParameters `
@@ -66,7 +68,10 @@ foreach ($RunnerRegToken in $RunnerRegTokenList.split(',')) {
      --executor $RunnerExecutor
 }
 
-aws ec2 create-tags --resources $MYINSTANCEID --tags "Key=`"GitLabRunnerName`",Value=$RunnerName" "Key=`"GitLabURL`",Value=$RunnerGitLabInstanceURL" "Key=`"GitLabRunnerTags`",Value=$($RunnerCompleteTagList.split(',') -join ('\,'))" --region $AWS_DEFAULT_REGION
+#rename instance to include -glrunner ?
+#aws ec2 describe-tags --filters "Name=resource-id,Values=$MYINSTANCEID"
+
+aws ec2 create-tags --region $AWS_DEFAULT_REGION --resources $MYINSTANCEID --tags "Key=`"GitLabRunnerName`",Value=$RunnerName" "Key=`"GitLabURL`",Value=$RunnerGitLabInstanceURL" "Key=`"GitLabRunnerTags`",`"Value=$($RunnerCompleteTagList.split(',') -join ('\,'))`""
 
 .\gitlab-runner.exe start
 
