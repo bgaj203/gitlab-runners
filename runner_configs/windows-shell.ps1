@@ -17,7 +17,7 @@ $RunnerExecutor='shell'
 $RunnerOSTags="$($INSTANCEOSPLATFORM.ToLower())"
 $RunnerTagList="TagA,TagB"
 $RunnerConfigTomlTemplate #(Embedded, local or s3:// or http*://)
-$RunnerRegTokenList='f3QN1vAeQq-MQx2_u9ML'
+#$GITLABRunnerRegTokenList='f3QN1vAeQq-MQx2_u9ML'
 $RunnerGitLabInstanceURL='https://gitlab.demo.i2p.online/'
 
 $RunnerCompleteTagList = $RunnerOSTags, $RunnerExecutor, $RunnerTagList -join ','

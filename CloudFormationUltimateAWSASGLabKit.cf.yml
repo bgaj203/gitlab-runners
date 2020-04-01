@@ -65,6 +65,10 @@ Parameters:
     AllowedValues: 
       - true
       - false 
+  3GITLABRunnerRegTokenList:
+    Description: One or more runner tokens to register (comma delimited)
+    Type: String
+    Default: false
   4ASGDesiredCapacity:
     Description: >
       This template uses ASGs for HA - even if you choose not to autoscale.
@@ -873,6 +877,7 @@ Resources:
                   ((Test-Path "HKLM:SYSTEM\CurrentControlSet\Services\Netlogon\JoinDomain") -OR (Test-Path "HKLM:SYSTEM\CurrentControlSet\Services\Netlogon\AvoidSpnSet")))
                 }
 
+                $GITLABRunnerRegTokenList="${3GITLABRunnerRegTokenList}"
                 $INSTANCEOSPLATFORM="${1OSInstanceOSPlatform}"
                 $LAST_CF_PATCH_RUN="${1OSPatchRunDate}" #Forces change for patching rolling replacement and documents last CF triggered patching
                 $ACTUAL_PATCH_DATE="$(date -format 'yyyy-MM-dd')"
