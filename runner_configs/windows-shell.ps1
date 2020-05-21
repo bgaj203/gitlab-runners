@@ -22,6 +22,8 @@ $RunnerGitLabInstanceURL='https://gitlab.demo.i2p.online/'
 
 $RunnerCompleteTagList = $RunnerOSTags, $RunnerExecutor, $RunnerTagList -join ','
 
+if (Test-Path variable:COMPUTETYPE) {$RunnerCompleteTagList = $RunnerCompleteTagList $COMPUTETYPE -join ','}
+
 $RunnerInstallRoot='C:\GitLab-Runner'
 
 write-host "GITLABRunnerRegTokenList: $GITLABRunnerRegTokenList"

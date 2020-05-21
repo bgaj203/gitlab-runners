@@ -284,7 +284,7 @@ Rules:
   WindowsPlatformShouldNotUseDefaultSSMParameter:
     RuleCondition: !Equals [ !Ref 1OSInstanceOSPlatform, "Windows" ]
     Assertions:
-      - Assert: !Equals [ !Ref 9AWSRetrieveLatestAWSOSAmiIdFromSSM, "/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2" ]
+      - Assert: !Not [ !Equals [ !Ref 9AWSRetrieveLatestAWSOSAmiIdFromSSM, "/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2" ]]
         AssertDescription: "You have indicated the Windows platform in the parameter 1OSInstanceOSPlatform, but left the default Linux SSM Parameter path in 9AWSRetrieveLatestAWSOSAmiIdFromSSM"
 
 Resources:
