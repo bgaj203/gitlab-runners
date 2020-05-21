@@ -1,13 +1,20 @@
 ---
 AWSTemplateFormatVersion: '2010-09-09'
 Description: >
-  AWSASGLabKitVersion: 1.2:
   More Information https://gitlab.com/DarwinJS/ultimate-aws-asg-lab-kit/-/blob/master/README.md
 Parameters:
+  1AAAAUltimateASGVersion:
+    Description: "Read Only - Ultimate ASG Kickstart and Lab Kit Version."
+    Type: String
+    Default: "1.3.0"
+    AllowedValues: [ "1.3.0" ]
+    ConstraintDescription: "Version number is used in the template and cannot be changed."
   1AAAReadmeBlogPost:
     Description: Read the following post to learn why this template is helpful - Darwin.
     Type: String
     Default: https://gitlab.com/DarwinJS/ultimate-aws-asg-lab-kit/-/blob/master/README.md
+    AllowedValues: [ "https://gitlab.com/DarwinJS/ultimate-aws-asg-lab-kit/-/blob/master/README.md" ]
+    ConstraintDescription: "Readme Blog post is for documentation purposes only and cannot be changed."
   1OSPeggedAMIID:
     Description: >
       99% of the time you will want to leave this as "latest".  Override here if you have a dependency on a specific AMI or have prepared a custom one.
@@ -133,7 +140,16 @@ Parameters:
     Description: >
       How many seconds does the threshold have to be in alarm to trigger scale down? Requires 5ASGAutoScalingEnabled=true.
     Type: Number
-    Default: 60    
+    Default: 60
+  5ASGBucketName:
+    Description: >
+      A bucket to which all instances will be given read and write permissions for purposes such as CodeDeploy, SSM Remote Command and Inventory.
+      Values: "none" - do not create bucket or permissions. 
+      "CreateOneForMe" - create a new, ASG unique bucket and permissions. 
+      "SpecificName" - presumed to be a preexisting bucket to which read / write permissions are already present. Generally used
+      with a customer override IAM Instance Profile Role.
+    Type: String
+    Default: CreateOneForMe        
   5SPOTInstanceType1:
     Description: >
       ATTENTION: DISABLING SPOT *instance usage* is achieved by setting 5SPOTOnDemandPercentageAboveBaseCapacity to 0 (zero).
@@ -186,7 +202,7 @@ Parameters:
       count in 5SPOTOnDemandBaseCapacity.
       Set to 100 for a 100% spot cluster.
     Type: Number
-    Default: 100
+    Default: 0
   8DBGCPULoadPercentInitialValue:
     Description: >
       WARNING: Everything is 1 minute granularity - so don't set this to cause scaling and forget it unless you want a massive AWS bill ;)
@@ -200,6 +216,9 @@ Parameters:
       For parameters above that range, setup your steps below 90 and test them and then once verified, update the numbers to the
       higher values.
     Type: String
+  8DBGKeypairName:
+    Description: Spins instances with a keypair to allow connection.
+    Type: String 
   8DBGTroubleShootingMode:
     Description: Enables troubleshooting - enables SSM and configures Instance Profile IAM so SSM Session Manager can logon.
     Type: String
@@ -241,6 +260,7 @@ Parameters:
   ParentStackName:
     Description: Parent stack name (Optional) - passes resources including ELBName
     Type: String
+
 Conditions: 
   CreateDebugResources: !Equals [ !Ref 8DBGTroubleShootingMode, "true" ]
   ReplaceEntireASG: !Equals [ !Ref 4ASGUpdateType, "ReplaceEntireASG" ]
@@ -256,30 +276,18 @@ Conditions:
   Provided5SPOTInstanceType2: !Not [ !Equals [ !Ref 5SPOTInstanceType2, "" ]]
   Provided5SPOTInstanceType3: !Not [ !Equals [ !Ref 5SPOTInstanceType3, "" ]]
   Provided5SPOTInstanceType4: !Not [ !Equals [ !Ref 5SPOTInstanceType4, "" ]]
+  UseKeypair: !Not [ !Equals [ !Ref 8DBGKeypairName, "" ]]
   EnableSelfTerminationMonitoring: !Not [ !Equals [ !Ref 5ASGSelfMonitorTerminationInterval, "Disabled" ]]
-Resources:
-  ASGRebootRole:
-    Type: AWS::IAM::Role
-    Condition: BuildInstanceRoleToUse
-    Properties:
-      Path: /
-      AssumeRolePolicyDocument:
-        Version: 2012-10-17
-        Statement:
-        - Effect: Allow
-          Action: sts:AssumeRole
-          Principal:
-            Service:
-              - ec2.amazonaws.com
-      ManagedPolicyArns:
-        !If
-          - CreateDebugResources
-          - 
-            - arn:aws:iam::aws:policy/service-role/AmazonSSMMaintenanceWindowRole
-            - arn:aws:iam::aws:policy/service-role/AmazonSSMAutomationRole
-            - arn:aws:iam::aws:policy/service-role/AmazonEC2RoleforSSM       
-          - !Ref "AWS::NoValue"
+  CreateS3BucketAndPermissions: !Equals [ !Ref 5ASGBucketName, "CreateOneForMe" ]
 
+Rules:
+  WindowsPlatformShouldNotUseDefaultSSMParameter:
+    RuleCondition: !Equals [ !Ref 1OSInstanceOSPlatform, "Windows" ]
+    Assertions:
+      - Assert: !Equals [ !Ref 9AWSRetrieveLatestAWSOSAmiIdFromSSM, "/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2" ]
+        AssertDescription: "You have indicated the Windows platform in the parameter 1OSInstanceOSPlatform, but left the default Linux SSM Parameter path in 9AWSRetrieveLatestAWSOSAmiIdFromSSM"
+
+Resources:
   #IAM Policies for Instance Profile:
   ASGInstanceProfile:
     Type: AWS::IAM::InstanceProfile
@@ -289,11 +297,10 @@ Resources:
       Roles: [ !Ref ASGRebootRole ]
 
   ASGSelfAccessPolicy:
-    Type: AWS::IAM::Policy
-    Condition: BuildInstanceRoleToUse
+    Type: AWS::IAM::ManagedPolicy
     Properties:
-      PolicyName: ASGSelfAccessPolicy
-      Roles: [ !Ref ASGRebootRole ]
+      Description: Allow instances to read their own ASG information for finding and signalling lifecycle hooks.    
+      ManagedPolicyName: !Sub "${AWS::StackName}-ASGSelfAccessPolicy"
       PolicyDocument:
         Version: 2012-10-17
         Statement:
@@ -317,11 +324,10 @@ Resources:
           #    autoscaling :ResourceTag/Name: !Ref AWS::StackName
 
   EC2SelfAccessPolicy:
-    Type: AWS::IAM::Policy
-    Condition: BuildInstanceRoleToUse
+    Type: AWS::IAM::ManagedPolicy
     Properties:
-      PolicyName: EC2SelfAccessPolicy
-      Roles: [ !Ref ASGRebootRole ]
+      Description: Allow instances to read their own information - for detecting asg and spot membership.
+      ManagedPolicyName: !Sub "${AWS::StackName}-EC2SelfAccessPolicy"
       PolicyDocument:
         Version: 2012-10-17
         Statement:
@@ -332,13 +338,37 @@ Resources:
             - ec2:DescribeInstances
             - ec2:DescribeTags
   
-  #Give access to CPU Percent for ASG Scaling Testing
-  SSMParameterStorePolicy:
-    Type: AWS::IAM::Policy
-    Condition: SetupSythenticCPULoad
+  ASGBucketPolicy:
+    Type: AWS::IAM::ManagedPolicy
     Properties:
-      PolicyName: SSMParameterForCPUPercent
-      Roles: [ !Ref ASGRebootRole ]
+      Description: Setting Amazon S3 bucket policy for ASG Instance Access for CodeDeploy and SSM.
+      ManagedPolicyName: !Sub "${AWS::StackName}-ASGBucketPolicy"
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+        - Action:
+            - 's3:GetObject'
+            - 's3:GetObjectVersion'
+            - 's3:GetBucketVersioning'
+            - 's3:PutObject'            
+          Resource:
+            !If
+              - CreateS3BucketAndPermissions
+              - 
+                - !Sub 'arn:${AWS::Partition}:s3:::${ASGBucket}'
+                - !Sub 'arn:${AWS::Partition}:s3:::${ASGBucket}/*'       
+              -             
+                - !Sub 'arn:${AWS::Partition}:s3:::${5ASGBucketName}'
+                - !Sub 'arn:${AWS::Partition}:s3:::${5ASGBucketName}/*'
+          Effect: Allow
+          Sid: WhitelistedGet
+
+  #Give access to CPU Percent for ASG Scaling Testing
+  #Because hacking together a conditional dependency in CF is a lot of extra code, this policy is always created (not least config)
+  SSMParameterStorePolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      ManagedPolicyName: !Sub "${AWS::StackName}-SSMParameterStorePolicy"
       PolicyDocument:
         Version: 2012-10-17
         Statement:
@@ -347,6 +377,41 @@ Resources:
           Effect: Allow
           Action: 
             - ssm:GetParameters
+
+  ASGRebootRole:
+    Type: AWS::IAM::Role
+    Condition: BuildInstanceRoleToUse
+    DependsOn:
+      - ASGSelfAccessPolicy
+      - EC2SelfAccessPolicy
+      - ASGBucketPolicy
+      - SSMParameterStorePolicy    
+    Properties:
+      Path: /
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+        - Effect: Allow
+          Action: sts:AssumeRole
+          Principal:
+            Service:
+              - ec2.amazonaws.com
+      ManagedPolicyArns:
+        !If
+          - CreateDebugResources
+          - 
+            - arn:aws:iam::aws:policy/service-role/AmazonSSMMaintenanceWindowRole
+            - arn:aws:iam::aws:policy/service-role/AmazonSSMAutomationRole
+            - arn:aws:iam::aws:policy/service-role/AmazonEC2RoleforSSM
+            - !Sub "arn:aws:iam::${AWS::AccountId}:policy/${AWS::StackName}-ASGSelfAccessPolicy"
+            - !Sub "arn:aws:iam::${AWS::AccountId}:policy/${AWS::StackName}-EC2SelfAccessPolicy"
+            - !Sub "arn:aws:iam::${AWS::AccountId}:policy/${AWS::StackName}-SSMParameterStorePolicy"
+            - !Sub "arn:aws:iam::${AWS::AccountId}:policy/${AWS::StackName}-ASGBucketPolicy"       
+          - 
+            - !Sub "arn:aws:iam::${AWS::AccountId}:policy/${AWS::StackName}-ASGSelfAccessPolicy"
+            - !Sub "arn:aws:iam::${AWS::AccountId}:policy/${AWS::StackName}-EC2SelfAccessPolicy"
+            - !Sub "arn:aws:iam::${AWS::AccountId}:policy/${AWS::StackName}-SSMParameterStorePolicy"
+            - !Sub "arn:aws:iam::${AWS::AccountId}:policy/${AWS::StackName}-ASGBucketPolicy"
 
   SSMSyntheticCPULoad:
     Type: AWS::SSM::Parameter
@@ -366,6 +431,14 @@ Resources:
       FromPort: 80
       ToPort: 80
       CidrIp: 0.0.0.0/0
+
+  ASGBucket:
+    Type: AWS::S3::Bucket
+    Condition: CreateS3BucketAndPermissions    
+    Properties:    
+      BucketName: !Sub "${AWS::StackName}-asgbucket"
+      VersioningConfiguration:
+        Status: Enabled
 
   InstanceASG:
     Type: AWS::AutoScaling::AutoScalingGroup
@@ -396,11 +469,11 @@ Resources:
           - AlarmNotification
           - ScheduledActions
       AutoScalingReplacingUpdate:
-        # WillReplace=True will make ReplacingUpdate take precedent over RollingUpdate
+        # WillReplace=true will make ReplacingUpdate take precedent over RollingUpdate
         !If
           - ReplaceEntireASG
-          - WillReplace: 'true'
-          - WillReplace: 'false'
+          - WillReplace: true
+          - WillReplace: false
     Properties:
       HealthCheckGracePeriod: 3
       AvailabilityZones:
@@ -463,10 +536,10 @@ Resources:
       Tags:
       - Key: Name
         Value: !Ref AWS::StackName
-        PropagateAtLaunch: 'True'
+        PropagateAtLaunch: true
       - Key: LAST_CF_PATCH_RUN
         Value: !Ref 1OSPatchRunDate
-        PropagateAtLaunch: 'True'
+        PropagateAtLaunch: true
   
   #Scaling policy and alarms are only created if autoscaling parameter is true
   ScaleDownPolicy:
@@ -561,6 +634,7 @@ Resources:
                 Ref: 1OSPeggedAMIID
         #InstanceType is overridden by spot parameters
         InstanceType: t2.micro
+        KeyName: !If [UseKeypair,!Ref 8DBGKeypairName,!Ref "AWS::NoValue"]
         IamInstanceProfile:
           !If
             - BuildInstanceRoleToUse
@@ -580,7 +654,7 @@ Resources:
               Fn::Base64: !Sub | 
                 #!/bin/bash
                 set -xv
-                AWSASGLabKitVersion="1.2"
+                AWSASGLabKitVersion="${1AAAAUltimateASGVersion}"
                 function logit() {
                   LOGSTRING="$(date +"%_b %e %H:%M:%S") $(hostname) USERDATA_SCRIPT: $1"
                   echo "$LOGSTRING"
@@ -590,7 +664,8 @@ Resources:
                 logit "Building Linux Instance... with AWS ASG Lab Kit Version: $AWSASGLabKitVersion"
                 logit "Learn more at: $1AAAReadmeBlogPost"
                 logit "Logs for this are found in /var/log/cloud-init-output.log or /var/log/messsages (non amazon linux)"
-                logit "Rendered script found in /var/lib/cloud/instance/scripts/part-001"          
+                logit "Rendered script found in /var/lib/cloud/instance/scripts/part-001"   
+                yum install -y jq       
                 if [[ "${8DBGTroubleShootingMode}" == "true" ]]; then
                   if ! ps -ef | grep -q '[a]mazon-ssm-agent'; then
                     logit "8DBGTroubleShootingMode is true - and SSM is not installed, Installing SSM for Session Manager Access..."
@@ -613,22 +688,28 @@ Resources:
                   yum install -y https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-latest.amzn1.noarch.rpm
                   sudo ln -s /usr/local/lib/python2.7/site-packages/cfnbootstrap /usr/lib/python2.7/site-packages/cfnbootstrap
                 fi                                        
-                INSTANCEOSPLATFORM="${1OSInstanceOSPlatform}"
                 LAST_CF_PATCH_RUN="${1OSPatchRunDate}" #Forces change for patching rolling replacement and documents last CF triggered patching
                 ACTUAL_PATCH_DATE=$(date +%Y-%m-%d)
                 MYINSTANCEID="$(wget -q -O - http://169.254.169.254/latest/meta-data/instance-id)"
-                export AWS_DEFAULT_REGION="$(curl -s 169.254.169.254/latest/meta-data/placement/availability-zone | sed 's/.$//')"
-                NAMEOFASG=$(aws ec2 describe-tags --region $AWS_DEFAULT_REGION --filters {"Name=resource-id,Values=$MYINSTANCEID","Name=key,Values=aws:autoscaling:groupName"} --output=text | cut -f5)
+                AWS_REGION="$(curl -s 169.254.169.254/latest/meta-data/placement/availability-zone | sed 's/.$//')"
+                NAMEOFASG=$(aws ec2 describe-tags --region $AWS_REGION --filters {"Name=resource-id,Values=$MYINSTANCEID","Name=key,Values=aws:autoscaling:groupName"} --output=text | cut -f5)
                 NAMEOFSTACK=${AWS::StackName}
                 PATCHDONEFLAG=/root/patchingrebootwasdone.flg
                 logit "Processing userdata script on instance: $MYINSTANCEID"
-                logit "Operating in Region: $AWS_DEFAULT_REGION, launched from ASG: $NAMEOFASG"
+                logit "Operating in Region: $AWS_REGION, launched from ASG: $NAMEOFASG"
                 yum update yum-utils yum-plugin-security
                 uname -r
+                COMPUTETYPE="PROBLEM FINDING SPOT STATUS"
+                if [[ "$(aws ec2 describe-instances --filters Name=instance-id,Values="$MYINSTANCEID" --region $AWS_REGION | jq -r '.Reservations[].Instances[].SpotInstanceRequestId')" != "null" ]]; then
+                  COMPUTETYPE="SPOT"
+                else
+                  COMPUTETYPE="ONDEMAND"
+                fi
+                aws ec2 create-tags --resources $MYINSTANCEID --tags Key=COMPUTETYPE,Value=$COMPUTETYPE --region $AWS_REGION
                 if [ ! -z $NAMEOFASG ]; then
                   logit "Instance is in an ASG, will process lifecycle hooks"
                   logit "Listing hook to verify permissions and hook presence"
-                  aws autoscaling describe-lifecycle-hooks --region $AWS_DEFAULT_REGION --auto-scaling-group-name $NAMEOFASG
+                  aws autoscaling describe-lifecycle-hooks --region $AWS_REGION --auto-scaling-group-name $NAMEOFASG
                 else
                   logit "Instance is not in an ASG or if it is, the instance profile used does not have permissions to its own tags."
                 fi
@@ -636,7 +717,7 @@ Resources:
                 if [ -f $PATCHDONEFLAG ]; then
                   logit "Completed a post-patching reboot, skipping patching check..."
                 else
-                  logit "Lets patch (including the kernel if necessary)..."
+                  logit "Lets patch - including the kernel if necessary..."
                   if [[ "${1OSPatchScope}" == "All" ]]; then
                     logit "Started Patching."
                     yum update -y
@@ -658,7 +739,7 @@ Resources:
                 logit "Continuing..."
                 if [ ! -z $NAMEOFASG ]; then
                   logit "Sending a heart beat to reset the timeout counter while doing more things (just as an example)..."
-                  aws autoscaling record-lifecycle-action-heartbeat --region $AWS_DEFAULT_REGION --instance-id $MYINSTANCEID --lifecycle-hook-name instance-patching-reboot --auto-scaling-group-name $NAMEOFASG
+                  aws autoscaling record-lifecycle-action-heartbeat --region $AWS_REGION --instance-id $MYINSTANCEID --lifecycle-hook-name instance-patching-reboot --auto-scaling-group-name $NAMEOFASG
                 fi
 
                 if [[ "${8DBGSetupPseudoWebApp}" == "true" ]]; then
@@ -688,7 +769,7 @@ Resources:
                   logit "Code Deploy Install..."
                   yum install -y ruby
                   cd /tmp
-                  aws s3 cp s3://aws-codedeploy-us-east-1/latest/install . --region $AWS_DEFAULT_REGION
+                  aws s3 cp s3://aws-codedeploy-us-east-1/latest/install . --region $AWS_REGION
                   chmod +x ./install
                   ./install auto
                 fi
@@ -701,7 +782,6 @@ Resources:
                   SCRIPTNAME=/etc/cron.d/MonitorTerminationHook.sh
                   SCRIPTFOLDER=$(dirname $SCRIPTNAME)
                   SCRIPTBASENAME=$(basename $SCRIPTNAME)
-                  yum install -y jq
                   
                   #Heredoc script
                   cat << EndOfScript > $SCRIPTNAME
@@ -712,12 +792,12 @@ Resources:
                     }
                     #These are resolved at script creation time to reduce api calls when this script runs every minute on instances.
                
-                    if [[ "\$(aws autoscaling describe-auto-scaling-instances --instance-ids $MYINSTANCEID --region $AWS_DEFAULT_REGION | jq --raw-output '.AutoScalingInstances[0] .LifecycleState')" == *"Terminating"* ]]; then
+                    if [[ "\$(aws autoscaling describe-auto-scaling-instances --instance-ids $MYINSTANCEID --region $AWS_REGION | jq --raw-output '.AutoScalingInstances[0] .LifecycleState')" == *"Terminating"* ]]; then
                       logit "This instance ($MYINSTANCEID) is being terminated, perform cleanup..."
 
                       #### PUT YOUR CLEANUP CODE HERE, DECIDE IF CLEANUP CODE SHOULD ERROR OUT OR SILENTLY FAIL (best effort cleanup)
 
-                      aws autoscaling complete-lifecycle-action --region $AWS_DEFAULT_REGION --lifecycle-action-result CONTINUE --instance-id $MYINSTANCEID --lifecycle-hook-name instance-terminating --auto-scaling-group-name $NAMEOFASG
+                      aws autoscaling complete-lifecycle-action --region $AWS_REGION --lifecycle-action-result CONTINUE --instance-id $MYINSTANCEID --lifecycle-hook-name instance-terminating --auto-scaling-group-name $NAMEOFASG
                       logit "This instance ($MYINSTANCEID) is ready for termination"
                       logit "Lifecycle CONTINUE was sent to termination hook in ASG: $NAMEOFASG for this instance ($MYINSTANCEID)."
                     fi
@@ -803,12 +883,12 @@ Resources:
 
                 if [ ! -z "$NAMEOFASG" ] && [ "$WaitingForReboot" != "true" ]; then
                   logit "Completing lifecycle action hook so that ASG knows we are ready to be placed InService..."
-                  aws autoscaling complete-lifecycle-action --region $AWS_DEFAULT_REGION --lifecycle-action-result CONTINUE --instance-id $MYINSTANCEID --lifecycle-hook-name instance-patching-reboot --auto-scaling-group-name $NAMEOFASG
+                  aws autoscaling complete-lifecycle-action --region $AWS_REGION --lifecycle-action-result CONTINUE --instance-id $MYINSTANCEID --lifecycle-hook-name instance-patching-reboot --auto-scaling-group-name $NAMEOFASG
                 fi
                 
                 if [ "$WaitingForReboot" != "true" ]; then
                   logit "Cfn-signaling success..."
-                  /opt/aws/bin/cfn-signal --success true --stack ${AWS::StackName} --resource InstanceASG --region $AWS_DEFAULT_REGION
+                  /opt/aws/bin/cfn-signal --success true --stack ${AWS::StackName} --resource InstanceASG --region $AWS_REGION
                 fi
 
                 DBGCPULoadPercentInitialValue=${8DBGCPULoadPercentInitialValue}
@@ -818,20 +898,20 @@ Resources:
                     amazon-linux-extras install epel -y
                   fi
                   yum install -y curl stress-ng
-                  CPUPercent="$(aws --region=$AWS_DEFAULT_REGION ssm get-parameter --name "$NAMEOFSTACK-SyntheticCPULoad" --output text --query Parameter.Value | grep -E ^\-?[0-9]+$)"
+                  CPUPercent="$(aws --region=$AWS_REGION ssm get-parameter --name "$NAMEOFSTACK-SyntheticCPULoad" --output text --query Parameter.Value | grep -E ^\-?[0-9]+$)"
                   while [ "$CPUPercent" != '' ]; do
                     logit "Stressing for 1 minute at $CPUPercent percent CPU utilization before checking for updated percentage."
                     stress-ng -c 0 -l $CPUPercent --timeout 60
-                    CPUPercent="$(aws --region=$AWS_DEFAULT_REGION ssm get-parameter --name "$NAMEOFSTACK-SyntheticCPULoad" --output text --query Parameter.Value | grep -E ^\-?[0-9]+$)"
+                    CPUPercent="$(aws --region=$AWS_REGION ssm get-parameter --name "$NAMEOFSTACK-SyntheticCPULoad" --output text --query Parameter.Value | grep -E ^\-?[0-9]+$)"
                   done
-                  logit "Stopping CPU stressing due to receving non-numeric value: \"$(aws --region=$AWS_DEFAULT_REGION ssm get-parameter --name "$NAMEOFSTACK-SyntheticCPULoad" --output text --query Parameter.Value)\""
+                  logit "Stopping CPU stressing due to receving non-numeric value: \"$(aws --region=$AWS_REGION ssm get-parameter --name "$NAMEOFSTACK-SyntheticCPULoad" --output text --query Parameter.Value)\""
                 fi              
             - 
               # **************
               # Windows UserData
               Fn::Base64: !Sub | 
                 <powershell>
-                $AWSASGLabKitVersion="1.2"
+                $AWSASGLabKitVersion="${1AAAAUltimateASGVersion}"
                 Function logit ($Msg, $MsgType='Information', $ID='1') {
                   If ($script:PSCommandPath -ne '' ) { $SourcePathName = $script:PSCommandPath ; $SourceName = split-path -leaf $SourcePathName } else { $SourceName = "Automation Code"; $SourcePathName = "Unknown" }
                   Write-Host "[$(Get-date -format 'yyyy-MM-dd HH:mm:ss zzz')] $MsgType : From: $SourcePathName : $Msg"
@@ -882,19 +962,24 @@ Resources:
                 $LAST_CF_PATCH_RUN="${1OSPatchRunDate}" #Forces change for patching rolling replacement and documents last CF triggered patching
                 $ACTUAL_PATCH_DATE="$(date -format 'yyyy-MM-dd')"
                 $MYINSTANCEID="$(invoke-restmethod http://169.254.169.254/latest/meta-data/instance-id)"
-                $AWS_DEFAULT_REGION="$($(invoke-restmethod 169.254.169.254/latest/meta-data/placement/availability-zone) -replace '.$')"
-                $env:AWS_DEFAULT_REGION=$AWS_DEFAULT_REGION
-                $NAMEOFASG=$(aws ec2 describe-tags --region $AWS_DEFAULT_REGION --filters Name=resource-id,Values=$MYINSTANCEID Name=key,Values=aws:autoscaling:groupName | convertfrom-json).tags.value
+                $AWS_REGION="$($(invoke-restmethod 169.254.169.254/latest/meta-data/placement/availability-zone) -replace '.$')"
+                $NAMEOFASG=$(aws ec2 describe-tags --region $AWS_REGION --filters Name=resource-id,Values=$MYINSTANCEID Name=key,Values=aws:autoscaling:groupName | convertfrom-json).tags.value
                 $NAMEOFSTACK="${AWS::StackName}"
                 $PATCHDONEFLAG="$env:USERPROFILE/patchingrebootwasdone.flg"
                 $1OSPatchScopeToUse="${1OSPatchScope}"
-
                 logit "Processing userdata script on instance: $MYINSTANCEID"
-                logit "Operating in Region: $AWS_DEFAULT_REGION, launched from ASG: $NAMEOFASG"
+                logit "Operating in Region: $AWS_REGION, launched from ASG: $NAMEOFASG"
+                $COMPUTETYPE="PROBLEM FINDING SPOT STATUS"
+                if ( "$((aws ec2 describe-instances --region $AWS_REGION --instance-id $MYINSTANCEID | convertfrom-json).Reservations.Instances.SpotInstanceRequestId)" -ne "" ) {
+                  $COMPUTETYPE='SPOT'
+                } else {
+                  $COMPUTETYPE='ONDEMAND'
+                }
+                aws ec2 create-tags --region $AWS_REGION --resources $MYINSTANCEID --tags "Key=`"COMPUTETYPE`",Value=$COMPUTETYPE"
                 if ($NAMEOFASG) {
                   logit "Instance is in an ASG, will process lifecycle hooks"
                   logit "Listing hook to verify permissions and hook presence"
-                  aws --region $AWS_DEFAULT_REGION autoscaling describe-lifecycle-hooks --auto-scaling-group-name $NAMEOFASG
+                  aws --region $AWS_REGION autoscaling describe-lifecycle-hooks --auto-scaling-group-name $NAMEOFASG
                 } else {
                   logit "Instance is not in an ASG or if it is, the instance profile used does not have permissions to its own tags."
                 }
@@ -956,7 +1041,7 @@ Resources:
 
                 if (("${3INSTInstallCodeDeploy}" -eq "true") -AND (![bool](get-service codedeployagent -ErrorAction SilentlyContinue))) {
                   logit "Code deploy is requested, but not present, installing CodeDeploy"
-                  aws s3 cp s3://aws-codedeploy-$AWS_DEFAULT_REGION/latest/codedeploy-agent.msi $env:USERPROFILE\codedeploy-agent.msi  --region $AWS_DEFAULT_REGION
+                  aws s3 cp s3://aws-codedeploy-$AWS_REGION/latest/codedeploy-agent.msi $env:USERPROFILE\codedeploy-agent.msi  --region $AWS_REGION
                   Start-Process	 -wait -nonewwindow -FilePath "msiexec.exe" -ArgumentList "/i $env:USERPROFILE\codedeploy-agent.msi /l*v $env:USERPROFILE\codedeploy-agent.log /qn"
                 }
 
@@ -978,12 +1063,12 @@ Resources:
                       `$applog.WriteEntry("From: `$SourcePathName : `$Msg", `$MsgType, `$ID)
                     }
                 
-                    if ( (aws autoscaling describe-auto-scaling-instances --instance-ids $MYINSTANCEID --region $AWS_DEFAULT_REGION | convertfrom-json).AutoScalingInstances.LifecycleState -ilike "*Terminating*" ) {
+                    if ( (aws autoscaling describe-auto-scaling-instances --instance-ids $MYINSTANCEID --region $AWS_REGION | convertfrom-json).AutoScalingInstances.LifecycleState -ilike "*Terminating*" ) {
                       logit "This instance ($MYINSTANCEID) is being terminated, perform cleanup..."
 
                       #### PUT YOUR CLEANUP CODE HERE, DECIDE IF CLEANUP CODE SHOULD ERROR OUT OR SILENTLY FAIL (best effort cleanup)
 
-                      aws autoscaling complete-lifecycle-action --region $AWS_DEFAULT_REGION --lifecycle-action-result CONTINUE --instance-id $MYINSTANCEID --lifecycle-hook-name instance-terminating --auto-scaling-group-name $NAMEOFASG
+                      aws autoscaling complete-lifecycle-action --region $AWS_REGION --lifecycle-action-result CONTINUE --instance-id $MYINSTANCEID --lifecycle-hook-name instance-terminating --auto-scaling-group-name $NAMEOFASG
                       logit "This instance ($MYINSTANCEID) is ready for termination"
                       logit "Lifecycle CONTINUE was sent to termination hook in ASG: $NAMEOFASG for this instance ($MYINSTANCEID)."
                     }
@@ -1071,23 +1156,23 @@ Resources:
 
                 if ($NAMEOFASG -AND !$WaitingForReboot) {
                   logit "Completing lifecycle action hook so that ASG knows we are ready to be placed InService..."
-                  aws autoscaling complete-lifecycle-action --region $AWS_DEFAULT_REGION --lifecycle-action-result CONTINUE --instance-id $MYINSTANCEID --lifecycle-hook-name instance-patching-reboot --auto-scaling-group-name $NAMEOFASG
+                  aws autoscaling complete-lifecycle-action --region $AWS_REGION --lifecycle-action-result CONTINUE --instance-id $MYINSTANCEID --lifecycle-hook-name instance-patching-reboot --auto-scaling-group-name $NAMEOFASG
                 }
                 
                 if (!$WaitingForReboot) {
                   logit "Cfn-signaling success..."
-                  cfn-signal --success true --stack ${AWS::StackName} --resource InstanceASG --region $AWS_DEFAULT_REGION
+                  cfn-signal --success true --stack ${AWS::StackName} --resource InstanceASG --region $AWS_REGION
                 }
 
                 $DBGCPULoadPercentInitialValue=${8DBGCPULoadPercentInitialValue}
                 if (($WaitingForReboot -ne $True ) -AND ($DBGCPULoadPercentInitialValue)) {
                   logit "Setting up CPU stressing because 8DBGCPULoadPercentInitialValue was set to $DBGCPULoadPercentInitialValue"
                   Invoke-WebRequest https://github.com/vikyd/go-cpu-load/releases/download/0.0.1/go-cpu-load-win-amd64.exe -UseBasicParsing -outfile go-cpu-load-win-amd64.exe
-                  $CPUPercent="$(aws --region=$AWS_DEFAULT_REGION ssm get-parameter --name $NAMEOFSTACK-SyntheticCPULoad --output text --query Parameter.Value)"
+                  $CPUPercent="$(aws --region=$AWS_REGION ssm get-parameter --name $NAMEOFSTACK-SyntheticCPULoad --output text --query Parameter.Value)"
                   while ( $CPUPercent -match "^[\d\.]+$" ) {
                     logit "Stressing for 1 minutes at $CPUPercent percent CPU utilization."
                     . .\go-cpu-load-win-amd64.exe -p $CPUPercent -t 60
-                    $CPUPercent="$(aws --region=$AWS_DEFAULT_REGION ssm get-parameter --name $NAMEOFSTACK-SyntheticCPULoad --output text --query Parameter.Value)"
+                    $CPUPercent="$(aws --region=$AWS_REGION ssm get-parameter --name $NAMEOFSTACK-SyntheticCPULoad --output text --query Parameter.Value)"
                   }
                   logit "Stopping CPU stressing due to receving non-numeric value: `"$CPUPercent`""
                 }
