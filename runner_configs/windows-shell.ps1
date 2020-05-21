@@ -9,8 +9,8 @@
 
 #Runner Token List
 #$INSTANCEOSPLATFORM="Windows"
-#$AWS_DEFAULT_REGION="$($(invoke-restmethod 169.254.169.254/latest/meta-data/placement/availability-zone) -replace '.$')"
-#$NAMEOFASG=$(aws ec2 describe-tags --region $AWS_DEFAULT_REGION --filters Name=resource-id,Values=$MYINSTANCEID Name=key,Values=aws:autoscaling:groupName | convertfrom-json).tags.value
+#$AWS_REGION="$($(invoke-restmethod 169.254.169.254/latest/meta-data/placement/availability-zone) -replace '.$')"
+#$NAMEOFASG=$(aws ec2 describe-tags --region $AWS_REGION --filters Name=resource-id,Values=$MYINSTANCEID Name=key,Values=aws:autoscaling:groupName | convertfrom-json).tags.value
 #$MYINSTANCEID="$(invoke-restmethod http://169.254.169.254/latest/meta-data/instance-id)"
 $RunnerVersion="latest"
 $RunnerExecutor='shell'
@@ -71,7 +71,7 @@ foreach ($RunnerRegToken in $GITLABRunnerRegTokenList.split(',')) {
 #rename instance to include -glrunner ?
 #aws ec2 describe-tags --filters "Name=resource-id,Values=$MYINSTANCEID"
 
-aws ec2 create-tags --region $AWS_DEFAULT_REGION --resources $MYINSTANCEID --tags "Key=`"GitLabRunnerName`",Value=$RunnerName" "Key=`"GitLabURL`",Value=$RunnerGitLabInstanceURL" "Key=`"GitLabRunnerTags`",`"Value=$($RunnerCompleteTagList.split(',') -join ('\,'))`""
+aws ec2 create-tags --region $AWS_REGION --resources $MYINSTANCEID --tags "Key=`"GitLabRunnerName`",Value=$RunnerName" "Key=`"GitLabURL`",Value=$RunnerGitLabInstanceURL" "Key=`"GitLabRunnerTags`",`"Value=$($RunnerCompleteTagList.split(',') -join ('\,'))`""
 
 .\gitlab-runner.exe start
 
@@ -87,7 +87,7 @@ Function logit (`$Msg, `$MsgType='Information', `$ID='1') {
   `$applog.WriteEntry("From: `$SourcePathName : `$Msg", `$MsgType, `$ID)
 }
 
-if ( (aws autoscaling describe-auto-scaling-instances --instance-ids $MYINSTANCEID --region $AWS_DEFAULT_REGION | convertfrom-json).AutoScalingInstances.LifecycleState -ilike "*Terminating*" ) {
+if ( (aws autoscaling describe-auto-scaling-instances --instance-ids $MYINSTANCEID --region $AWS_REGION | convertfrom-json).AutoScalingInstances.LifecycleState -ilike "*Terminating*" ) {
   logit "This instance ($MYINSTANCEID) is being terminated, perform cleanup..."
 
   cd $RunnerInstallRoot
@@ -95,7 +95,7 @@ if ( (aws autoscaling describe-auto-scaling-instances --instance-ids $MYINSTANCE
 
   .\gitlab-runner.exe stop
 
-  aws autoscaling complete-lifecycle-action --region $AWS_DEFAULT_REGION --lifecycle-action-result CONTINUE --instance-id $MYINSTANCEID --lifecycle-hook-name instance-terminating --auto-scaling-group-name $NAMEOFASG
+  aws autoscaling complete-lifecycle-action --region $AWS_REGION --lifecycle-action-result CONTINUE --instance-id $MYINSTANCEID --lifecycle-hook-name instance-terminating --auto-scaling-group-name $NAMEOFASG
   logit "This instance ($MYINSTANCEID) is ready for termination"
   logit "Lifecycle CONTINUE was sent to termination hook in ASG: $NAMEOFASG for this instance ($MYINSTANCEID)."
   }
