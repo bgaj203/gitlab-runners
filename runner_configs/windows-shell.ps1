@@ -24,7 +24,7 @@ $RunnerCompleteTagList = $RunnerOSTags, $RunnerExecutor, $RunnerTagList -join ',
 
 $RunnerInstallRoot='C:\GitLab-Runner'
 
-echo "GITLABRunnerRegTokenList: $GITLABRunnerRegTokenList"
+write-host "GITLABRunnerRegTokenList: $GITLABRunnerRegTokenList"
 
 $MYIP="$(invoke-restmethod http://169.254.169.254/latest/meta-data/local-ipv4)"
 $MYACCOUNTID="$((invoke-restmethod http://169.254.169.254/latest/dynamic/instance-identity/document).accountId)"
