@@ -55,7 +55,7 @@ if ($RunnerConfigTomlTemplate) {
 cd $RunnerInstallRoot
 .\gitlab-runner.exe install
 
-foreach ($RunnerRegToken in $RunnerRegTokenList.split(',')) {
+foreach ($RunnerRegToken in $GITLABRunnerRegTokenList.split(',')) {
  
   .\gitlab-runner.exe register `
      --config $RunnerInstallRoot\config.toml `
