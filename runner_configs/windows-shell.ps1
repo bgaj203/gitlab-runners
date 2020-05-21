@@ -22,7 +22,7 @@ $RunnerGitLabInstanceURL='https://gitlab.demo.i2p.online/'
 
 $RunnerCompleteTagList = $RunnerOSTags, $RunnerExecutor, $RunnerTagList -join ','
 
-if (Test-Path variable:COMPUTETYPE) {$RunnerCompleteTagList = $RunnerCompleteTagList $COMPUTETYPE -join ','}
+if (Test-Path variable:COMPUTETYPE) {$RunnerCompleteTagList = $RunnerCompleteTagList, $COMPUTETYPE -join ','}
 
 $RunnerInstallRoot='C:\GitLab-Runner'
 
@@ -49,6 +49,11 @@ If (!(Test-Path "$RunnerInstallRoot\gitlab-runner.exe")) {
 }
 
 #If runnerconfig template is provided, download if remote, validate local file exists
+#set-content $env:public\RunnerConfigTemplate.toml -Value @"
+
+#"@
+
+$RunnerConfigTomlTemplate="$env:public\RunnerConfigTemplate.toml"
 
 if ($RunnerConfigTomlTemplate) {
   $OptionalParameters = " --template-config $RunnerConfigTomlTemplate "
