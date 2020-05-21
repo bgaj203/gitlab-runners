@@ -48,7 +48,7 @@ If (!(Test-Path "$RunnerInstallRoot\gitlab-runner.exe")) {
   (New-Object System.Net.WebClient).DownloadFile("https://gitlab-runner-downloads.s3.amazonaws.com/$($RunnerVersion.tolower())/binaries/gitlab-runner-windows-amd64.exe", "$RunnerInstallRoot\gitlab-runner.exe")
 }
 
-If runnerconfig template is provided, download if remote, validate local file exists
+#If runnerconfig template is provided, download if remote, validate local file exists
 set-content $env:public\RunnerConfigTemplate.toml -Value @"
 concurrent = 4
 log_level = "warning"
