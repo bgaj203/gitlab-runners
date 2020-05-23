@@ -19,12 +19,13 @@ $RunnerTagList="TagA,TagB"
 $RunnerConfigTomlTemplate #(Embedded, local or s3:// or http*://)
 #$GITLABRunnerRegTokenList='f3QN1vAeQq-MQx2_u9ML'
 $RunnerGitLabInstanceURL='https://gitlab.demo.i2p.online/'
+$RunnerInstallRoot='C:\GitLab-Runner'
+$RunnerConfigToml="$RunnerInstallRoot\config.toml"
 
 $RunnerCompleteTagList = $RunnerOSTags, $RunnerExecutor, $RunnerTagList -join ','
 
 if (Test-Path variable:COMPUTETYPE) {$RunnerCompleteTagList = $RunnerCompleteTagList, $COMPUTETYPE -join ','}
 
-$RunnerInstallRoot='C:\GitLab-Runner'
 
 write-host "GITLABRunnerRegTokenList: $GITLABRunnerRegTokenList"
 
@@ -48,17 +49,12 @@ If (!(Test-Path "$RunnerInstallRoot\gitlab-runner.exe")) {
   (New-Object System.Net.WebClient).DownloadFile("https://gitlab-runner-downloads.s3.amazonaws.com/$($RunnerVersion.tolower())/binaries/gitlab-runner-windows-amd64.exe", "$RunnerInstallRoot\gitlab-runner.exe")
 }
 
-#If runnerconfig template is provided, download if remote, validate local file exists
-set-content $env:public\RunnerConfigTemplate.toml -Value @"
+#Write runner config.toml
+set-content $env:public\config.toml -Value @"
 concurrent = 4
 log_level = "warning"
 "@
 
-$RunnerConfigTomlTemplate="$env:public\RunnerConfigTemplate.toml"
-
-if ($RunnerConfigTomlTemplate) {
-  $OptionalParameters = " --template-config $RunnerConfigTomlTemplate "
-}
 
 cd $RunnerInstallRoot
 .\gitlab-runner.exe install
@@ -66,7 +62,7 @@ cd $RunnerInstallRoot
 foreach ($RunnerRegToken in $GITLABRunnerRegTokenList.split(',')) {
  
   .\gitlab-runner.exe register `
-     --config $RunnerInstallRoot\config.toml `
+     --config $RunnerConfigToml `
      $OptionalParameters `
      --non-interactive `
      --url $RunnerGitLabInstanceURL `
