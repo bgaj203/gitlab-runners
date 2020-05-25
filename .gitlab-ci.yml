@@ -1,4 +1,3 @@
-
 variables:
   AWS_DEFAULT_REGION: 'us-east-1'
 
@@ -11,7 +10,7 @@ cloudformation-lint:
     - |
       #pip install cfn-lint
       echo "Linting all cloudformation files that contain .cf. in their name..."
-      for cftemplate in (find . -type f -name "*.cf.*")
+      for cftemplate in $(find . -type f -name "*.cf.*")
       do
         echo "  ${cftemplate}"
         cfn-lint --template ${cftemplate} --region ${AWS_DEFAULT_REGION} ${CFNLINTARGS} --format junit > ${cftemplate}.xml || true
