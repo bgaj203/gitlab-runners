@@ -1,11 +1,10 @@
 
-image: registry.gitlab.com/guided-explorations/containers/aws-cli-tools/aws-cli
-
 variables:
   AWS_DEFAULT_REGION: 'us-east-1'
 
 cloudformation-lint:
   stage: test
+  image: registry.gitlab.com/guided-explorations/containers/aws-cli-tools/aws-cli
   variables:
     CFNLINTARGS: '--ignore-checks W' # override to '' or other args in CI/CD Vars if desired 
   script:
@@ -21,4 +20,4 @@ cloudformation-lint:
 
   artifacts:
     reports:
-      junit: *.xml
+      junit: "*.xml"
