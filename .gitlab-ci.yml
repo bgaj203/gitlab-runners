@@ -10,7 +10,7 @@ cloudformation-lint:
     - |
       #pip install cfn-lint
       echo "Linting all cloudformation files that contain .cf. in their name..."
-      for cftemplate in $(find . -type f -name "*.cf.*")
+      find . -type f -name "*.cf.*" | while read cftemplate;
       do
         echo "  ${cftemplate}"
         cfn-lint --template ${cftemplate} --region ${AWS_DEFAULT_REGION} ${CFNLINTARGS} --format junit > ${cftemplate}.xml || true
