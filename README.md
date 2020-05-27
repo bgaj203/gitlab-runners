@@ -22,5 +22,6 @@ Note that these runner scripts have the following attributes (when fully complet
 Yes - because:
 * By having your entire runner build in an ASG you are making your runner provisioning production-grade because it is IaC (built with code)
 * When you end up with runner sprawl, the prospect of updating all runners is much less daunting if they are all built with IaC
-* the dispatcher node should be in a single instance ASG for warm HA (respawn on death).  However, it would also benefit from all the other features of this template including repulling the latest AMI, latest patches and latest runner version upon a simple CF stack update.
+* the dispatcher node should be in a single instance ASG for warm HA (respawn on death).  
+* It benefits from all the other features of this template including maintenance by repulling the latest AMI, latest patches and latest runner version upon a simple CF stack update.
 * Docker-machine should be able to be completely replaced by a well tuned ASG housing the plain docker executor.
