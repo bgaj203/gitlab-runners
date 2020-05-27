@@ -4,16 +4,16 @@ Description: >
   More Information https://gitlab.com/DarwinJS/ultimate-aws-asg-lab-kit/-/blob/master/README.md
 Parameters:
   1AAAAUltimateASGVersion:
-    Description: "Read Only - Ultimate ASG Kickstart and Lab Kit Version."
+    Description: "Read Only - GitLab Runner Autoscaling on AWS with Spot Support."
     Type: String
-    Default: "1.3.0"
-    AllowedValues: [ "1.3.0" ]
+    Default: "2.3.0"
+    AllowedValues: [ "2.3.0" ]
     ConstraintDescription: "Version number is used in the template and cannot be changed."
   1AAAReadmeBlogPost:
     Description: Read the following post to learn why this template is helpful - Darwin.
     Type: String
-    Default: https://gitlab.com/DarwinJS/ultimate-aws-asg-lab-kit/-/blob/master/README.md
-    AllowedValues: [ "https://gitlab.com/DarwinJS/ultimate-aws-asg-lab-kit/-/blob/master/README.md" ]
+    Default: https://gitlab.com/guided-explorations/gitlab-deployment/gitlab-runner-autoscaling-aws-asg/-/blob/master/README.md
+    AllowedValues: [ "https://gitlab.com/guided-explorations/gitlab-deployment/gitlab-runner-autoscaling-aws-asg/-/blob/master/README.md" ]
     ConstraintDescription: "Readme Blog post is for documentation purposes only and cannot be changed."
   1OSPeggedAMIID:
     Description: >

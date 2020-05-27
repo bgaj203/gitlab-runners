@@ -1,0 +1,22 @@
+variables:
+  AWS_DEFAULT_REGION: 'us-east-1'
+
+cloudformation-lint:
+  stage: test
+  image: registry.gitlab.com/guided-explorations/containers/aws-cli-tools/aws-cli
+  variables:
+    CFNLINTARGS: '--ignore-checks W' # override to '' or other args in CI/CD Vars if desired 
+  script:
+    - |
+      #pip install cfn-lint
+      echo "Linting all cloudformation files that contain .cf. in their name..."
+      find . -type f -name "*.cf.*" | while read cftemplate;
+      do
+        echo "  ${cftemplate}"
+        cfn-lint --template ${cftemplate} --region ${AWS_DEFAULT_REGION} ${CFNLINTARGS} --format junit > ${cftemplate}.xml || true
+        cfn-lint --template ${cftemplate} --region ${AWS_DEFAULT_REGION} ${CFNLINTARGS}
+      done
+
+  artifacts:
+    reports:
+      junit: "*.xml"
