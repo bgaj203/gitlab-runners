@@ -16,6 +16,7 @@ Note that these runner scripts have the following attributes (when fully complet
 * They rely on variable pass through from the main cloud formation code
 * For runners with docker, the user should just provide an AWS prepared Amazon Linux 2 or Windows AMI with docker preinstalled in parameter
 * They follow the best practice of using AWS ASG lifecycle hooks to give the instance time to be built - but more importantly, to allow it to drain and unregister on scale-in.
+* They name and tag runners in both AWS and GitLab to ensure easy cross-system identification.
 
 ### Should I Bother for Scaling Runners (Docker-machine / AWS Fargate)
 
