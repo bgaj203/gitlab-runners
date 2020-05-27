@@ -24,7 +24,7 @@ $RunnerConfigToml="$RunnerInstallRoot\config.toml"
 
 $RunnerCompleteTagList = $RunnerOSTags, $RunnerExecutor, $RunnerTagList -join ','
 
-if (Test-Path variable:COMPUTETYPE) {$RunnerCompleteTagList = $RunnerCompleteTagList, $COMPUTETYPE -join ','}
+if (Test-Path variable:COMPUTETYPE) {$RunnerCompleteTagList = $RunnerCompleteTagList, COMPUTETYPE-$COMPUTETYPE -join ','}
 
 
 write-host "GITLABRunnerRegTokenList: $GITLABRunnerRegTokenList"

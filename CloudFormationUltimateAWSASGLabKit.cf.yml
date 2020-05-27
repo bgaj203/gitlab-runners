@@ -64,7 +64,7 @@ Parameters:
       The code you write must be idempotent so that it does the correct thing when run again after a patching reboot.
       There is an example at: https://gitlab.com/DarwinJS/ultimate-aws-asg-lab-kit/-/raw/master/CustomInstanceConfigurationScriptSample.sh_and_ps1
     Type: String
-    Default: Embedded
+    Default: https://gitlab.com/guided-explorations/gitlab-deployment/gitlab-runner-autoscaling-aws-asg/-/raw/master/runner_configs/windows-shell.ps1
   3INSTInstallCodeDeploy:
     Description: Installs CodeDeploy so it can be used for initial deployments and updates.
     Type: String
@@ -912,6 +912,9 @@ Resources:
               Fn::Base64: !Sub | 
                 <powershell>
                 $AWSASGLabKitVersion="${1AAAAUltimateASGVersion}"
+                Function lc-success {aws autoscaling complete-lifecycle-action --region $AWS_REGION --lifecycle-action-result CONTINUE --instance-id $MYINSTANCEID --lifecycle-hook-name instance-patching-reboot --auto-scaling-group-name $NAMEOFASG}
+                Function cf-success {cfn-signal --success true --stack ${AWS::StackName} --resource InstanceASG --region $AWS_REGION}
+                Trap { if ($8DBGTroubleShootingMode -eq 'true') { lc-success; cf-success}}
                 Function logit ($Msg, $MsgType='Information', $ID='1') {
                   If ($script:PSCommandPath -ne '' ) { $SourcePathName = $script:PSCommandPath ; $SourceName = split-path -leaf $SourcePathName } else { $SourceName = "Automation Code"; $SourcePathName = "Unknown" }
                   Write-Host "[$(Get-date -format 'yyyy-MM-dd HH:mm:ss zzz')] $MsgType : From: $SourcePathName : $Msg"
@@ -1016,27 +1019,6 @@ Resources:
                   set-content $env:public/lastpatchingdata.ps1 "$LAST_CF_PATCH_RUN=$LAST_CF_PATCH_RUN"
                   logit "ACTUAL_PATCH_DATE: $ACTUAL_PATCH_DATE"
                   add-content $env:public/lastpatchingdata.ps1 "$ACTUAL_PATCH_DATE=$ACTUAL_PATCH_DATE"
-                }
-
-                if ("${8DBGSetupPseudoWebApp}" -eq "true") {
-                  logit "Installing Web Application (To Emulate a Real Software Stack), Chocolatey is installed to support this test setup."
-                  If (!(Test-Path env:chocolateyinstall)) {Invoke-WebRequest https://chocolatey.org/install.ps1 -UseBasicParsing | Invoke-Expression }
-                  choco install -y apache-httpd --params '"/installLocation:C:\HTTPD /port:80"'
-                  
-                  Set-Content -Path 'C:\HTTPD\Apache24\htdocs\index.html' -Value @"
-                  <html><head><title>CloudyWindows.io ASG With Lifecycle Hooks</title></head>
-                  <body>
-                  <h1>CloudyWindows.io ASG With Lifecycle Hooks</h1>
-                  <p><A HREF="https://cloudywindows.io/post/asg-lifecycle-hook-for-linux-kernel-patching-with-a-reboot-in-aws-autoscaling-groups/"><IMG SRC="https://cloudywindows.io/mstile-150x150.png"> Check Out The Blog Post For This Template!</A>
-                  <BR><BR>Page retrieved from load balanced instance: $MYINSTANCEID 
-                  <BR>in ASG: $NAMEOFASG
-                  <BR>As a part of CF Stack: ${AWS::StackName}
-                  <BR>Running OS: ${1OSInstanceOSPlatform}
-                  <BR>with LAST_CF_PATCH_RUN: $LAST_CF_PATCH_RUN and ACTUAL_PATCH_DATE: $ACTUAL_PATCH_DATE</p>
-                  <iframe src="https://cloudywindows.io" frameborder=0 width="100%" height="100%" ></iframe>
-                  </body>
-                  </html>
-                "@
                 }
 
                 if (("${3INSTInstallCodeDeploy}" -eq "true") -AND (![bool](get-service codedeployagent -ErrorAction SilentlyContinue))) {
@@ -1156,12 +1138,12 @@ Resources:
 
                 if ($NAMEOFASG -AND !$WaitingForReboot) {
                   logit "Completing lifecycle action hook so that ASG knows we are ready to be placed InService..."
-                  aws autoscaling complete-lifecycle-action --region $AWS_REGION --lifecycle-action-result CONTINUE --instance-id $MYINSTANCEID --lifecycle-hook-name instance-patching-reboot --auto-scaling-group-name $NAMEOFASG
+                  lc-success
                 }
                 
                 if (!$WaitingForReboot) {
                   logit "Cfn-signaling success..."
-                  cfn-signal --success true --stack ${AWS::StackName} --resource InstanceASG --region $AWS_REGION
+                  cf-success
                 }
 
                 $DBGCPULoadPercentInitialValue=${8DBGCPULoadPercentInitialValue}

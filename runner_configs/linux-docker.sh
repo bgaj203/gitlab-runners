@@ -2,15 +2,23 @@
 
 #!/usr/bin/env bash
 
-# Update apt packages
+# Update packages
+
+#Detect package manager
+if [[ -n "$(command -v yum)" ]] ; then
+  PKGMGR='yum'
+elif [[ -n "$(command -v apt-get)" ]] ; then
+  PKGMGR='apt-get'
+fi
+
 set -ex
-sudo yum update && sudo yum install -y wget
+$PKGMGR update && $PKGMGR install -y wget
 
 # Installing and configuring Gitlab Runner
-sudo wget -O /usr/local/bin/gitlab-runner https://gitlab-runner-downloads.s3.amazonaws.com/latest/binaries/gitlab-runner-linux-amd64
-sudo chmod +x /usr/local/bin/gitlab-runner
-sudo useradd --comment 'GitLab Runner' --create-home gitlab-runner --shell /bin/bash
-sudo /usr/local/bin/gitlab-runner install --user="gitlab-runner" --working-directory="/home/gitlab-runner"
+wget -O /usr/local/bin/gitlab-runner https://gitlab-runner-downloads.s3.amazonaws.com/latest/binaries/gitlab-runner-linux-amd64
+chmod +x /usr/local/bin/gitlab-runner
+useradd --comment 'GitLab Runner' --create-home gitlab-runner --shell /bin/bash
+/usr/local/bin/gitlab-runner install --user="gitlab-runner" --working-directory="/home/gitlab-runner"
 echo -e "\nRunning scripts as '$(whoami)'\n\n"
 
 # Configuring Runner PreStart, Start and Stop Scripts
@@ -46,7 +54,7 @@ echo -e "\nMaking scripts executable"
 chmod +x ~/{start,register,deregister}-gitlab-runner.sh
 
 # Move scripts to /usr/bin/
-sudo mv ~/{start,register,deregister}-gitlab-runner.sh /usr/bin/
+mv ~/{start,register,deregister}-gitlab-runner.sh /usr/bin/
 echo -e "\nConfigure Gitlab Runner Service Unit File"
 
 cat > ~/gitlab-runner.service << EOF
@@ -67,8 +75,8 @@ WantedBy=multi-user.target
 EOF
 
 # Move SystemD service unit file to /etc/systemd/system
-sudo mv ~/gitlab-runner.service /etc/systemd/system/
-sudo systemctl enable gitlab-runner
+mv ~/gitlab-runner.service /etc/systemd/system/
+systemctl enable gitlab-runner
 
 # Service file changed - refresh systemd daemon
-sudo systemctl daemon-reload
+systemctl daemon-reload
