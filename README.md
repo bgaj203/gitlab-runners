@@ -15,3 +15,9 @@ Note that these runner scripts have the following attributes (when fully complet
 * They must overwrite the TerminationMonitor script built into the CF template so that they can properly drain and unregister a runner on a scale-in operation.
 * They rely on variable pass through from the main cloud formation code
 * For runners with docker, the user should just provide an AWS prepared Amazon Linux 2 or Windows AMI with docker preinstalled in parameter
+* They follow the best practice of using AWS ASG lifecycle hooks to give the instance time to be built - but more importantly, to allow it to drain and unregister on scale-in.
+
+### Should I Bother for Scaling Runners (Docker-machine / AWS Fargate)
+
+* Yes - because the dispatcher node should be in a single instance ASG for warm HA (respawn on death).  However, it would also benefit from all the other features of this template including repulling the latest AMI, latest patches and latest runner version upon a simple CF stack update.
+* Docker-machine should be able to be completely replaced by a well tuned ASG housing the plain docker executor.
