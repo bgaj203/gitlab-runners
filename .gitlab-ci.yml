@@ -20,13 +20,17 @@ cf-lint:
       
       if [[ ! -n "$TEMPLATE_LIST" ]]; then
         echo "\$TEMPLATE_LIST is empty, finding and sorting all files in directory tree with pattern *.cf.* ..."
-        TEMPLATE_LIST=$(find . -name '*.cf.*' -type f -printf "\"%p\"," | sort -n -z)
+        TEMPLATE_LIST=$(find . -name '*.cf.*' -type f -printf "\"%p\"|" | sort -n -z)
       fi
 
       echo "Template list: $TEMPLATE_LIST"
 
-      IFS="," GLOBIGNORE='*' args=($(echo "$TEMPLATE_LIST" \
-      | xargs -0 bash -c 'for arg in "$@"; do echo "$arg"; done'))
+      OIFS=$IFS;
+      IFS="|";
+      args=($TEMPLATE_LIST)
+
+      #IFS="," GLOBIGNORE='*' args=($(echo "$TEMPLATE_LIST" \
+      #| xargs -0 bash -c 'for arg in "$@"; do echo "$arg"; done'))
       for cftemplate in "${args[@]}"
       do
         echo "  ${cftemplate}"
