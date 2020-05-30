@@ -16,6 +16,7 @@ cf-lint:
   script:
     - |
       #pip install cfn-lint
+      set -xv
       echo "Linting all cloudformation files..."
       
       if [[ ! -n "$TEMPLATE_LIST" ]]; then
