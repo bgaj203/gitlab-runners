@@ -18,7 +18,7 @@ cf-lint:
       #pip install cfn-lint
       echo "Linting all cloudformation files..."
       
-      if [[ -z "$TEMPLATE_LIST" ]]; then
+      if [[ ! -n "$TEMPLATE_LIST" ]]; then
         echo "\$TEMPLATE_LIST is empty, finding and sorting all files in directory tree with pattern *.cf.* ..."
         TEMPLATE_LIST=$(find . -name '*.cf.*' -type f -printf "\"%p\" " | sort -n -z |  xargs -d'\n')
       fi
