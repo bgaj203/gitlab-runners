@@ -20,7 +20,7 @@ cf-lint:
       
       if [[ ! -n "$TEMPLATE_LIST" ]]; then
         echo "\$TEMPLATE_LIST is empty, finding and sorting all files in directory tree with pattern *.cf.* ..."
-        TEMPLATE_LIST=$(find . -name '*.cf.*' -type f -printf "\"%p\" " | sort -n -z |  xargs -d'\n')
+        TEMPLATE_LIST=$(find . -name '*.py*' -type f -printf "\"%p\" " | sort -n -z)
       fi
 
       echo "$TEMPLATE_LIST"
