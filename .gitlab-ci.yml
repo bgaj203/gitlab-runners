@@ -12,7 +12,8 @@ variables:
 cf-lint:
   stage: test
   variables:
-    CFNLINTARGS: --ignore-checks W # override to '' or other args in CI/CD Vars if desired 
+    CFNLINTARGS: "--ignore-checks W"
+    # override to '' or other args in CI/CD Vars if desired 
   script:
     - |
       #pip install cfn-lint
