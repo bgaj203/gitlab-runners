@@ -1,16 +1,31 @@
+image: registry.gitlab.com/guided-explorations/containers/aws-cli-tools/aws-cli
+
 variables:
   AWS_DEFAULT_REGION: 'us-east-1'
+  TEMPLATE_LIST:
+  #if present, only these files in the order provided with the exact names 
+  # (overrides .cf. naming requirement), overrides SERIALIZED_EXECUTION
+  #if null, find all files containing *.cf.* in all subfolders and sort them in pathname order
+  SERIALIZED_EXECUTION: 
+  #if null, submit all templates for synchronous execution, otherwise wait for each template to finish before submitting another
 
-cloudformation-lint:
+cf-lint:
   stage: test
-  image: registry.gitlab.com/guided-explorations/containers/aws-cli-tools/aws-cli
   variables:
     CFNLINTARGS: '--ignore-checks W' # override to '' or other args in CI/CD Vars if desired 
   script:
     - |
       #pip install cfn-lint
-      echo "Linting all cloudformation files that contain .cf. in their name..."
-      find . -type f -name "*.cf.*" | while read cftemplate;
+      echo "Linting all cloudformation files..."
+      
+      if [[ -z "$TEMPLATE_LIST" ]]; then
+        echo "\$TEMPLATE_LIST is empty, finding and sorting all files in directory tree with pattern *.cf.* ..."
+        TEMPLATE_LIST=$(find . -name '*.cf.*' -type f -printf "\"%p\" " | sort -n -z |  xargs -d'\n')
+      fi
+
+      IFS=$'\r\n' GLOBIGNORE='*' args=($(echo "$TEMPLATE_LIST" \
+      | xargs bash -c 'for arg in "$@"; do echo "$arg"; done'))
+      for cftemplate in "${args[@]}"
       do
         echo "  ${cftemplate}"
         cfn-lint --template ${cftemplate} --region ${AWS_DEFAULT_REGION} ${CFNLINTARGS} --format junit > ${cftemplate}.xml || true
@@ -20,3 +35,24 @@ cloudformation-lint:
   artifacts:
     reports:
       junit: "*.xml"
+
+.cf-changeset:
+  stage: changset
+  script:
+    - |
+      for i in $(printenv | sed 's;=.*;;' | grep 'CF_'); do cfparams="${cfparams} ParameterKey=${i#CF_},ParameterValue=${!i}"; done;
+      echo $cfparams
+      
+      
+      find . -name '*.cf.*' -type f -printf "\"%p\" " | sort -n -z | while read cftemplate;
+      do
+        echo ${cftemplate} aws cli command here
+        if [[ ! -z ${SORT_AND_SERIALIZE} ]]; then
+          echo "wait for cf stack status"
+        fi
+      else
+
+
+      aws cloudformation create-stack  --stack-name startmyinstance  
+        --template-body file://home/ec2-user/templates/startmyinstance.json 
+        --parameters $cfparams
