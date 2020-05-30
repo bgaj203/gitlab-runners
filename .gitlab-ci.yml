@@ -35,8 +35,8 @@ cf-lint:
       for cftemplate in "${args[@]}"
       do
         echo "  ${cftemplate}"
-        cfn-lint --region ${AWS_DEFAULT_REGION} --template "${cftemplate}" ${CFNLINTARGS} --format junit > ${cftemplate}.xml || true
-        cfn-lint --region ${AWS_DEFAULT_REGION} --template "${cftemplate}" ${CFNLINTARGS}
+        cfn-lint ${CFNLINTARGS} --region ${AWS_DEFAULT_REGION} --template "${cftemplate}"  --format junit > ${cftemplate}.xml || true
+        cfn-lint ${CFNLINTARGS} --region ${AWS_DEFAULT_REGION} --template "${cftemplate}"
       done
 
   artifacts:
