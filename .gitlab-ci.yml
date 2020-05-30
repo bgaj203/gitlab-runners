@@ -23,6 +23,8 @@ cf-lint:
         TEMPLATE_LIST=$(find . -name '*.cf.*' -type f -printf "\"%p\" " | sort -n -z |  xargs -d'\n')
       fi
 
+      echo "$TEMPLATE_LIST"
+
       IFS=$'\r\n' GLOBIGNORE='*' args=($(echo "$TEMPLATE_LIST" \
       | xargs bash -c 'for arg in "$@"; do echo "$arg"; done'))
       for cftemplate in "${args[@]}"
