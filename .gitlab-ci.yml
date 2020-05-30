@@ -12,7 +12,7 @@ variables:
 cf-lint:
   stage: test
   variables:
-    CFNLINTARGS: "--ignore-checks W"
+    CFNLINTARGS: --ignore-checks W
     # override to '' or other args in CI/CD Vars if desired 
   script:
     - |
