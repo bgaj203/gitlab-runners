@@ -37,7 +37,7 @@ cf-lint:
       #pip install cfn-lint
       echo "Linting all cloudformation files..."
 
-      $RESOLVED_TEMPLATE_LIST="$(cat cftemplates.lst)"
+      RESOLVED_TEMPLATE_LIST="$(cat cftemplates.lst)"
       echo "Template list: $RESOLVED_TEMPLATE_LIST"
 
       OIFS=$IFS;
