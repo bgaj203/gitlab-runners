@@ -106,20 +106,20 @@ cf-deploy:
       for cftemplate in "${cffiles[@]}"
       do
         echo ${cftemplate} 
-        
-        if ! aws cloudformation describe-stacks --region ${AWS_DEFAULT_REGION} --stack-name $(${cftemplate} | sed 's/[\/\.]//g) ; then
+        ESCAPEDSTACKNAME=$(${cftemplate} | sed 's/[\/\.]//g)
+        if ! aws cloudformation describe-stacks --region ${AWS_DEFAULT_REGION} --stack-name ${ESCAPEDSTACKNAME} ; then
 
           echo -e "\nStack does not exist, creating ..."
           aws cloudformation create-stack \
             --region ${AWS_DEFAULT_REGION} \
-            --stack-name $(${cftemplate} | sed 's/[\/\.]//g) \
+            --stack-name ${ESCAPEDSTACKNAME} \
             --parameters $cfparams
 
           if [[ ! -z ${SERIALIZED_EXECUTION} ]]; then
             echo "Waiting for stack to be created ..."
             aws cloudformation wait stack-create-complete \
               --region ${AWS_DEFAULT_REGION} \
-              --stack-name $(${cftemplate} | sed 's/[\/\.]//g) 
+              --stack-name ${ESCAPEDSTACKNAME} 
           fi
 
         else
@@ -128,7 +128,7 @@ cf-deploy:
           set +e
           update_output=$( aws cloudformation update-stack \
             --region ${AWS_DEFAULT_REGION} \
-            --stack-name $(${cftemplate} | sed 's/[\/\.]//g) \
+            --stack-name ${ESCAPEDSTACKNAME} \
             --parameters $cfparams  2>&1)
           status=$?
           set -e
@@ -151,7 +151,7 @@ cf-deploy:
             echo "Waiting for stack update to complete ..."
             aws cloudformation wait stack-update-complete \
               --region ${AWS_DEFAULT_REGION} \
-              --stack-name $(${cftemplate} | sed 's/[\/\.]//g)
+              --stack-name ${ESCAPEDSTACKNAME}
           fi
 
         fi
