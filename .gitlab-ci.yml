@@ -8,6 +8,7 @@ variables:
   #if null, find all files containing *.cf.* in all subfolders and sort them in pathname order
   SERIALIZED_EXECUTION: ''
   #if null, submit all templates for synchronous execution, otherwise wait for each template to finish before submitting another
+  CFNLINTARGS: '--ignore-checks W'
 
 cf-lint:
   stage: test
@@ -18,7 +19,7 @@ cf-lint:
     - |
       #pip install cfn-lint
       #set -xv
-      CFNLINTARGS="--ignore-checks W"
+      #CFNLINTARGS="--ignore-checks W"
       echo "Linting all cloudformation files..."
       
       if [[ ! -n "$TEMPLATE_LIST" ]]; then
