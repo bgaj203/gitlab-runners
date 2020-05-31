@@ -2,24 +2,20 @@ image: registry.gitlab.com/guided-explorations/containers/aws-cli-tools/aws-cli
 
 variables:
   AWS_DEFAULT_REGION: 'us-east-1'
-  TEMPLATE_LIST: ''
+  TEMPLATE_LIST: 'CloudFormationUltimateAWSASGLabKit.cf.yml'
   #if present, only these files - in the order provided - will be processed 
   # (overrides .cf. naming requirement), overrides SERIALIZED_EXECUTION
   #if null, find all files containing *.cf.* in all subfolders and sort them in pathname order
   SERIALIZED_EXECUTION: ''
   #if null, submit all templates for synchronous execution, otherwise wait for each template to finish before submitting another
-  #CFNLINTARGS: '--ignore-checks W'
+  CFNLINTARGS: '--ignore-checks W'
+  # override to '' or other args in CI/CD Vars if desired 
 
 cf-lint:
-  stage: test
-  variables:
-    CFNLINTARGS: '--ignore-checks W'
-    # override to '' or other args in CI/CD Vars if desired 
+  stage: test   
   script:
     - |
       #pip install cfn-lint
-      #set -xv
-      #CFNLINTARGS="--ignore-checks W"
       echo "Linting all cloudformation files..."
       
       if [[ ! -n "$TEMPLATE_LIST" ]]; then
