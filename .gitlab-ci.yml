@@ -17,6 +17,8 @@ variables:
   #if null, submit all templates for synchronous execution, otherwise wait for each template to finish before submitting another
   CFNLINTARGS: '--ignore-checks W'
   # override to '' or other args in CI/CD Vars if desired 
+  CF_1OSInstanceOSPlatform: 'Windows'
+  CF_9AWSRetrieveLatestAWSOSAmiIdFromSSM: '/aws/service/ami-windows-latest/Windows_Server-2016-English-Full-ContainersLatest'
 
 get-cf-list:
   stage: resolve-template-list
