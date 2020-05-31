@@ -8,7 +8,7 @@ stages:
 
 variables:
   AWS_DEFAULT_REGION: 'us-east-1'
-  TEMPLATE_LIST: 'CloudFormationUltimateAWSASGLabKit.cf.yml'
+  #TEMPLATE_LIST: 'CloudFormationUltimateAWSASGLabKit.cf.yml'
   #if null, find all files containing *.cf.* in all subfolders and sort them in pathname order
   #if present, only:
   #  1. process the listed files (without requiring ''.cf.' in filename)
@@ -92,6 +92,7 @@ cf-deploy:
   stage: cfn-deploy
   script:
     - |
+      set -xv
       for i in $(printenv | sed 's;=.*;;' | grep 'CF_'); do cfparams="${cfparams} ParameterKey=${i#CF_},ParameterValue=${!i}"; done;
       echo $cfparams
       
