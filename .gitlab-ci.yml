@@ -154,4 +154,5 @@ cf-deploy:
               --stack-name ${cftemplate}
           fi
 
-        fi     
+        fi
+      done    
