@@ -36,12 +36,12 @@ cf-lint:
       #pip install cfn-lint
       echo "Linting all cloudformation files..."
 
-      $TEMPLATE_LIST=$(cat cftemplates.lst)
-      echo "Template list: $TEMPLATE_LIST"
+      $RESOLVED_TEMPLATE_LIST=$(cat cftemplates.lst)
+      echo "Template list: $RESOLVED_TEMPLATE_LIST"
 
       OIFS=$IFS;
       IFS="|";
-      cffiles=($TEMPLATE_LIST)
+      cffiles=($RESOLVED_TEMPLATE_LIST)
       IFS=$OIFS
 
       for cftemplate in "${cffiles[@]}"
@@ -63,11 +63,11 @@ cf-lint:
       for i in $(printenv | sed 's;=.*;;' | grep 'CF_'); do cfparams="${cfparams} ParameterKey=${i#CF_},ParameterValue=${!i}"; done;
       echo $cfparams
       
-      $TEMPLATE_LIST=$(cat cftemplates.lst)
+      $RESOLVED_TEMPLATE_LIST=$(cat cftemplates.lst)
 
       OIFS=$IFS;
       IFS="|";
-      cffiles=($TEMPLATE_LIST)
+      cffiles=($RESOLVED_TEMPLATE_LIST)
       IFS=$OIFS
 
       for cftemplate in "${cffiles[@]}"
