@@ -29,15 +29,15 @@ cf-lint:
 
       OIFS=$IFS;
       IFS="|";
-      args=($TEMPLATE_LIST)
+      cffiles=($TEMPLATE_LIST)
 
-      #IFS="," GLOBIGNORE='*' args=($(echo "$TEMPLATE_LIST" \
+      #IFS="," GLOBIGNORE='*' cffiles=($(echo "$TEMPLATE_LIST" \
       #| xargs -0 bash -c 'for arg in "$@"; do echo "$arg"; done'))
-      for cftemplate in "${args[@]}"
+      for cftemplate in "${cffiles[@]}"
       do
         echo "  ${cftemplate}"
-        cfn-lint --template ${cftemplate} --region ${AWS_DEFAULT_REGION} $CFNLINTARGS --format junit > cfn-lint-test-results.xml || true
-        cfn-lint --template ${cftemplate} --region ${AWS_DEFAULT_REGION} $CFNLINTARGS
+        cfn-lint --template ${cftemplate} --region ${AWS_DEFAULT_REGION} ${CFNLINTARGS} --format junit > cfn-lint-test-results.xml || true
+        cfn-lint --template ${cftemplate} --region ${AWS_DEFAULT_REGION} ${CFNLINTARGS}
 
       done
 
