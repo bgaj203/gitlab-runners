@@ -1,5 +1,10 @@
 image: registry.gitlab.com/guided-explorations/containers/aws-cli-tools/aws-cli
 
+stages:
+  - resolve-template-list
+  - cfn-lint
+  - cfn-changeset
+
 variables:
   AWS_DEFAULT_REGION: 'us-east-1'
   TEMPLATE_LIST: 'CloudFormationUltimateAWSASGLabKit.cf.yml'
@@ -13,7 +18,7 @@ variables:
   # override to '' or other args in CI/CD Vars if desired 
 
 get-cf-list:
-  stage: .pre
+  stage: resolve-template-list
   script:
     - |
       echo "Figuring out the template list and storing it in cftemplates.lst"
@@ -31,7 +36,7 @@ get-cf-list:
       - cftemplates.lst    
 
 cf-lint:
-  stage: test   
+  stage: cfn-lint   
   script:
     - |
       #pip install cfn-lint
@@ -58,7 +63,7 @@ cf-lint:
       junit: "*.xml"
 
 cf-changeset:
-  stage: changset
+  stage: cfn-changeset
   script:
     - |
       for i in $(printenv | sed 's;=.*;;' | grep 'CF_'); do cfparams="${cfparams} ParameterKey=${i#CF_},ParameterValue=${!i}"; done;
@@ -75,7 +80,7 @@ cf-changeset:
       do
         echo ${cftemplate} aws cli command here
         if [[ ! -z ${SORT_AND_SERIALIZE} ]]; then
-          aws cloudformation create-changeset --stack-name ${cftemplate}  
+          aws cloudformation create-changeset --stack-name ${cftemplate} --region ${AWS_DEFAULT_REGION} 
             --template-body file://${cftemplate} 
             --parameters $cfparams
         fi
