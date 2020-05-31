@@ -57,14 +57,14 @@ cf-lint:
     reports:
       junit: "*.xml"
 
-.cf-changeset:
+cf-changeset:
   stage: changset
   script:
     - |
       for i in $(printenv | sed 's;=.*;;' | grep 'CF_'); do cfparams="${cfparams} ParameterKey=${i#CF_},ParameterValue=${!i}"; done;
       echo $cfparams
       
-      $RESOLVED_TEMPLATE_LIST=$(cat cftemplates.lst)
+      RESOLVED_TEMPLATE_LIST=$(cat cftemplates.lst)
 
       OIFS=$IFS;
       IFS="|";
@@ -75,11 +75,11 @@ cf-lint:
       do
         echo ${cftemplate} aws cli command here
         if [[ ! -z ${SORT_AND_SERIALIZE} ]]; then
-          echo "wait for cf stack status"
+          aws cloudformation create-changeset --stack-name ${cftemplate}  
+            --template-body file://${cftemplate} 
+            --parameters $cfparams
         fi
       else
 
 
-      aws cloudformation create-stack  --stack-name startmyinstance  
-        --template-body file://home/ec2-user/templates/startmyinstance.json 
-        --parameters $cfparams
+      
