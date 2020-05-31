@@ -11,13 +11,14 @@ variables:
 
 cf-lint:
   stage: test
-  variables:
-    CFNLINTARGS: "--ignore-checks W"
+  #variables:
+    #CFNLINTARGS: "--ignore-checks W"
     # override to '' or other args in CI/CD Vars if desired 
   script:
     - |
       #pip install cfn-lint
       #set -xv
+      CFNLINTARGS="--ignore-checks W"
       echo "Linting all cloudformation files..."
       
       if [[ ! -n "$TEMPLATE_LIST" ]]; then
@@ -30,6 +31,7 @@ cf-lint:
       OIFS=$IFS;
       IFS="|";
       cffiles=($TEMPLATE_LIST)
+      IFS=$OIFS
 
       #IFS="," GLOBIGNORE='*' cffiles=($(echo "$TEMPLATE_LIST" \
       #| xargs -0 bash -c 'for arg in "$@"; do echo "$arg"; done'))
