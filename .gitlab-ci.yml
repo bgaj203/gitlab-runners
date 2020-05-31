@@ -83,7 +83,7 @@ cf-lint:
       do
         echo ${cftemplate} aws cli command here
         if [[ ! -z ${SORT_AND_SERIALIZE} ]]; then
-          aws cloudformation create-changeset --stack-name ${cftemplate} --region ${AWS_DEFAULT_REGION} 
+          aws cloudformation create-changeset --stack-name $(${cftemplate} | sed 's/[\/\.]//g) --region ${AWS_DEFAULT_REGION} 
             --template-body file://${cftemplate} 
             --parameters $cfparams
         fi
@@ -107,19 +107,19 @@ cf-deploy:
       do
         echo ${cftemplate} 
         
-        if ! aws cloudformation describe-stacks --region ${AWS_DEFAULT_REGION} --stack-name ${cftemplate} ; then
+        if ! aws cloudformation describe-stacks --region ${AWS_DEFAULT_REGION} --stack-name $(${cftemplate} | sed 's/[\/\.]//g) ; then
 
           echo -e "\nStack does not exist, creating ..."
           aws cloudformation create-stack \
             --region ${AWS_DEFAULT_REGION} \
-            --stack-name ${cftemplate} \
+            --stack-name $(${cftemplate} | sed 's/[\/\.]//g) \
             --parameters $cfparams
 
           if [[ ! -z ${SERIALIZED_EXECUTION} ]]; then
             echo "Waiting for stack to be created ..."
             aws cloudformation wait stack-create-complete \
               --region ${AWS_DEFAULT_REGION} \
-              --stack-name ${cftemplate} 
+              --stack-name $(${cftemplate} | sed 's/[\/\.]//g) 
           fi
 
         else
@@ -128,7 +128,7 @@ cf-deploy:
           set +e
           update_output=$( aws cloudformation update-stack \
             --region ${AWS_DEFAULT_REGION} \
-            --stack-name ${cftemplate} \
+            --stack-name $(${cftemplate} | sed 's/[\/\.]//g) \
             --parameters $cfparams  2>&1)
           status=$?
           set -e
@@ -151,7 +151,7 @@ cf-deploy:
             echo "Waiting for stack update to complete ..."
             aws cloudformation wait stack-update-complete \
               --region ${AWS_DEFAULT_REGION} \
-              --stack-name ${cftemplate}
+              --stack-name $(${cftemplate} | sed 's/[\/\.]//g)
           fi
 
         fi
