@@ -15,6 +15,7 @@ get-cf-list:
   stage: .pre
   script:
     - |
+      echo "Figuring out the template list and storing it in cftemplates.lst"
       if [[ ! -n "$TEMPLATE_LIST" ]]; then
         echo "\$TEMPLATE_LIST is empty, finding and sorting all files in directory tree with pattern *.cf.* ..."
         TEMPLATE_LIST=$(find . -name '*.cf.*' -type f -printf "%p|" | sort -n -z)
@@ -36,6 +37,7 @@ cf-lint:
       echo "Linting all cloudformation files..."
 
       $TEMPLATE_LIST=$(cat cftemplates.lst)
+      echo "Template list: $TEMPLATE_LIST"
 
       OIFS=$IFS;
       IFS="|";
@@ -61,8 +63,14 @@ cf-lint:
       for i in $(printenv | sed 's;=.*;;' | grep 'CF_'); do cfparams="${cfparams} ParameterKey=${i#CF_},ParameterValue=${!i}"; done;
       echo $cfparams
       
-      
-      find . -name '*.cf.*' -type f -printf "\"%p\" " | sort -n -z | while read cftemplate;
+      $TEMPLATE_LIST=$(cat cftemplates.lst)
+
+      OIFS=$IFS;
+      IFS="|";
+      cffiles=($TEMPLATE_LIST)
+      IFS=$OIFS
+
+      for cftemplate in "${cffiles[@]}"
       do
         echo ${cftemplate} aws cli command here
         if [[ ! -z ${SORT_AND_SERIALIZE} ]]; then
