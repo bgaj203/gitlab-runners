@@ -84,9 +84,9 @@ cf-lint:
 
       for cftemplate in "${cffiles[@]}"
       do
-        echo ${cftemplate} aws cli command here
+        ESCAPEDSTACKNAME="$(echo ${cftemplate} | sed 's/[\/\.]//g')-$CI_COMMIT_REF_NAME"
         if [[ ! -z ${SORT_AND_SERIALIZE} ]]; then
-          aws cloudformation create-changeset --stack-name $(${cftemplate} | sed 's/[\/\.]//g) --region ${AWS_DEFAULT_REGION} 
+          aws cloudformation create-changeset --stack-name ${ESCAPEDSTACKNAME} --region ${AWS_DEFAULT_REGION} 
             --template-body file://${cftemplate} 
             --parameters $cfparams
         fi
@@ -110,7 +110,13 @@ cf-deploy:
       do
         #cftemplate=$(echo $cftemplateraw | sed 's/^\.\//')
         echo "${cftemplate}" 
-        ESCAPEDSTACKNAME=$(echo ${cftemplate} | sed 's/[\/\.]//g')
+        ESCAPEDSTACKNAME="$(echo ${cftemplate} | sed 's/[\/\.]//g')-$CI_COMMIT_REF_NAME"
+
+        echo -e "\nValidating template ..."
+        aws cloudformation validate-template \
+          --region ${AWS_DEFAULT_REGION} \
+          --template-body file://${cftemplate} \
+
         if ! aws cloudformation describe-stacks --region ${AWS_DEFAULT_REGION} --stack-name ${ESCAPEDSTACKNAME} ; then
 
           echo -e "\nStack does not exist, creating ..."
