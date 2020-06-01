@@ -27,7 +27,7 @@ get-cf-list:
       echo "Figuring out the template list and storing it in cftemplates.lst"
       if [[ ! -n "$TEMPLATE_LIST" ]]; then
         echo "\$TEMPLATE_LIST is empty, finding and sorting all files in directory tree with pattern *.cf.* ..."
-        TEMPLATE_LIST=$(find . -name '*.cf.*' -type f -printf "%P|" | sort -n -z)
+        TEMPLATE_LIST=$(find . -name '*.cf.*' -type f -printf "$(PWD)/%P|" | sort -n -z)
       fi
       
       echo "Template list: $TEMPLATE_LIST"
