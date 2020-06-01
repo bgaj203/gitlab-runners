@@ -64,13 +64,14 @@ cf-lint:
   artifacts:
     reports:
       junit: "*.xml"
-    files:
+    paths:
       - "*.xml"
 
 .cf-changeset:
   stage: cfn-changeset
   script:
     - |
+      #Not implmented yet.  Create change set, describe into artifact, delete?
       for i in $(printenv | sed 's;=.*;;' | grep 'CF_'); do cfparams="${cfparams} ParameterKey=${i#CF_},ParameterValue=${!i}"; done;
       echo $cfparams
       
