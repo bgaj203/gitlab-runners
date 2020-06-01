@@ -27,7 +27,7 @@ get-cf-list:
       echo "Figuring out the template list and storing it in cftemplates.lst"
       if [[ ! -n "$TEMPLATE_LIST" ]]; then
         echo "\$TEMPLATE_LIST is empty, finding and sorting all files in directory tree with pattern *.cf.* ..."
-        TEMPLATE_LIST=$(find . -name '*.cf.*' -type f -printf "$(PWD)/%P|" | sort -n -z)
+        TEMPLATE_LIST=$(find . -name '*.cf.*' -type f -printf "$(pwd)/%P|" | sort -n -z)
       fi
       
       echo "Template list: $TEMPLATE_LIST"
@@ -109,6 +109,7 @@ cf-deploy:
       for cftemplate in "${cffiles[@]}"
       do
         #cftemplate=$(echo $cftemplateraw | sed 's/^\.\//')
+        #cftemplate="$(pwd)/$cftemplate"
         echo "${cftemplate}" 
         ESCAPEDSTACKNAME="$(echo ${cftemplate} | sed 's/[\/\.]//g')-$CI_COMMIT_REF_NAME"
 
