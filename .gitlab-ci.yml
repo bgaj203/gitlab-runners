@@ -27,7 +27,7 @@ get-cf-list:
       echo "Figuring out the template list and storing it in cftemplates.lst"
       if [[ ! -n "$TEMPLATE_LIST" ]]; then
         echo "\$TEMPLATE_LIST is empty, finding and sorting all files in directory tree with pattern *.cf.* ..."
-        TEMPLATE_LIST=$(find . -name '*.cf.*' -type f -printf "%p|" | sort -n -z)
+        TEMPLATE_LIST=$(find . -name '*.cf.*' -type f -printf "%P|" | sort -n -z)
       fi
       
       echo "Template list: $TEMPLATE_LIST"
@@ -105,9 +105,9 @@ cf-deploy:
       cffiles=($RESOLVED_TEMPLATE_LIST)
       IFS=$OIFS
 
-      for cftemplateraw in "${cffiles[@]}"
+      for cftemplate in "${cffiles[@]}"
       do
-        cftemplate=$(echo $cftemplateraw | sed 's/^\.\//')
+        #cftemplate=$(echo $cftemplateraw | sed 's/^\.\//')
         echo "${cftemplate}" 
         ESCAPEDSTACKNAME=$(echo ${cftemplate} | sed 's/[\/\.]//g')
         if ! aws cloudformation describe-stacks --region ${AWS_DEFAULT_REGION} --stack-name ${ESCAPEDSTACKNAME} ; then
