@@ -113,6 +113,7 @@ cf-deploy:
           aws cloudformation create-stack \
             --region ${AWS_DEFAULT_REGION} \
             --stack-name ${ESCAPEDSTACKNAME} \
+            --template-body file://${cftemplate} \
             --parameters $cfparams
 
           if [[ ! -z ${SERIALIZED_EXECUTION} ]]; then
@@ -129,6 +130,7 @@ cf-deploy:
           update_output=$( aws cloudformation update-stack \
             --region ${AWS_DEFAULT_REGION} \
             --stack-name ${ESCAPEDSTACKNAME} \
+            --template-body file://${cftemplate} \            
             --parameters $cfparams  2>&1)
           status=$?
           set -e
