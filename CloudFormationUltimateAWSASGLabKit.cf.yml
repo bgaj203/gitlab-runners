@@ -92,6 +92,14 @@ Parameters:
     AllowedValues: 
       - ReplaceEntireASG
       - RollingThroughInstances
+  4ASGECSEnabled:
+    Description: >
+      Setup ECS for this asg.
+    Type: String
+    Default: false
+    AllowedValues: 
+      - true
+      - false      
   5ASGAutoScalingEnabled:
     Description: >
       Setting to false still allows for High Availability - either HOT/Warm HA with 1 instance or HOT/HOT HA for 2 or more instances. 
@@ -252,6 +260,7 @@ Parameters:
       /aws/service/ami-windows-latest/Windows_Server-2016-English-Full-ContainersLatest,/aws/service/ami-windows-latest/Windows_Server-2019-English-Core-ContainersLatest,
       /aws/service/ami-windows-latest/Windows_Server-2019-English-Full-ContainersLatest,/aws/service/ami-windows-latest/Windows_Server-1903-English-Core-ContainersLatest,
       /aws/service/ami-windows-latest/Windows_Server-1809-English-Core-ContainersLatest
+      COMMON LINUX OPTIONS: /aws/service/ecs/optimized-ami/amazon-linux/recommended/image_id
     Type: 'AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>'
     Default: '/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2'
   ELBName:
@@ -295,6 +304,30 @@ Resources:
     Properties:
       Path: /
       Roles: [ !Ref ASGRebootRole ]
+
+  ECSAccessPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      Description: ECS Permissions.    
+      ManagedPolicyName: !Sub "${AWS::StackName}-ECSAccessPolicy"
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+        - Sid: ECSAccessPolicy
+          Resource: "*"
+          Effect: Allow
+          Action:
+            - ecs:CreateCluster
+            - ecs:DeregisterContainerInstance
+            - ecs:DiscoverPollEndpoint
+            - ecs:Poll
+            - ecs:RegisterContainerInstance
+            - ecs:StartTelemetrySession
+            - ecs:Submit*
+            - ecr:BatchCheckLayerAvailability
+            - ecr:BatchGetImage
+            - ecr:GetDownloadUrlForLayer
+            - ecr:GetAuthorizationToken
 
   ASGSelfAccessPolicy:
     Type: AWS::IAM::ManagedPolicy
@@ -406,12 +439,14 @@ Resources:
             - !Sub "arn:aws:iam::${AWS::AccountId}:policy/${AWS::StackName}-ASGSelfAccessPolicy"
             - !Sub "arn:aws:iam::${AWS::AccountId}:policy/${AWS::StackName}-EC2SelfAccessPolicy"
             - !Sub "arn:aws:iam::${AWS::AccountId}:policy/${AWS::StackName}-SSMParameterStorePolicy"
-            - !Sub "arn:aws:iam::${AWS::AccountId}:policy/${AWS::StackName}-ASGBucketPolicy"       
+            - !Sub "arn:aws:iam::${AWS::AccountId}:policy/${AWS::StackName}-ASGBucketPolicy"      
+            - !Sub "arn:aws:iam::${AWS::AccountId}:policy/${AWS::StackName}-ECSAccessPolicy"             
           - 
             - !Sub "arn:aws:iam::${AWS::AccountId}:policy/${AWS::StackName}-ASGSelfAccessPolicy"
             - !Sub "arn:aws:iam::${AWS::AccountId}:policy/${AWS::StackName}-EC2SelfAccessPolicy"
             - !Sub "arn:aws:iam::${AWS::AccountId}:policy/${AWS::StackName}-SSMParameterStorePolicy"
             - !Sub "arn:aws:iam::${AWS::AccountId}:policy/${AWS::StackName}-ASGBucketPolicy"
+            - !Sub "arn:aws:iam::${AWS::AccountId}:policy/${AWS::StackName}-ECSAccessPolicy"
 
   SSMSyntheticCPULoad:
     Type: AWS::SSM::Parameter
@@ -440,20 +475,28 @@ Resources:
       VersioningConfiguration:
         Status: Enabled
 
+  ECSCluster:
+    Type: AWS::ECS::Cluster
+    Condition: CreateECSCluster
+    Properties:
+      ClusterName: !Sub "${AWS::StackName}-ecscluster"
+
   InstanceASG:
     Type: AWS::AutoScaling::AutoScalingGroup
     CreationPolicy:
       AutoScalingCreationPolicy:
         MinSuccessfulInstancesPercent: 75
-      ResourceSignal:     
-        !If
-          - InstancePlatformLinux
-          - 
-            Timeout: PT15M
-            Count: !Ref 4ASGDesiredCapacity
-          - 
-            Timeout: PT1H
-            Count: !Ref 4ASGDesiredCapacity
+      ResourceSignal:   
+        Timeout: !If [InstancePlatformLinux,PT15M,PT1H] 
+        Count: !Ref 4ASGDesiredCapacity          
+        # !If
+        #   - InstancePlatformLinux
+        #   - 
+        #     Timeout: PT15M
+        #     Count: !Ref 4ASGDesiredCapacity
+        #   - 
+        #     Timeout: PT1H
+        #     Count: !Ref 4ASGDesiredCapacity
     # Decide which UpdatePolicy to uncomment to see this template work with either one.
     UpdatePolicy:
       AutoScalingRollingUpdate:

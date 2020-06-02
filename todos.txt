@@ -1,4 +1,7 @@
 
+ecs fargate runner:
+- Docker file and build for docker containers
+
 Add EBS Warming with:
 
   1OSWarmAllEBSVolumes:
