@@ -305,30 +305,6 @@ Resources:
       Path: /
       Roles: [ !Ref ASGRebootRole ]
 
-  ECSAccessPolicy:
-    Type: AWS::IAM::ManagedPolicy
-    Properties:
-      Description: ECS Permissions.    
-      ManagedPolicyName: !Sub "${AWS::StackName}-ECSAccessPolicy"
-      PolicyDocument:
-        Version: 2012-10-17
-        Statement:
-        - Sid: ECSAccessPolicy
-          Resource: "*"
-          Effect: Allow
-          Action:
-            - ecs:CreateCluster
-            - ecs:DeregisterContainerInstance
-            - ecs:DiscoverPollEndpoint
-            - ecs:Poll
-            - ecs:RegisterContainerInstance
-            - ecs:StartTelemetrySession
-            - ecs:Submit*
-            - ecr:BatchCheckLayerAvailability
-            - ecr:BatchGetImage
-            - ecr:GetDownloadUrlForLayer
-            - ecr:GetAuthorizationToken
-
   ASGSelfAccessPolicy:
     Type: AWS::IAM::ManagedPolicy
     Properties:
