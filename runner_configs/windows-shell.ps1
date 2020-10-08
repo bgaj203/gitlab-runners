@@ -12,15 +12,15 @@
 #$AWS_REGION="$($(invoke-restmethod 169.254.169.254/latest/meta-data/placement/availability-zone) -replace '.$')"
 #$NAMEOFASG=$(aws ec2 describe-tags --region $AWS_REGION --filters Name=resource-id,Values=$MYINSTANCEID Name=key,Values=aws:autoscaling:groupName | convertfrom-json).tags.value
 #$MYINSTANCEID="$(invoke-restmethod http://169.254.169.254/latest/meta-data/instance-id)"
-$RunnerVersion="latest"
-$RunnerExecutor='shell'
-$RunnerOSTags="$($INSTANCEOSPLATFORM.ToLower())"
-$RunnerTagList="TagA,TagB"
-$RunnerConfigTomlTemplate #(Embedded, local or s3:// or http*://)
-#$GITLABRunnerRegTokenList='f3QN1vAeQq-MQx2_u9ML'
-$RunnerGitLabInstanceURL='https://gitlab.demo.i2p.online/'
-$RunnerInstallRoot='C:\GitLab-Runner'
-$RunnerConfigToml="$RunnerInstallRoot\config.toml"
+# $GITLABRunnerVersion="latest"
+# $RunnerExecutor='shell'
+# $RunnerOSTags="$($INSTANCEOSPLATFORM.ToLower())"
+# $RunnerTagList="TagA,TagB"
+# $RunnerConfigTomlTemplate #(Embedded, local or s3:// or http*://)
+# #$GITLABRunnerRegTokenList='f3QN1vAeQq-MQx2_u9ML'
+# $GITLABRunnerInstanceURL='https://gitlab.demo.i2p.online/'
+# $RunnerInstallRoot='C:\GitLab-Runner'
+# $RunnerConfigToml="$RunnerInstallRoot\config.toml"
 
 $RunnerCompleteTagList = $RunnerOSTags, $RunnerExecutor, $RunnerTagList -join ','
 
@@ -46,7 +46,7 @@ logit "Installing runner"
 if (!(Test-Path $RunnerInstallRoot)) {New-Item -ItemType Directory -Path $RunnerInstallRoot}
 #Most broadly compatible way to download file in PowerShell
 If (!(Test-Path "$RunnerInstallRoot\gitlab-runner.exe")) {
-  (New-Object System.Net.WebClient).DownloadFile("https://gitlab-runner-downloads.s3.amazonaws.com/$($RunnerVersion.tolower())/binaries/gitlab-runner-windows-amd64.exe", "$RunnerInstallRoot\gitlab-runner.exe")
+  (New-Object System.Net.WebClient).DownloadFile("https://gitlab-runner-downloads.s3.amazonaws.com/$($GITLABRunnerVersion.tolower())/binaries/gitlab-runner-windows-amd64.exe", "$RunnerInstallRoot\gitlab-runner.exe")
 }
 
 #Write runner config.toml
@@ -65,7 +65,7 @@ foreach ($RunnerRegToken in $GITLABRunnerRegTokenList.split(',')) {
      --config $RunnerConfigToml `
      $OptionalParameters `
      --non-interactive `
-     --url $RunnerGitLabInstanceURL `
+     --url $GITLABRunnerInstanceURL `
      --registration-token $RunnerRegToken `
      --name $RunnerName `
      --tag-list $RunnerCompleteTagList `
@@ -75,7 +75,7 @@ foreach ($RunnerRegToken in $GITLABRunnerRegTokenList.split(',')) {
 #rename instance to include -glrunner ?
 #aws ec2 describe-tags --filters "Name=resource-id,Values=$MYINSTANCEID"
 
-aws ec2 create-tags --region $AWS_REGION --resources $MYINSTANCEID --tags "Key=`"GitLabRunnerName`",Value=$RunnerName" "Key=`"GitLabURL`",Value=$RunnerGitLabInstanceURL" "Key=`"GitLabRunnerTags`",`"Value=$($RunnerCompleteTagList.split(',') -join ('\,'))`""
+aws ec2 create-tags --region $AWS_REGION --resources $MYINSTANCEID --tags "Key=`"GitLabRunnerName`",Value=$RunnerName" "Key=`"GitLabURL`",Value=$GITLABRunnerInstanceURL" "Key=`"GitLabRunnerTags`",`"Value=$($RunnerCompleteTagList.split(',') -join ('\,'))`""
 
 .\gitlab-runner.exe start
 
