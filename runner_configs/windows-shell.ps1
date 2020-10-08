@@ -15,14 +15,14 @@
 # $GITLABRunnerVersion="latest"
 # $RunnerExecutor='shell'
 # $RunnerOSTags="$($INSTANCEOSPLATFORM.ToLower())"
-# $RunnerTagList="TagA,TagB"
+# $GITLABRunnerTagList="TagA,TagB"
 # $RunnerConfigTomlTemplate #(Embedded, local or s3:// or http*://)
 # #$GITLABRunnerRegTokenList='f3QN1vAeQq-MQx2_u9ML'
 # $GITLABRunnerInstanceURL='https://gitlab.demo.i2p.online/'
 # $RunnerInstallRoot='C:\GitLab-Runner'
 # $RunnerConfigToml="$RunnerInstallRoot\config.toml"
 
-$RunnerCompleteTagList = $RunnerOSTags, $RunnerExecutor, $RunnerTagList -join ','
+$RunnerCompleteTagList = $RunnerOSTags, $RunnerExecutor, $GITLABRunnerTagList -join ','
 
 if (Test-Path variable:COMPUTETYPE) {$RunnerCompleteTagList = $RunnerCompleteTagList, COMPUTETYPE-$COMPUTETYPE -join ','}
 
