@@ -24,7 +24,7 @@
 
 $RunnerCompleteTagList = $RunnerOSTags, $RunnerExecutor, $GITLABRunnerTagList -join ','
 
-if (Test-Path variable:COMPUTETYPE) {$RunnerCompleteTagList = $RunnerCompleteTagList, COMPUTETYPE-$COMPUTETYPE -join ','}
+if (Test-Path variable:COMPUTETYPE) {$RunnerCompleteTagList = $RunnerCompleteTagList, "COMPUTETYPE-$COMPUTETYPE" -join ','}
 
 
 write-host "GITLABRunnerRegTokenList: $GITLABRunnerRegTokenList"
