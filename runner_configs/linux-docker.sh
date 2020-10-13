@@ -4,13 +4,13 @@
 
 # Update packages
 
-RunnerVersion="latest"
+GITLABRunnerVersion="latest"
 RunnerExecutor='shell'
 RunnerOSTags="$($INSTANCEOSPLATFORM.ToLower())"
-RunnerTagList="TagA,TagB"
+GITLABRunnerTagList="TagA,TagB"
 RunnerConfigTomlTemplate #(Embedded, local or s3:// or http*://)
 GITLABRunnerRegTokenList='f3QN1vAeQq-MQx2_u9ML'
-RunnerGitLabInstanceURL='https://gitlab.demo.i2p.online/'
+GITLABRunnerInstanceURL='https://gitlab.demo.i2p.online/'
 RunnerInstallRoot='/gitlab-runner'
 RunnerConfigToml="$RunnerInstallRoot/config.toml"
 function logit() {

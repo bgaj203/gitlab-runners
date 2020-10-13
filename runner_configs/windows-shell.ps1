@@ -95,9 +95,10 @@ if ( (aws autoscaling describe-auto-scaling-instances --instance-ids $MYINSTANCE
   logit "This instance ($MYINSTANCEID) is being terminated, perform cleanup..."
 
   cd $RunnerInstallRoot
-  .\gitlab-runner.exe unregister --config $RunnerInstallRoot\config.toml --all-runners 
 
   .\gitlab-runner.exe stop
+
+  .\gitlab-runner.exe unregister --config $RunnerInstallRoot\config.toml --all-runners 
 
   aws autoscaling complete-lifecycle-action --region $AWS_REGION --lifecycle-action-result CONTINUE --instance-id $MYINSTANCEID --lifecycle-hook-name instance-terminating --auto-scaling-group-name $NAMEOFASG
   logit "This instance ($MYINSTANCEID) is ready for termination"

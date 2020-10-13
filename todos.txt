@@ -1,6 +1,11 @@
 
-ecs fargate runner:
-- Docker file and build for docker containers
+
+Debugging
+cat \programdata\Amazon\EC2-Windows\Launch\Log\UserdataExecution.log
+
+$lastdate=$(Get-date).addminutes(-5);while ($True) {$newdate=get-date;get-winevent Application -ea 0 | ? {$_.TimeCreated -ge $lastdate -AND $_.TimeCreated -le $newdate}| Sort-Object TimeCreated;$lastdate=$newdate;start-sleep -milliseconds 330}
+
+If (!(Test-Path env:chocolateyinstall)) {iwr https://chocolatey.org/install.ps1 -UseBasicParsing | iex} ; cinst -y nano
 
 Add EBS Warming with:
 

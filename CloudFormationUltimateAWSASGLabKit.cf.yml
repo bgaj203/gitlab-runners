@@ -28,7 +28,8 @@ Parameters:
     Description: >
       Enter "Linux" or "Windows".  AMI specified in 9AWSRetrieveLatestAWSOSAmiIdFromSSM or 1OSPeggedAMIID must contain this platform choice.
     Type: String
-    Default: Linux
+    Default: Windows
+    #Reset above to: Linux
     AllowedValues: 
       - Linux
       - Windows
@@ -43,7 +44,8 @@ Parameters:
   1OSPatchScope:
     Description: What types of patches to apply
     Type: String
-    Default: All
+    Default: NoPatching-OnlyForDebugging
+    #Reset above to: All
     AllowedValues: 
       - All
       - SecurityOnly
@@ -72,10 +74,35 @@ Parameters:
     AllowedValues: 
       - true
       - false 
+  3GITLABRunnerExecutor:
+    Description: Type of runner executor
+    Type: String
+    Default: shell
+    #Reset to: docker
+    AllowedValues: 
+      - shell
+      - docker
+      - docker+machine 
+  3GITLABRunnerInstanceURL:
+    Description: >
+      The url of the instance that the runner will register (must be reachable from runner instance on port 443 with return conversations).
+    Type: String
+    Default: https://gitlab-core.us.gitlabdemo.cloud/
+    #Reset to: https://gitlab.com
+  3GITLABRunnerTagList:
+    Description: > 
+      Supplemental tags to identify the runner (comma delimited) in GitLab and AWS Instance tags.  
+      The runner will automatically have tags for the operating system platform,whether or not the compute is spot or ondemand and the executor type.
+      Ec2 tags will also include the runner name and the gitlab instance url.
+    Type: String
+    Default: TagA,TagB  
   3GITLABRunnerRegTokenList:
     Description: One or more runner tokens to register (comma delimited)
     Type: String
-    Default: false
+  3GITLABRunnerVersion:
+    Description: Version of the GitLab Runner to install (defaults to latest)
+    Type: String
+    Default: latest
   4ASGDesiredCapacity:
     Description: >
       This template uses ASGs for HA - even if you choose not to autoscale.
@@ -84,7 +111,8 @@ Parameters:
       For testing, a desired capacity of 4 is a good number for testing rolling updates.  
       For testing all other functionality 1 is sufficient to observe how the userdata code processes to accomplish the yum update and reboot before the lifecycle hook.
     Type: Number
-    Default: 4
+    Default: 2
+    #Reset above to: 1
   4ASGUpdateType:
     Description: (Only Applies To Updates) Whether ASG Update Should Do a Rolling Update or an ASG Replacement.
     Type: String
@@ -92,14 +120,6 @@ Parameters:
     AllowedValues: 
       - ReplaceEntireASG
       - RollingThroughInstances
-  4ASGECSEnabled:
-    Description: >
-      Setup ECS for this asg.
-    Type: String
-    Default: false
-    AllowedValues: 
-      - true
-      - false      
   5ASGAutoScalingEnabled:
     Description: >
       Setting to false still allows for High Availability - either HOT/Warm HA with 1 instance or HOT/HOT HA for 2 or more instances. 
@@ -153,7 +173,7 @@ Parameters:
     Description: >
       A bucket to which all instances will be given read and write permissions for purposes such as CodeDeploy, SSM Remote Command and Inventory.
       Values: "none" - do not create bucket or permissions. 
-      "CreateOneForMe" - create a new, ASG unique bucket and permissions. 
+      "CreateOneForMe" - create a new, ASG unique bucket and permissions. Uses the stack name, which then must be all lowercase for the bucket to create properly. 
       "SpecificName" - presumed to be a preexisting bucket to which read / write permissions are already present. Generally used
       with a customer override IAM Instance Profile Role.
     Type: String
@@ -175,6 +195,8 @@ Parameters:
       sizes small because the lowest price will always be choosen and is likely cheaper than small on demand instances.
       More information: https://docs.aws.amazon.com/autoscaling/ec2/APIReference/API_InstancesDistribution.html
     Type: String
+    Default: "m5.large"
+    #Remove Default
   5SPOTInstanceType3:
     Description: >
       At least one instancetype is required, use at least 2 to demonstrate spot. You do not have to keep your instance
@@ -201,7 +223,8 @@ Parameters:
       Sets a minimum number of always on on-demand (non-spot) base capacity.  The number of instances here will benefit from InstanceType 
       exhaustion, but not spot pricing. Set to 0 for a 100% spot cluster.
     Type: Number
-    Default: 0
+    Default: 1
+    #Reset above to: 0
   5SPOTOnDemandPercentageAboveBaseCapacity: 
     Description: >
       ATTENTION: DISABLING SPOT *instance usage* is achieved by setting this value to 0 (zero). It still results in a spot setup, but none of
@@ -210,7 +233,8 @@ Parameters:
       count in 5SPOTOnDemandBaseCapacity.
       Set to 100 for a 100% spot cluster.
     Type: Number
-    Default: 0
+    Default: 100
+    #Reset above to: 0    
   8DBGCPULoadPercentInitialValue:
     Description: >
       WARNING: Everything is 1 minute granularity - so don't set this to cause scaling and forget it unless you want a massive AWS bill ;)
@@ -224,23 +248,21 @@ Parameters:
       For parameters above that range, setup your steps below 90 and test them and then once verified, update the numbers to the
       higher values.
     Type: String
+    Default: 25
+    #Remove Default
   8DBGKeypairName:
-    Description: Spins instances with a keypair to allow connection.
-    Type: String 
+    Description: Spins instances with a keypair to allow connection. Not needed if TroubleShootingMode is enabled.
+    Type: String
+    Default: dsanoy 
+    #Remove Default
   8DBGTroubleShootingMode:
     Description: Enables troubleshooting - enables SSM and configures Instance Profile IAM so SSM Session Manager can logon.
     Type: String
-    Default: false
+    Default: true
+    #Reset above to: false
     AllowedValues: 
       - true
-      - false    
-  8DBGSetupPseudoWebApp:
-    Description: Puts up a web server with a simple landing page to map an ELB to it.  Warning, adds an ingress for port 80 to the VPC default security group.
-    Type: String
-    Default: false
-    AllowedValues: 
-      - true
-      - false    
+      - false     
   9AWSSpecifiedIAMRoleNAME:
     Description: >
       Uses the specified IAM Role as the Instance Profile rather than building one. Must be the Role NAME (NOT THE ARN) which 
@@ -262,20 +284,11 @@ Parameters:
       /aws/service/ami-windows-latest/Windows_Server-1809-English-Core-ContainersLatest
       COMMON LINUX OPTIONS: /aws/service/ecs/optimized-ami/amazon-linux/recommended/image_id
     Type: 'AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>'
-    Default: '/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2'
-  ELBName:
-    Description: ELBName (Optional) - overrides same name in parent stack exports if both are provided
-    Type: String
-  ParentStackName:
-    Description: Parent stack name (Optional) - passes resources including ELBName
-    Type: String
-
+    Default: '/aws/service/ami-windows-latest/Windows_Server-2019-English-Core-ContainersLatest'
+    #Reset above to: '/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2'
 Conditions: 
   CreateDebugResources: !Equals [ !Ref 8DBGTroubleShootingMode, "true" ]
   ReplaceEntireASG: !Equals [ !Ref 4ASGUpdateType, "ReplaceEntireASG" ]
-  8DBGSetupPseudoWebApp: !Equals [ !Ref 8DBGSetupPseudoWebApp, "true" ]
-  ParentStackNameWasPassed: !Not [ !Equals [ !Ref ParentStackName, "" ]]
-  ELBNameWasPassed: !Not [ !Equals [ !Ref ELBName, "" ]]
   InstancePlatformLinux: !Equals [ !Ref 1OSInstanceOSPlatform, "Linux" ]
   UseLatestAMI: !Equals [ !Ref 1OSPeggedAMIID, "AlwaysUseLatest"]
   BuildInstanceRoleToUse: !Equals [ !Ref 9AWSSpecifiedIAMRoleNAME, "CreateOneForMe" ]
@@ -291,6 +304,10 @@ Conditions:
 
 Rules:
   WindowsPlatformShouldNotUseDefaultSSMParameter:
+    RuleCondition: !Equals [ !Ref 1OSInstanceOSPlatform, "Windows" ]
+    Assertions:
+      - Assert: !Not [ !Equals [ !Ref 9AWSRetrieveLatestAWSOSAmiIdFromSSM, "/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2" ]]
+        AssertDescription: "You have indicated the Windows platform in the parameter 1OSInstanceOSPlatform, but left the default Linux SSM Parameter path in 9AWSRetrieveLatestAWSOSAmiIdFromSSM"
     RuleCondition: !Equals [ !Ref 1OSInstanceOSPlatform, "Windows" ]
     Assertions:
       - Assert: !Not [ !Equals [ !Ref 9AWSRetrieveLatestAWSOSAmiIdFromSSM, "/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2" ]]
@@ -415,14 +432,12 @@ Resources:
             - !Sub "arn:aws:iam::${AWS::AccountId}:policy/${AWS::StackName}-ASGSelfAccessPolicy"
             - !Sub "arn:aws:iam::${AWS::AccountId}:policy/${AWS::StackName}-EC2SelfAccessPolicy"
             - !Sub "arn:aws:iam::${AWS::AccountId}:policy/${AWS::StackName}-SSMParameterStorePolicy"
-            - !Sub "arn:aws:iam::${AWS::AccountId}:policy/${AWS::StackName}-ASGBucketPolicy"      
-            - !Sub "arn:aws:iam::${AWS::AccountId}:policy/${AWS::StackName}-ECSAccessPolicy"             
+            - !Sub "arn:aws:iam::${AWS::AccountId}:policy/${AWS::StackName}-ASGBucketPolicy"                
           - 
             - !Sub "arn:aws:iam::${AWS::AccountId}:policy/${AWS::StackName}-ASGSelfAccessPolicy"
             - !Sub "arn:aws:iam::${AWS::AccountId}:policy/${AWS::StackName}-EC2SelfAccessPolicy"
             - !Sub "arn:aws:iam::${AWS::AccountId}:policy/${AWS::StackName}-SSMParameterStorePolicy"
             - !Sub "arn:aws:iam::${AWS::AccountId}:policy/${AWS::StackName}-ASGBucketPolicy"
-            - !Sub "arn:aws:iam::${AWS::AccountId}:policy/${AWS::StackName}-ECSAccessPolicy"
 
   SSMSyntheticCPULoad:
     Type: AWS::SSM::Parameter
@@ -433,16 +448,6 @@ Resources:
       Value: !Ref 8DBGCPULoadPercentInitialValue
       Description: Named as stackname-SyntheticCPULoad, contains CPU Load Percent Value.
 
-  WebPlusDefaultSecurityGroupSelfIngress:
-    Type: 'AWS::EC2::SecurityGroupIngress'
-    Condition: 8DBGSetupPseudoWebApp
-    Properties:
-      GroupName: default
-      IpProtocol: tcp
-      FromPort: 80
-      ToPort: 80
-      CidrIp: 0.0.0.0/0
-
   ASGBucket:
     Type: AWS::S3::Bucket
     Condition: CreateS3BucketAndPermissions    
@@ -450,12 +455,6 @@ Resources:
       BucketName: !Sub "${AWS::StackName}-asgbucket"
       VersioningConfiguration:
         Status: Enabled
-
-  ECSCluster:
-    Type: AWS::ECS::Cluster
-    Condition: CreateECSCluster
-    Properties:
-      ClusterName: !Sub "${AWS::StackName}-ecscluster"
 
   InstanceASG:
     Type: AWS::AutoScaling::AutoScalingGroup
@@ -503,15 +502,6 @@ Resources:
       DesiredCapacity: !Ref 4ASGDesiredCapacity
       #Demonstrates an 1) **Optional dependency** on an ELB which can be sourced from either
       # 2) **A parent stack**, or 3) **overridden by a parameter** in this stack
-      LoadBalancerNames:
-        !If
-         - ELBNameWasPassed
-         - - !Ref ELBName 
-         - !If
-             - ParentStackNameWasPassed
-             - - Fn::ImportValue:
-                   !Sub "${ParentStackName}-ELBName" 
-             - !Ref AWS::NoValue
       MixedInstancesPolicy:
         LaunchTemplate:
           LaunchTemplateSpecification:
@@ -761,28 +751,6 @@ Resources:
                   aws autoscaling record-lifecycle-action-heartbeat --region $AWS_REGION --instance-id $MYINSTANCEID --lifecycle-hook-name instance-patching-reboot --auto-scaling-group-name $NAMEOFASG
                 fi
 
-                if [[ "${8DBGSetupPseudoWebApp}" == "true" ]]; then
-                  logit "Installing Web Application (To Emulate a Real Software Stack)"
-                  yum install -y httpd
-                  service httpd start
-                  chkconfig httpd on
-                  
-                  cat << HTMLHomePage > /var/www/html/index.html
-                  <html><head><title>CloudyWindows.io ASG With Lifecycle Hooks</title></head>
-                  <body>
-                  <h1>CloudyWindows.io ASG With Lifecycle Hooks</h1>
-                  <p><A HREF="https://cloudywindows.io/post/asg-lifecycle-hook-for-linux-kernel-patching-with-a-reboot-in-aws-autoscaling-groups/"><IMG SRC="https://cloudywindows.io/mstile-150x150.png"> Check Out The Blog Post For This Template!</A>
-                  <BR><BR>Page retrieved from load balanced instance: $MYINSTANCEID 
-                  <BR>in ASG: $NAMEOFASG
-                  <BR>As a part of CF Stack: ${AWS::StackName}
-                  <BR>Running OS: ${1OSInstanceOSPlatform}                
-                  <BR>with LAST_CF_PATCH_RUN: $LAST_CF_PATCH_RUN and ACTUAL_PATCH_DATE: $ACTUAL_PATCH_DATE</p>
-                  <iframe src="https://cloudywindows.io" frameborder=0 width="100%" height="100%" ></iframe>
-                  </body>
-                  </html>
-                HTMLHomePage
-                fi
-
                 #Check if already installed or running
                 if [[ "${3INSTInstallCodeDeploy}" == "true" ]]; then
                   logit "Code Deploy Install..."
@@ -979,8 +947,17 @@ Resources:
                   ((Test-Path "HKLM:SYSTEM\CurrentControlSet\Services\Netlogon\JoinDomain") -OR (Test-Path "HKLM:SYSTEM\CurrentControlSet\Services\Netlogon\AvoidSpnSet")))
                 }
 
+                $GITLABRunnerInstanceURL="${3GITLABRunnerInstanceURL}"
                 $GITLABRunnerRegTokenList="${3GITLABRunnerRegTokenList}"
+                $GITLABRunnerVersion="${3GITLABRunnerVersion}"
+                $GITLABRunnerTagList="${3GITLABRunnerTagList}"
+                $GITLABRunnerExecutor="${3GITLABRunnerExecutor}"
                 $INSTANCEOSPLATFORM="${1OSInstanceOSPlatform}"
+                $RunnerOSTags="$($INSTANCEOSPLATFORM.ToLower())"
+                $RunnerConfigTomlTemplate #(Embedded, local or s3:// or http*://)
+                $RunnerInstallRoot='C:\GitLab-Runner'
+                $RunnerConfigToml="$RunnerInstallRoot\config.toml"
+                
                 $LAST_CF_PATCH_RUN="${1OSPatchRunDate}" #Forces change for patching rolling replacement and documents last CF triggered patching
                 $ACTUAL_PATCH_DATE="$(date -format 'yyyy-MM-dd')"
                 $MYINSTANCEID="$(invoke-restmethod http://169.254.169.254/latest/meta-data/instance-id)"
