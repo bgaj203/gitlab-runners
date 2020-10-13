@@ -67,6 +67,7 @@ Parameters:
       There is an example at: https://gitlab.com/DarwinJS/ultimate-aws-asg-lab-kit/-/raw/master/CustomInstanceConfigurationScriptSample.sh_and_ps1
     Type: String
     Default: https://gitlab.com/guided-explorations/gitlab-deployment/gitlab-runner-autoscaling-aws-asg/-/raw/master/runner_configs/windows-shell.ps1
+    #Reset above to: https://gitlab.com/guided-explorations/gitlab-deployment/gitlab-runner-autoscaling-aws-asg/-/raw/master/runner_configs/linux-docker.ps1
   3INSTInstallCodeDeploy:
     Description: Installs CodeDeploy so it can be used for initial deployments and updates.
     Type: String
