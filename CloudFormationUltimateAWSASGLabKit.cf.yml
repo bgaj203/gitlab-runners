@@ -121,6 +121,33 @@ Parameters:
     AllowedValues: 
       - ReplaceEntireASG
       - RollingThroughInstances
+  4ASGScheduledShutdownCron:
+    Description: >
+      Cron format when ASG should scale to 0 for Min and Desired. to completely stop all instances. This is UTC, so adjust for your timezone.
+      You can set only a stop hour if something else is starting the ASG on demand, but this action will also scale it to the new parameters 
+      regardless of the current settings due to autoscaling. You can manually edit this template to add more schedules.
+      For syntax guidelines see: https://docs.aws.amazon.com/AmazonCloudWatch/latest/events/ScheduledEvents.html#CronExpressions
+      "0 19 ? * MON-FRI *" = Stop 7pm UTC, Monday-Friday. (Off during the UTC weekend)
+      "0 20 ? * * *" = Stop 8pm UTC everyday.
+    Type: String
+    Default: Disabled 
+  4ASGScheduledStartupCron:
+    Description: >
+      Cron format when ASG should scale to 1 minimum to start ASG, autoscaling will take over after start. This is UTC, so adjust for your timezone.
+      You can set only a start hour if something else is stopping the ASG on demand, but this action will also scale it to the new parameters 
+      regardless of the current settings due to autoscaling. You can manually edit this template to add more schedules.
+      For syntax guidelines see: https://docs.aws.amazon.com/AmazonCloudWatch/latest/events/ScheduledEvents.html#CronExpressions
+      "0 7 ? * MON-FRI *" = Start 7am UTC, Monday-Friday.
+      "0 5 ? * * *" = Start 5am UTC everyday.
+    Type: String
+    Default: Disabled
+  4ASGScheduledStartupDesiredInstances:
+    Description: >
+      How many desired instances should be started upon scheduled start.  Min will be set 1.  If autoscaling is in use, it will adjust shortly after.
+      If autoscaling is not in use, this parameter dictates number of available instances when using schedules.
+      Not used if 4ASGScheduledStartupCron = Disabled.
+    Type: Number
+    Default: 1
   5ASGAutoScalingEnabled:
     Description: >
       Setting to false still allows for High Availability - either HOT/Warm HA with 1 instance or HOT/HOT HA for 2 or more instances. 
@@ -143,13 +170,16 @@ Parameters:
       It is best practice to delete this if a termination hook truely is not needed for cleanup.
     Type: String
     Default: 1
-    AllowedValues:
-     - 1
-     - 2
-     - 3
-     - 4
-     - 5
-     - Disabled
+    AllowedValues: [0,1,2,3,4,5,Disabled] 
+  5ASGSelfMonitorTerminationInterval:  
+    Description: >
+      How often in minutes should the instance check if it is being asked to terminate so it can run a clean up script.
+      Terminations initiated by spot occur two minutes after notification, so this value should less than that for spot implementations.
+      AWS and instance resources for monitoring termination are not created if this value is not provided.
+      It is best practice to delete this if a termination hook truely is not needed for cleanup.
+    Type: String
+    Default: 1
+    AllowedValues: [0,1,2,3,4,5,Disabled] 
   5ASGAutoScalingSetScaleOutCPUThreshold:
     Description: >
       What ASG-wide CPU threshold triggers scaling up via step-scaling? Requires 5ASGAutoScalingEnabled=true.
@@ -228,13 +258,13 @@ Parameters:
     #Reset above to: 0
   5SPOTOnDemandPercentageAboveBaseCapacity: 
     Description: >
-      ATTENTION: DISABLING SPOT *instance usage* is achieved by setting this value to 0 (zero). It still results in a spot setup, but none of
+      ATTENTION: DISABLING SPOT *instance usage* is achieved by setting this value to 100 (zero). It still results in a spot setup, but none of
       the instances will be spot instances.
       What percent of the cluster should be Spot (with the remainder being on demand).  Percentage only applied to instances started after
       count in 5SPOTOnDemandBaseCapacity.
-      Set to 100 for a 100% spot cluster.
+      Set to 0 for a 100% spot cluster.
     Type: Number
-    Default: 100
+    Default: 0
     #Reset above to: 0    
   8DBGCPULoadPercentInitialValue:
     Description: >
@@ -302,6 +332,8 @@ Conditions:
   UseKeypair: !Not [ !Equals [ !Ref 8DBGKeypairName, "" ]]
   EnableSelfTerminationMonitoring: !Not [ !Equals [ !Ref 5ASGSelfMonitorTerminationInterval, "Disabled" ]]
   CreateS3BucketAndPermissions: !Equals [ !Ref 5ASGBucketName, "CreateOneForMe" ]
+  CreateStartSchedule: !Not [ !Equals [ !Ref 4ASGScheduledStartupCron, "Disabled" ]]
+  CreateStopSchedule: !Not [ !Equals [ !Ref 4ASGScheduledShutdownCron, "Disabled" ]]
 
 Rules:
   WindowsPlatformShouldNotUseDefaultSSMParameter:
@@ -456,7 +488,7 @@ Resources:
       BucketName: !Sub "${AWS::StackName}-asgbucket"
       VersioningConfiguration:
         Status: Enabled
-
+        
   InstanceASG:
     Type: AWS::AutoScaling::AutoScalingGroup
     CreationPolicy:
@@ -551,6 +583,26 @@ Resources:
         Value: !Ref 1OSPatchRunDate
         PropagateAtLaunch: true
   
+  ScheduledActionDailyStart: 
+    Condition: CreateStartSchedule
+    Type: AWS::AutoScaling::ScheduledAction
+    Properties:
+      AutoScalingGroupName: 
+        Ref: InstanceASG
+      DesiredCapacity: !Ref 4ASGScheduledStartupDesiredInstances
+      MinSize: 1
+      Recurrence: !Sub "0 ${4ASGScheduledStartupCron} * * *"
+  
+  ScheduledActionDailyStop: 
+    Condition: CreateStopSchedule
+    Type: AWS::AutoScaling::ScheduledAction
+    Properties:
+      AutoScalingGroupName: 
+        Ref: InstanceASG
+      DesiredCapacity: 0
+      MinSize: 0
+      Recurrence: !Sub "0 ${4ASGScheduledShutdownCron} * * *"
+
   #Scaling policy and alarms are only created if autoscaling parameter is true
   ScaleDownPolicy:
     Type: AWS::AutoScaling::ScalingPolicy
@@ -959,10 +1011,14 @@ Resources:
                 $RunnerInstallRoot='C:\GitLab-Runner'
                 $RunnerConfigToml="$RunnerInstallRoot\config.toml"
                 
+                If (("${4ASGScheduledStartupCron}" -ine "Disabled") -OR ("${4ASGScheduledShutdownCron}" -ine "Disabled")) { $GITLABRunnerTagList = "$GITLABRunnerTagList, UsesAWSASGScheduledAvailability"}
+
+                $AWS_REGION="$($(invoke-restmethod 169.254.169.254/latest/meta-data/placement/availability-zone) -replace '.$')"
+                $GITLABRunnerTagList = "$GITLABRunnerTagList, AWSRegion-$AWS_REGION"
+
                 $LAST_CF_PATCH_RUN="${1OSPatchRunDate}" #Forces change for patching rolling replacement and documents last CF triggered patching
                 $ACTUAL_PATCH_DATE="$(date -format 'yyyy-MM-dd')"
                 $MYINSTANCEID="$(invoke-restmethod http://169.254.169.254/latest/meta-data/instance-id)"
-                $AWS_REGION="$($(invoke-restmethod 169.254.169.254/latest/meta-data/placement/availability-zone) -replace '.$')"
                 $NAMEOFASG=$(aws ec2 describe-tags --region $AWS_REGION --filters Name=resource-id,Values=$MYINSTANCEID Name=key,Values=aws:autoscaling:groupName | convertfrom-json).tags.value
                 $NAMEOFSTACK="${AWS::StackName}"
                 $PATCHDONEFLAG="$env:USERPROFILE/patchingrebootwasdone.flg"
