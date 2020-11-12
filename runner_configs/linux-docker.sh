@@ -12,6 +12,11 @@
 #GITLABRunnerInstanceURL='https://gitlab.demo.i2p.online/'
 #RunnerInstallRoot='/gitlab-runner'
 #RunnerConfigToml="$RunnerInstallRoot/config.toml"
+
+MYIP="$(curl http://169.254.169.254/latest/meta-data/local-ipv4)"
+MYACCOUNTID="$(curl http://169.254.169.254/latest/dynamic/instance-identity/document|grep accountId| awk '{print $3}'|sed  's/"//g'|sed 's/,//g')"
+RunnerName="$MYINSTANCEID-in-$MYACCOUNTID"
+
 function logit() {
   LOGSTRING="$(date +"%_b %e %H:%M:%S") $(hostname) USERDATA_SCRIPT: $1"
   #For CloudFormation, if you already collect /var/log/cloud-init-output.log or /var/log/messsages (non amazon linux), then you could mute the next logging line
@@ -28,6 +33,8 @@ fi
 set -ex
 $PKGMGR update && $PKGMGR install -y wget
 
+RunnerCompleteTagList = "$RunnerOSTags, glexecutor-$GITLABRunnerExecutor", $GITLABRunnerTagList"
+
 # Installing and configuring Gitlab Runner
 mkdir -p $RunnerInstallRoot
 wget -O $RunnerInstallRoot/gitlab-runner https://gitlab-runner-downloads.s3.amazonaws.com/latest/binaries/gitlab-runner-linux-amd64
@@ -36,13 +43,16 @@ useradd --comment 'GitLab Runner' --create-home gitlab-runner --shell /bin/bash
 $RunnerInstallRoot/gitlab-runner install --user="gitlab-runner" --working-directory="/home/gitlab-runner"
 echo -e "\nRunning scripts as '$(whoami)'\n\n"
 
-$RunnerInstallRoot/gitlab-runner register                          \
+$RunnerInstallRoot/gitlab-runner register \
+  --config $RunnerConfigToml                          \
+  $OptionalParameters \
   --non-interactive                                            \
   --url "$GITLABRunnerInstanceURL"                                \
   --registration-token "$GITLABRunnerRegTokenList"                     \
-  --tag-list "docker"                                          \
-  --request-concurrency 4                                      \
+  --name $RunnerName \
+  --tag-list $RunnerCompleteTagList                                          \
   --executor "$GITLABRunnerExecutor"                                          \
+  --request-concurrency 4                                      \
   --description "Some Runner Description"                      \
   --docker-volumes "/var/run/docker.sock:/var/run/docker.sock" \
   --docker-image "docker:latest"                               \
@@ -51,11 +61,15 @@ $RunnerInstallRoot/gitlab-runner register                          \
   --docker-shm-size 0                                          \
   --locked="true"
 
-$RunnerInstallRoot/gitlab-runner run            \
-  --working-directory "$RunnerInstallRoot" \
-  --config "/etc/gitlab-runner/config.toml" \
-  --service "gitlab-runner"                 \
-  --user "gitlab-runner"
+#$RunnerInstallRoot/gitlab-runner run            \
+#  --working-directory "$RunnerInstallRoot" \
+#  --config "/etc/gitlab-runner/config.toml" \
+#  --service "gitlab-runner"                 \
+#  --user "gitlab-runner"
+
+aws ec2 create-tags --region $AWS_REGION --resources $MYINSTANCEID --tags "Key=\"GitLabRunnerName\",\"Value=$RunnerName\"" "Key=\"GitLabURL\",\"Value=$GITLABRunnerInstanceURL\"" "Key=\"GitLabRunnerTags\",\"Value=$(echo $RunnerCompleteTagList | sed 's/,/\\\,/g')\""
+
+$RunnerInstallRoot/gitlab-runner start
 
 #$RunnerInstallRoot/gitlab-runner unregister --all-runners
 
