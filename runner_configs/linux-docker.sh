@@ -4,15 +4,14 @@
 
 # Update packages
 
-GITLABRunnerVersion="latest"
-RunnerExecutor='shell'
-RunnerOSTags="$($INSTANCEOSPLATFORM.ToLower())"
-GITLABRunnerTagList="TagA,TagB"
-RunnerConfigTomlTemplate #(Embedded, local or s3:// or http*://)
-GITLABRunnerRegTokenList='f3QN1vAeQq-MQx2_u9ML'
-GITLABRunnerInstanceURL='https://gitlab.demo.i2p.online/'
-RunnerInstallRoot='/gitlab-runner'
-RunnerConfigToml="$RunnerInstallRoot/config.toml"
+#GITLABRunnerVersion="latest"
+#RunnerOSTags="$($INSTANCEOSPLATFORM.ToLower())"
+#GITLABRunnerTagList="TagA,TagB"
+#RunnerConfigTomlTemplate #(Embedded, local or s3:// or http*://)
+#GITLABRunnerRegTokenList='f3QN1vAeQq-MQx2_u9ML'
+#GITLABRunnerInstanceURL='https://gitlab.demo.i2p.online/'
+#RunnerInstallRoot='/gitlab-runner'
+#RunnerConfigToml="$RunnerInstallRoot/config.toml"
 function logit() {
   LOGSTRING="$(date +"%_b %e %H:%M:%S") $(hostname) USERDATA_SCRIPT: $1"
   #For CloudFormation, if you already collect /var/log/cloud-init-output.log or /var/log/messsages (non amazon linux), then you could mute the next logging line
@@ -34,22 +33,16 @@ mkdir -p $RunnerInstallRoot
 wget kds -O $RunnerInstallRoot/gitlab-runner https://gitlab-runner-downloads.s3.amazonaws.com/latest/binaries/gitlab-runner-linux-amd64
 chmod +x $RunnerInstallRoot/gitlab-runner
 useradd --comment 'GitLab Runner' --create-home gitlab-runner --shell /bin/bash
-/usr/local/bin/gitlab-runner install --user="gitlab-runner" --working-directory="/home/gitlab-runner"
+$RunnerInstallRoot/gitlab-runner install --user="gitlab-runner" --working-directory="/home/gitlab-runner"
 echo -e "\nRunning scripts as '$(whoami)'\n\n"
-
-$RunnerInstallRoot/gitlab-runner run            \
-  --working-directory "/home/gitlab-runner" \
-  --config "/etc/gitlab-runner/config.toml" \
-  --service "gitlab-runner"                 \
-  --user "gitlab-runner"
 
 $RunnerInstallRoot/gitlab-runner register                          \
   --non-interactive                                            \
-  --url "https://<GITLAB_URL>/"                                \
-  --registration-token "<GITLAB_REG_TOKEN"                     \
+  --url "$GITLABRunnerInstanceURL"                                \
+  --registration-token "$GITLABRunnerRegTokenList"                     \
   --tag-list "docker"                                          \
   --request-concurrency 4                                      \
-  --executor "docker"                                          \
+  --executor "$GITLABRunnerExecutor"                                          \
   --description "Some Runner Description"                      \
   --docker-volumes "/var/run/docker.sock:/var/run/docker.sock" \
   --docker-image "docker:latest"                               \
@@ -58,7 +51,13 @@ $RunnerInstallRoot/gitlab-runner register                          \
   --docker-shm-size 0                                          \
   --locked="true"
 
-$RunnerInstallRoot/gitlab-runner unregister --all-runners
+$RunnerInstallRoot/gitlab-runner run            \
+  --working-directory "$RunnerInstallRoot" \
+  --config "/etc/gitlab-runner/config.toml" \
+  --service "gitlab-runner"                 \
+  --user "gitlab-runner"
+
+#$RunnerInstallRoot/gitlab-runner unregister --all-runners
 
 
 #This approach for termination hook is much simpler than those involving SNS or CloudWatch, but when deployed 
