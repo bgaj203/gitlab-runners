@@ -33,13 +33,16 @@ fi
 set -ex
 $PKGMGR update && $PKGMGR install -y wget
 
-RunnerCompleteTagList = "$RunnerOSTags, glexecutor-$GITLABRunnerExecutor, $GITLABRunnerTagList"
+RunnerCompleteTagList="$RunnerOSTags, glexecutor-$GITLABRunnerExecutor, $GITLABRunnerTagList"
 
 # Installing and configuring Gitlab Runner
-mkdir -p $RunnerInstallRoot
+if [ ! -d $RunnerInstallRoot ]; then mkdir -p $RunnerInstallRoot; fi
+
 wget -O $RunnerInstallRoot/gitlab-runner https://gitlab-runner-downloads.s3.amazonaws.com/latest/binaries/gitlab-runner-linux-amd64
 chmod +x $RunnerInstallRoot/gitlab-runner
-useradd --comment 'GitLab Runner' --create-home gitlab-runner --shell /bin/bash
+if ! id -u "gitlab-runner" >/dev/null 2>&1; then
+  useradd --comment 'GitLab Runner' --create-home gitlab-runner --shell /bin/bash
+fi
 $RunnerInstallRoot/gitlab-runner install --user="gitlab-runner" --working-directory="/home/gitlab-runner"
 echo -e "\nRunning scripts as '$(whoami)'\n\n"
 
@@ -49,8 +52,8 @@ $RunnerInstallRoot/gitlab-runner register \
   --non-interactive                                            \
   --url "$GITLABRunnerInstanceURL"                                \
   --registration-token "$GITLABRunnerRegTokenList"                     \
-  --name $RunnerName \
-  --tag-list $RunnerCompleteTagList                                          \
+  --name "$RunnerName" \
+  --tag-list "$RunnerCompleteTagList"                                          \
   --executor "$GITLABRunnerExecutor"                                          \
   --request-concurrency 4                                      \
   --description "Some Runner Description"                      \
@@ -102,3 +105,20 @@ if [ ! -z "$NAMEOFASG" ] && [ "$ASGSelfMonitorTerminationInterval" != "Disabled"
       logit "Lifecycle CONTINUE was sent to termination hook in ASG: $NAMEOFASG for this instance ($MYINSTANCEID)."
     fi
 EndOfScript
+
+    function logit() {
+      LOGSTRING="\$(date +"%_b %e %H:%M:%S") \$(hostname) TERMINATIONMON_SCRIPT: \$1"
+      echo "\$LOGSTRING"
+      echo "\$LOGSTRING" >> /var/log/messages
+    }
+    #These are resolved at script creation time to reduce api calls when this script runs every minute on instances.
+
+    if [[ "\$(aws autoscaling describe-auto-scaling-instances --instance-ids $MYINSTANCEID --region $AWS_REGION | jq --raw-output '.AutoScalingInstances[0] .LifecycleState')" == *"Terminating"* ]]; then
+      logit "This instance ($MYINSTANCEID) is being terminated, perform cleanup..."
+
+      #### PUT YOUR CLEANUP CODE HERE, DECIDE IF CLEANUP CODE SHOULD ERROR OUT OR SILENTLY FAIL (best effort cleanup)
+
+      aws autoscaling complete-lifecycle-action --region $AWS_REGION --lifecycle-action-result CONTINUE --instance-id $MYINSTANCEID --lifecycle-hook-name instance-terminating --auto-scaling-group-name $NAMEOFASG
+      logit "This instance ($MYINSTANCEID) is ready for termination"
+      logit "Lifecycle CONTINUE was sent to termination hook in ASG: $NAMEOFASG for this instance ($MYINSTANCEID)."
+    fi
