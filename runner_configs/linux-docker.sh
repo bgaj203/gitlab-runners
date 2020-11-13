@@ -33,7 +33,7 @@ fi
 set -ex
 $PKGMGR update && $PKGMGR install -y wget
 
-RunnerCompleteTagList = "$RunnerOSTags, glexecutor-$GITLABRunnerExecutor", $GITLABRunnerTagList"
+RunnerCompleteTagList = "$RunnerOSTags, glexecutor-$GITLABRunnerExecutor, $GITLABRunnerTagList"
 
 # Installing and configuring Gitlab Runner
 mkdir -p $RunnerInstallRoot
@@ -101,5 +101,4 @@ if [ ! -z "$NAMEOFASG" ] && [ "$ASGSelfMonitorTerminationInterval" != "Disabled"
       logit "This instance ($MYINSTANCEID) is ready for termination"
       logit "Lifecycle CONTINUE was sent to termination hook in ASG: $NAMEOFASG for this instance ($MYINSTANCEID)."
     fi
-
 EndOfScript
