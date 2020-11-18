@@ -46,6 +46,19 @@ fi
 $RunnerInstallRoot/gitlab-runner install --user="gitlab-runner" --working-directory="/home/gitlab-runner"
 echo -e "\nRunning scripts as '$(whoami)'\n\n"
 
+
+cat << EndOfRunnerConfigTOML > $RunnerConfigToml
+#Docker executor configuration
+concurrent = 4
+log_level = "warning"
+[runners.docker]
+  image = "ruby:2.6"
+  tls_verify = false
+  volumes ["/data", "/home/project/cache"]
+  shm_size = 300000
+EndOfRunnerConfigTOML
+
+
 $RunnerInstallRoot/gitlab-runner register \
   --config $RunnerConfigToml                          \
   $OptionalParameters \
