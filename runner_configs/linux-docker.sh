@@ -51,10 +51,20 @@ cat << EndOfRunnerConfigTOML > $RunnerConfigToml
 #Docker executor configuration
 concurrent = 4
 log_level = "warning"
-[runners.docker]
-  image = "ruby:2.6"
-  tls_verify = false
-  shm_size = 300000
+[[runners]]
+  name = "ruby-2.6-docker"
+  limit = 0
+  executor = "docker"
+  builds_dir = ""
+  [runners.docker]
+    host = ""
+    image = "ruby:2.6"
+    privileged = false
+    disable_cache = false
+    cache_dir = ""
+    tls_verify = false
+    shm_size = 300000
+
 EndOfRunnerConfigTOML
 
 
