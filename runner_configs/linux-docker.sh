@@ -93,9 +93,11 @@ $RunnerInstallRoot/gitlab-runner register \
 #  --service "gitlab-runner"                 \
 #  --user "gitlab-runner"
 
-aws ec2 create-tags --region $AWS_REGION --resources $MYINSTANCEID --tags "\"Key=GitLabRunnerName\",\"Value=$RunnerName\"" "\"Key=GitLabURL\",\"Value=$GITLABRunnerInstanceURL\"" "\"Key=GitLabRunnerTags\",\"Value=$(echo $RunnerCompleteTagList | sed 's/,/\\\,/g')\""
-
 $RunnerInstallRoot/gitlab-runner start
+
+aws ec2 create-tags --region $AWS_REGION --resources $MYINSTANCEID --tags "Key=\"GitLabRunnerName\",\"Value=$RunnerName\"" "Key=\"GitLabURL\",\"Value=$GITLABRunnerInstanceURL\"" "Key=\"GitLabRunnerTags\",\"Value=$(echo $RunnerCompleteTagList | sed 's/,/\\\,/g')\""
+
+
 
 #$RunnerInstallRoot/gitlab-runner unregister --all-runners
 
