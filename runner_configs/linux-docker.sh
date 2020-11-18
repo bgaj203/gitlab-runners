@@ -54,15 +54,15 @@ $RunnerInstallRoot/gitlab-runner register \
   --registration-token "$GITLABRunnerRegTokenList"                     \
   --name "$RunnerName" \
   --tag-list "$RunnerCompleteTagList"                                          \
-  --executor "$GITLABRunnerExecutor"                                          \
-  --request-concurrency 4                                      \
-  --description "Some Runner Description"                      \
-  --docker-volumes "/var/run/docker.sock:/var/run/docker.sock" \
-  --docker-image "docker:latest"                               \
-  --docker-tlsverify false                                     \
-  --docker-disable-cache false                                 \
-  --docker-shm-size 0                                          \
-  --locked="true"
+  --executor "$GITLABRunnerExecutor"                                          
+ # --request-concurrency 4                                      \
+ # --description "Some Runner Description"                      \
+ # --docker-volumes "/var/run/docker.sock:/var/run/docker.sock" \
+ # --docker-image "docker:latest"                               \
+ # --docker-tlsverify false                                     \
+ # --docker-disable-cache false                                 \
+ # --docker-shm-size 0                                          \
+ # --locked="true"
 
 #$RunnerInstallRoot/gitlab-runner run            \
 #  --working-directory "$RunnerInstallRoot" \
