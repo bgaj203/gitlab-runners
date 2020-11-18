@@ -54,7 +54,6 @@ log_level = "warning"
 [runners.docker]
   image = "ruby:2.6"
   tls_verify = false
-  volumes = ["/data", "/home/project/cache"]
   shm_size = 300000
 EndOfRunnerConfigTOML
 
