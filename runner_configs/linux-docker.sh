@@ -76,7 +76,8 @@ $RunnerInstallRoot/gitlab-runner register \
   --registration-token "$GITLABRunnerRegTokenList"                     \
   --name "$RunnerName" \
   --tag-list "$RunnerCompleteTagList"                                          \
-  --executor "$GITLABRunnerExecutor"                                          
+  --executor "$GITLABRunnerExecutor"    \
+  --docker-image "ruby:2.6"                                      
  # --request-concurrency 4                                      \
  # --description "Some Runner Description"                      \
  # --docker-volumes "/var/run/docker.sock:/var/run/docker.sock" \
