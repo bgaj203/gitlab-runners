@@ -2,7 +2,7 @@ image: registry.gitlab.com/guided-explorations/containers/aws-cli-tools/aws-cli
 
 stages:
   - resolve-template-list
-  - cfn-lint
+  - test
   - cfn-changeset
   - cfn-deploy
 
@@ -39,7 +39,7 @@ get-cf-list:
       - cftemplates.lst    
 
 cf-lint:
-  stage: cfn-lint   
+  stage: test   
   script:
     - |
       #pip install cfn-lint
@@ -66,6 +66,16 @@ cf-lint:
       junit: "*.xml"
     paths:
       - "*.xml"
+
+checkov-iac-sast:
+  stage: test
+  image:
+    name: bridgecrew/checkov:latest
+    entrypoint:
+      - '/usr/bin/env'
+      - 'PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'
+  script:
+    - checkov -d .
 
 .cf-changeset:
   stage: cfn-changeset
