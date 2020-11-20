@@ -459,9 +459,9 @@ Resources:
         Statement:
         - Effect: Allow
           Action: sts:AssumeRole
-          Principal:
-            Service:
-              - ec2.amazonaws.com
+#          Principal:
+#            Service:
+#              - ec2.amazonaws.com
       ManagedPolicyArns:
         !If
           - CreateDebugResources
