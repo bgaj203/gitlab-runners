@@ -1,5 +1,11 @@
 image: registry.gitlab.com/guided-explorations/containers/aws-cli-tools/aws-cli
 
+before_script:
+  - ls -ashl
+
+after_script:
+  - ls -ashl
+
 stages:
   - resolve-template-list
   - test
