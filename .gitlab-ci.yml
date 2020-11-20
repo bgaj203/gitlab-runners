@@ -75,7 +75,13 @@ checkov-iac-sast:
       - '/usr/bin/env'
       - 'PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'
   script:
-    - checkov -d .
+    - checkov -d . -o junitxml > checkov.test.xml
+
+  artifacts:
+    reports:
+      junit: "checkov.text.xml"
+    paths:
+      - "checkov.text.xml"
 
 .cf-changeset:
   stage: cfn-changeset
