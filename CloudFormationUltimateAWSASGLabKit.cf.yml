@@ -33,12 +33,6 @@ Parameters:
     AllowedValues: 
       - Linux
       - Windows
-  access_key: 
-    Default "AKIAIOSFODNN7EXAMPLE"
-    Type: String
-  secret_key: 
-    Default: "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
-  Type: String    
   1OSPatchRunDate:
     Description: >
       Enter the deploy or update date - changing this is required to force a rolling replacement for patching.
@@ -459,9 +453,9 @@ Resources:
         Statement:
         - Effect: Allow
           Action: sts:AssumeRole
-#          Principal:
-#            Service:
-#              - ec2.amazonaws.com
+          Principal:
+            Service:
+              - *
       ManagedPolicyArns:
         !If
           - CreateDebugResources

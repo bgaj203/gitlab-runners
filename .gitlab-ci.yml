@@ -85,9 +85,9 @@ checkov-iac-sast:
 
   artifacts:
     reports:
-      junit: "checkov.text.xml"
+      junit: "checkov.test.xml"
     paths:
-      - "checkov.text.xml"
+      - "checkov.test.xml"
 
 .cf-changeset:
   stage: cfn-changeset
