@@ -2,7 +2,7 @@ image: registry.gitlab.com/guided-explorations/containers/aws-cli-tools/aws-cli
 
 stages:
   - resolve-template-list
-  - cfn-lint
+  - test
   - cfn-changeset
   - cfn-deploy
 
@@ -39,7 +39,7 @@ get-cf-list:
       - cftemplates.lst    
 
 cf-lint:
-  stage: cfn-lint   
+  stage: test   
   script:
     - |
       #pip install cfn-lint
@@ -66,6 +66,14 @@ cf-lint:
       junit: "*.xml"
     paths:
       - "*.xml"
+
+include:
+  - project: 'guided-explorations/ci-cd-plugin-extensions/checkov-iac-sast'
+    file: '/ci-cd-plugin-extension-checkov-iac-sast.yml'
+    
+iac_sast:
+  extends: .checkov-iac-sast
+  stage: test
 
 .cf-changeset:
   stage: cfn-changeset
