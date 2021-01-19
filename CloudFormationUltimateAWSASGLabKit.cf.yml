@@ -28,7 +28,7 @@ Parameters:
     Description: >
       Enter "Linux" or "Windows".  AMI specified in 9AWSRetrieveLatestAWSOSAmiIdFromSSM or 1OSPeggedAMIID must contain this platform choice.
     Type: String
-    Default: Windows
+    Default: Linux
     #Reset above to: Linux
     AllowedValues: 
       - Linux
@@ -66,8 +66,8 @@ Parameters:
       The code you write must be idempotent so that it does the correct thing when run again after a patching reboot.
       There is an example at: https://gitlab.com/DarwinJS/ultimate-aws-asg-lab-kit/-/raw/master/CustomInstanceConfigurationScriptSample.sh_and_ps1
     Type: String
-    Default: https://gitlab.com/guided-explorations/gitlab-deployment/gitlab-runner-autoscaling-aws-asg/-/raw/master/runner_configs/windows-shell.ps1
-    #Reset above to: https://gitlab.com/guided-explorations/gitlab-deployment/gitlab-runner-autoscaling-aws-asg/-/raw/master/runner_configs/linux-docker.ps1
+    Default: https://gitlab.com/guided-explorations/gitlab-deployment/gitlab-runner-autoscaling-aws-asg/-/raw/master/runner_configs/linux-docker.sh
+    #Reset above to: https://gitlab.com/guided-explorations/gitlab-deployment/gitlab-runner-autoscaling-aws-asg/-/raw/master/runner_configs/linux-docker.sh
   3INSTInstallCodeDeploy:
     Description: Installs CodeDeploy so it can be used for initial deployments and updates.
     Type: String
@@ -78,7 +78,7 @@ Parameters:
   3GITLABRunnerExecutor:
     Description: Type of runner executor
     Type: String
-    Default: shell
+    Default: docker
     #Reset to: docker
     AllowedValues: 
       - shell
@@ -100,7 +100,8 @@ Parameters:
   3GITLABRunnerRegTokenList:
     Description: One or more runner tokens to register (comma delimited)
     Type: String
-
+    Default: xTrR9x4xGeT5y13qyftN
+    #Remove default
   3GITLABRunnerVersion:
     Description: Version of the GitLab Runner to install (defaults to latest)
     Type: String
@@ -314,9 +315,9 @@ Parameters:
       /aws/service/ami-windows-latest/Windows_Server-2016-English-Full-ContainersLatest,/aws/service/ami-windows-latest/Windows_Server-2019-English-Core-ContainersLatest,
       /aws/service/ami-windows-latest/Windows_Server-2019-English-Full-ContainersLatest,/aws/service/ami-windows-latest/Windows_Server-1903-English-Core-ContainersLatest,
       /aws/service/ami-windows-latest/Windows_Server-1809-English-Core-ContainersLatest
-      COMMON LINUX OPTIONS: /aws/service/ecs/optimized-ami/amazon-linux/recommended/image_id
+      COMMON LINUX OPTIONS: /aws/service/ecs/optimized-ami/amazon-linux/recommended/image_id, /aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2
     Type: 'AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>'
-    Default: '/aws/service/ami-windows-latest/Windows_Server-2019-English-Core-ContainersLatest'
+    Default: '/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2'
     #Reset above to: '/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2'
 Conditions: 
   CreateDebugResources: !Equals [ !Ref 8DBGTroubleShootingMode, "true" ]
@@ -750,11 +751,29 @@ Resources:
                   yum install -y epel-release
                   yum install -y https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-latest.amzn1.noarch.rpm
                   sudo ln -s /usr/local/lib/python2.7/site-packages/cfnbootstrap /usr/lib/python2.7/site-packages/cfnbootstrap
-                fi                                        
+                fi      
+                
+                GITLABRunnerInstanceURL="${3GITLABRunnerInstanceURL}"
+                GITLABRunnerRegTokenList="${3GITLABRunnerRegTokenList}"
+                GITLABRunnerVersion="${3GITLABRunnerVersion}"
+                GITLABRunnerTagList="${3GITLABRunnerTagList}"
+                GITLABRunnerExecutor="${3GITLABRunnerExecutor}"
+                INSTANCEOSPLATFORM="${1OSInstanceOSPlatform}"
+                RunnerOSTags="$(echo $INSTANCEOSPLATFORM | awk '{print tolower($0)}' )"
+                #RunnerConfigTomlTemplate #(Embedded, local or s3:// or http*://)
+                #RunnerInstallRoot='/usr/local/bin'
+                RunnerInstallRoot='/gitlab-runner'
+                RunnerConfigToml="$RunnerInstallRoot/config.toml"
+                
+                if [[ "${4ASGScheduledStartupCron}" != "Disabled" ]] || [[ "${4ASGScheduledShutdownCron}" != "Disabled" ]]; then GITLABRunnerTagList = "$GITLABRunnerTagList, UsesAWSASGScheduledAvailability"; fi
+
+                AWS_REGION="$(curl -s 169.254.169.254/latest/meta-data/placement/availability-zone | sed 's/.$//')"
+                GITLABRunnerTagList = "$GITLABRunnerTagList, AWSRegion-$AWS_REGION"                
+
                 LAST_CF_PATCH_RUN="${1OSPatchRunDate}" #Forces change for patching rolling replacement and documents last CF triggered patching
                 ACTUAL_PATCH_DATE=$(date +%Y-%m-%d)
                 MYINSTANCEID="$(wget -q -O - http://169.254.169.254/latest/meta-data/instance-id)"
-                AWS_REGION="$(curl -s 169.254.169.254/latest/meta-data/placement/availability-zone | sed 's/.$//')"
+ 
                 NAMEOFASG=$(aws ec2 describe-tags --region $AWS_REGION --filters {"Name=resource-id,Values=$MYINSTANCEID","Name=key,Values=aws:autoscaling:groupName"} --output=text | cut -f5)
                 NAMEOFSTACK=${AWS::StackName}
                 PATCHDONEFLAG=/root/patchingrebootwasdone.flg
