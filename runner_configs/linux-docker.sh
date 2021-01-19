@@ -80,12 +80,10 @@ $RunnerInstallRoot/gitlab-runner register \
   --docker-privileged \
   --run-untagged="true" \
   --locked 0 \
-  --docker-tlsverify false                                     \
-  --docker-disable-cache false                                 \
+  --docker-tlsverify false \
+  --docker-disable-cache false \
   --docker-shm-size 0 \
   --request-concurrency 4
-
-chmod o+r $RunnerInstallRoot/gitlab-runner/config.toml
 
 # $RunnerInstallRoot/gitlab-runner register \
 #   --config $RunnerConfigToml                          \
@@ -145,7 +143,7 @@ if [ ! -z "$NAMEOFASG" ] && [ "$ASGSelfMonitorTerminationInterval" != "Disabled"
       logit "This instance ($MYINSTANCEID) is ready for termination"
       logit "Lifecycle CONTINUE was sent to termination hook in ASG: $NAMEOFASG for this instance ($MYINSTANCEID)."
     fi
-    
+
     function logit() {
       LOGSTRING="\$(date +"%_b %e %H:%M:%S") \$(hostname) TERMINATIONMON_SCRIPT: \$1"
       echo "\$LOGSTRING"
