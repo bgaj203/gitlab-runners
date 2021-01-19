@@ -772,7 +772,7 @@ Resources:
 
                 LAST_CF_PATCH_RUN="${1OSPatchRunDate}" #Forces change for patching rolling replacement and documents last CF triggered patching
                 ACTUAL_PATCH_DATE=$(date +%Y-%m-%d)
-                MYINSTANCEID="$(wget -q -O - http://169.254.169.254/latest/meta-data/instance-id)"
+                MYINSTANCEID="$(curl http://169.254.169.254/latest/meta-data/instance-id)"
  
                 NAMEOFASG=$(aws ec2 describe-tags --region $AWS_REGION --filters {"Name=resource-id,Values=$MYINSTANCEID","Name=key,Values=aws:autoscaling:groupName"} --output=text | cut -f5)
                 NAMEOFSTACK=${AWS::StackName}

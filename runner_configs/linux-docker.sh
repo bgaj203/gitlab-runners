@@ -31,14 +31,14 @@ elif [[ -n "$(command -v apt-get)" ]] ; then
 fi
 
 set -ex
-$PKGMGR update && $PKGMGR install -y wget
+#$PKGMGR update && $PKGMGR install -y wget
 
 RunnerCompleteTagList="$RunnerOSTags, glexecutor-$GITLABRunnerExecutor, $GITLABRunnerTagList"
 
 # Installing and configuring Gitlab Runner
 if [ ! -d $RunnerInstallRoot ]; then mkdir -p $RunnerInstallRoot; fi
 
-wget -O $RunnerInstallRoot/gitlab-runner https://gitlab-runner-downloads.s3.amazonaws.com/latest/binaries/gitlab-runner-linux-amd64
+curl https://gitlab-runner-downloads.s3.amazonaws.com/latest/binaries/gitlab-runner-linux-amd64 --output $RunnerInstallRoot/gitlab-runner
 chmod +x $RunnerInstallRoot/gitlab-runner
 if ! id -u "gitlab-runner" >/dev/null 2>&1; then
   useradd --comment 'GitLab Runner' --create-home gitlab-runner --shell /bin/bash
