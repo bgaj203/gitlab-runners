@@ -317,7 +317,7 @@ Parameters:
       /aws/service/ami-windows-latest/Windows_Server-1809-English-Core-ContainersLatest
       COMMON LINUX OPTIONS: /aws/service/ecs/optimized-ami/amazon-linux/recommended/image_id, /aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2
     Type: 'AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>'
-    Default: '/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2'
+    Default: '/aws/service/ecs/optimized-ami/amazon-linux/recommended/image_id'
     #Reset above to: '/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2'
 Conditions: 
   CreateDebugResources: !Equals [ !Ref 8DBGTroubleShootingMode, "true" ]
