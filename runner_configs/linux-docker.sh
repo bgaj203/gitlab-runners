@@ -128,11 +128,11 @@ if [ ! -z "$NAMEOFASG" ] && [ "$ASGSelfMonitorTerminationInterval" != "Disabled"
   #Heredoc script
   cat << EndOfScript > $SCRIPTNAME
     function logit() {
-      LOGSTRING="\$(date +"%_b %e %H:%M:%S") \$(hostname) TERMINATIONMON_SCRIPT: \$1"
-      echo "\$LOGSTRING"
-      echo "\$LOGSTRING" >> /var/log/messages
+      LOGSTRING=\"\$(date +"%_b %e %H:%M:%S") \$(hostname) TERMINATIONMON_SCRIPT: \$1\"
+      echo \"\$LOGSTRING\"
+      echo \"\$LOGSTRING\" >> /var/log/messages
     }
-    #Some variables are resolved at script creation time to reduce api calls when this script runs every minute on instances.
+    #These are resolved at script creation time to reduce api calls when this script runs every minute on instances.
 
     if [[ "\$(aws autoscaling describe-auto-scaling-instances --instance-ids $MYINSTANCEID --region $AWS_REGION | jq --raw-output '.AutoScalingInstances[0] .LifecycleState')" == *"Terminating"* ]]; then
       logit "This instance ($MYINSTANCEID) is being terminated, perform cleanup..."
@@ -143,10 +143,4 @@ if [ ! -z "$NAMEOFASG" ] && [ "$ASGSelfMonitorTerminationInterval" != "Disabled"
       logit "This instance ($MYINSTANCEID) is ready for termination"
       logit "Lifecycle CONTINUE was sent to termination hook in ASG: $NAMEOFASG for this instance ($MYINSTANCEID)."
     fi
-
-    function logit() {
-      LOGSTRING="\$(date +"%_b %e %H:%M:%S") \$(hostname) TERMINATIONMON_SCRIPT: \$1"
-      echo "\$LOGSTRING"
-      echo "\$LOGSTRING" >> /var/log/messages
-    }
-EndOfScript    
+EndOfScript
