@@ -66,8 +66,8 @@ Parameters:
       The code you write must be idempotent so that it does the correct thing when run again after a patching reboot.
       There is an example at: https://gitlab.com/DarwinJS/ultimate-aws-asg-lab-kit/-/raw/master/CustomInstanceConfigurationScriptSample.sh_and_ps1
     Type: String
-    Default: https://gitlab.com/guided-explorations/gitlab-deployment/gitlab-runner-autoscaling-aws-asg/-/raw/master/runner_configs/linux-docker.sh
-    #Reset above to: https://gitlab.com/guided-explorations/gitlab-deployment/gitlab-runner-autoscaling-aws-asg/-/raw/master/runner_configs/linux-docker.sh
+    Default: https://gitlab.com/guided-explorations/aws/gitlab-runner-autoscaling-aws-asg/-/raw/master/runner_configs/linux-docker.sh
+    #Reset above to: https://gitlab.com/guided-explorations/aws/gitlab-runner-autoscaling-aws-asg/-/raw/master/runner_configs/linux-docker.sh
   3INSTInstallCodeDeploy:
     Description: Installs CodeDeploy so it can be used for initial deployments and updates.
     Type: String
