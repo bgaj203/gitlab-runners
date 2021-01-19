@@ -1,7 +1,7 @@
 ---
 AWSTemplateFormatVersion: '2010-09-09'
 Description: >
-  More Information https://gitlab.com/DarwinJS/ultimate-aws-asg-lab-kit/-/blob/master/README.md
+  NOTE: If you are allowing autocreation of a bucket, the stack name is used in the bucketname an only lowercase letters are allowed in bucket names.
 Parameters:
   1AAAAUltimateASGVersion:
     Description: "Read Only - GitLab Runner Autoscaling on AWS with Spot Support."
@@ -763,7 +763,7 @@ Resources:
                 #RunnerConfigTomlTemplate #(Embedded, local or s3:// or http*://)
                 #RunnerInstallRoot='/usr/local/bin'
                 RunnerInstallRoot='/gitlab-runner'
-                RunnerConfigToml="$RunnerInstallRoot/config.toml"
+                RunnerConfigToml="/etc/gitlab-runner/config.toml"
                 
                 if [[ "${4ASGScheduledStartupCron}" != "Disabled" ]] || [[ "${4ASGScheduledShutdownCron}" != "Disabled" ]]; then GITLABRunnerTagList = "$GITLABRunnerTagList, UsesAWSASGScheduledAvailability"; fi
 
