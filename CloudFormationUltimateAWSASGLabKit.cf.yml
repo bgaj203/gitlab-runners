@@ -281,8 +281,6 @@ Parameters:
       For parameters above that range, setup your steps below 90 and test them and then once verified, update the numbers to the
       higher values.
     Type: String
-    Default: 25
-    #Remove Default
   8DBGKeypairName:
     Description: Spins instances with a keypair to allow connection. Not needed if TroubleShootingMode is enabled.
     Type: String
