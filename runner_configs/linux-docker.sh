@@ -127,7 +127,7 @@ if [ ! -z "$NAMEOFASG" ] && [ "$ASGSelfMonitorTerminationInterval" != "Disabled"
   #Heredoc script
   cat << EndOfScript > $SCRIPTNAME
     function logit() {
-      LOGSTRING="\$(date +'%_b %e %H:%M:%S') \$(hostname) TERMINATIONMON_SCRIPT: \$1"
+      LOGSTRING="\$\(date +'%_b %e %H:%M:%S'\) \$\(hostname\) TERMINATIONMON_SCRIPT: \$1"
       echo "\$LOGSTRING"
       echo "\$LOGSTRING" >> /var/log/messages
     }
