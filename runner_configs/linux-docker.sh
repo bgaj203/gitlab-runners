@@ -64,7 +64,7 @@ $RunnerInstallRoot/gitlab-runner register \
   --docker-image "docker:latest" \
   --docker-privileged \
   --run-untagged="true" \
-  --tag-list "$RunnerCompleteTagList"
+  --tag-list "$RunnerCompleteTagList" \
   --locked 0 \
   --docker-tlsverify false \
   --docker-disable-cache false \
