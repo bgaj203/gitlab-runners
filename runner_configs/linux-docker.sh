@@ -31,7 +31,7 @@ fi
 set -ex
 #$PKGMGR update && $PKGMGR install -y wget
 
-RunnerCompleteTagList="$RunnerOSTags, glexecutor-$GITLABRunnerExecutor, $GITLABRunnerTagList"
+RunnerCompleteTagList="$RunnerOSTags,glexecutor-$GITLABRunnerExecutor,$GITLABRunnerTagList"
 
 if [ -n ${COMPUTETYPE} ]; then RunnerCompleteTagList="$RunnerCompleteTagList, computetype-${COMPUTETYPE,,}"; fi
 
