@@ -727,7 +727,7 @@ Resources:
                 logit "Learn more at: $1AAAReadmeBlogPost"
                 logit "Logs for this are found in /var/log/cloud-init-output.log or /var/log/messsages (non amazon linux)"
                 logit "Rendered script found in /var/lib/cloud/instance/scripts/part-001"   
-                yum install -y jq       
+                yum install -y jq unzip 
                 if [[ "${8DBGTroubleShootingMode}" == "true" ]]; then
                   if ! ps -ef | grep -q '[a]mazon-ssm-agent'; then
                     logit "8DBGTroubleShootingMode is true - and SSM is not installed, Installing SSM for Session Manager Access..."
@@ -738,9 +738,10 @@ Resources:
                 if [[ -z "$(command -v aws)" ]] ; then
                   logit "AWS CLI is not present, installing it to control asg lifecycle hook completion..."
                   if [[ -z "$(command -v pip)" ]] ; then
-                    logit "PIP is not present, installing for aws cli install"
-                    curl -O https://bootstrap.pypa.io/get-pip.py
-                    python get-pip.py
+                    curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+                    unzip awscliv2.zip
+                    ./aws/install -i /usr/local/aws-cli -b /usr/bin
+                    rm -rf aws
                   fi
                   pip install awscli --upgrade
                 fi     
