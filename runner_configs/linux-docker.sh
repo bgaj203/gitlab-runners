@@ -51,21 +51,6 @@ echo -e "\nRunning scripts as '$(whoami)'\n\n"
 # cat << EndOfRunnerConfigTOML > $RunnerConfigToml
 # #Docker executor configuration
 # concurrent = 4
-# log_level = "warning"
-# [[runners]]
-#   name = "ruby-2.6-docker"
-#   limit = 0
-#   executor = "docker"
-#   builds_dir = ""
-#   [runners.docker]
-#     host = ""
-#     image = "ruby:2.6"
-#     privileged = false
-#     disable_cache = false
-#     cache_dir = ""
-#     tls_verify = false
-#     shm_size = 300000
-
 # EndOfRunnerConfigTOML
 
 
@@ -79,36 +64,12 @@ $RunnerInstallRoot/gitlab-runner register \
   --docker-image "docker:latest" \
   --docker-privileged \
   --run-untagged="true" \
+  --tag-list "$RunnerCompleteTagList"
   --locked 0 \
   --docker-tlsverify false \
   --docker-disable-cache false \
   --docker-shm-size 0 \
   --request-concurrency 4
-
-# $RunnerInstallRoot/gitlab-runner register \
-#   --config $RunnerConfigToml                          \
-#   $OptionalParameters \
-#   --non-interactive                                            \
-#   --url "$GITLABRunnerInstanceURL"                                \
-#   --registration-token "$GITLABRunnerRegTokenList"                     \
-#   --name "$RunnerName" \
-#   --tag-list "$RunnerCompleteTagList"                                          \
-#   --executor "$GITLABRunnerExecutor"    \
-#   --docker-image "ruby:2.6"                                      
- # --request-concurrency 4                                      \
- # --description "Some Runner Description"                      \
- # --docker-volumes "/var/run/docker.sock:/var/run/docker.sock" \
- # --docker-image "docker:latest"                               \
- # --docker-tlsverify false                                     \
- # --docker-disable-cache false                                 \
- # --docker-shm-size 0                                          \
- # --locked="true"
-
-#$RunnerInstallRoot/gitlab-runner run            \
-#  --working-directory "$RunnerInstallRoot" \
-#  --config "/etc/gitlab-runner/config.toml" \
-#  --service "gitlab-runner"                 \
-#  --user "gitlab-runner"
 
 $RunnerInstallRoot/gitlab-runner start
 
@@ -138,6 +99,9 @@ if [ ! -z "$NAMEOFASG" ] && [ "$ASGSelfMonitorTerminationInterval" != "Disabled"
 
     if [[ "\$\(aws autoscaling describe-auto-scaling-instances --instance-ids $MYINSTANCEID --region $AWS_REGION | jq --raw-output '.AutoScalingInstances[0] .LifecycleState'\)" == *"Terminating"* ]]; then
       logit "This instance \($MYINSTANCEID\) is being terminated, perform cleanup..."
+
+      $RunnerInstallRoot/gitlab-runner stop
+      $RunnerInstallRoot/gitlab-runner unregister --all-runners
 
       #### PUT YOUR CLEANUP CODE HERE, DECIDE IF CLEANUP CODE SHOULD ERROR OUT OR SILENTLY FAIL (best effort cleanup)
 
