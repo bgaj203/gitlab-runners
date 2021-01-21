@@ -116,6 +116,8 @@ aws ec2 create-tags --region $AWS_REGION --resources $MYINSTANCEID --tags Key=Gi
 
 #$RunnerInstallRoot/gitlab-runner unregister --all-runners
 
+#Escape all parens that are in quotes and all $ for variables that should wait until script runtime to be expanded. 
+#Non-especaped $ will result in variable expansion DURING script writing which is used on purpose by this heredoc.
 #This approach for termination hook is much simpler than those involving SNS or CloudWatch, but when deployed 
 # on many instances it can result in a lot of ASG Describe API calls (which may be rate limited).
 if [ ! -z "$NAMEOFASG" ] && [ "$ASGSelfMonitorTerminationInterval" != "Disabled" ] && [ "$WaitingForReboot" != "true" ]; then
@@ -134,13 +136,13 @@ if [ ! -z "$NAMEOFASG" ] && [ "$ASGSelfMonitorTerminationInterval" != "Disabled"
     #These are resolved at script creation time to reduce api calls when this script runs every minute on instances.
 
     if [[ "\$\(aws autoscaling describe-auto-scaling-instances --instance-ids $MYINSTANCEID --region $AWS_REGION | jq --raw-output '.AutoScalingInstances[0] .LifecycleState'\)" == *"Terminating"* ]]; then
-      logit "This instance ($MYINSTANCEID) is being terminated, perform cleanup..."
+      logit "This instance \($MYINSTANCEID\) is being terminated, perform cleanup..."
 
       #### PUT YOUR CLEANUP CODE HERE, DECIDE IF CLEANUP CODE SHOULD ERROR OUT OR SILENTLY FAIL (best effort cleanup)
 
       aws autoscaling complete-lifecycle-action --region $AWS_REGION --lifecycle-action-result CONTINUE --instance-id $MYINSTANCEID --lifecycle-hook-name instance-terminating --auto-scaling-group-name $NAMEOFASG
-      logit "This instance ($MYINSTANCEID) is ready for termination"
-      logit "Lifecycle CONTINUE was sent to terminati   on hook in ASG: $NAMEOFASG for this instance ($MYINSTANCEID)."
+      logit "This instance \($MYINSTANCEID\) is ready for termination"
+      logit "Lifecycle CONTINUE was sent to terminati   on hook in ASG: $NAMEOFASG for this instance \($MYINSTANCEID\)."
     fi
 EndOfScript
 fi
