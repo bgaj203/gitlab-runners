@@ -1,5 +1,3 @@
-#from: https://medium.com/media/49867a766934c8ba3a1d419dd9acfd32#file-packer_provision-sh
-
 #!/usr/bin/env bash
 
 # Update packages
@@ -112,7 +110,7 @@ $RunnerInstallRoot/gitlab-runner register \
 
 $RunnerInstallRoot/gitlab-runner start
 
-aws ec2 create-tags --region $AWS_REGION --resources $MYINSTANCEID --tags Key=GitLabRunnerName,Value="$RunnerName" Key=GitLabURL,Value="$GITLABRunnerInstanceURL" Key=GitLabRunnerTags,Value=\"$(echo $RunnerCompleteTagList | sed 's/,/\\\,/g')\""
+aws ec2 create-tags --region $AWS_REGION --resources $MYINSTANCEID --tags Key=GitLabRunnerName,Value="$RunnerName" Key=GitLabURL,Value="$GITLABRunnerInstanceURL" Key=GitLabRunnerTags,Value=\"$(echo $RunnerCompleteTagList | sed 's/,/\\\,/g')\"
 
 #$RunnerInstallRoot/gitlab-runner unregister --all-runners
 
@@ -120,6 +118,7 @@ aws ec2 create-tags --region $AWS_REGION --resources $MYINSTANCEID --tags Key=Gi
 #Non-especaped $ will result in variable expansion DURING script writing which is used on purpose by this heredoc.
 #This approach for termination hook is much simpler than those involving SNS or CloudWatch, but when deployed 
 # on many instances it can result in a lot of ASG Describe API calls (which may be rate limited).
+
 if [ ! -z "$NAMEOFASG" ] && [ "$ASGSelfMonitorTerminationInterval" != "Disabled" ] && [ "$WaitingForReboot" != "true" ]; then
   logit "Setting up termination monitoring because 5ASGSelfMonitorTerminationInterval is set to $ASGSelfMonitorTerminationInterval"
   SCRIPTNAME=/etc/cron.d/MonitorTerminationHook.sh
@@ -142,7 +141,7 @@ if [ ! -z "$NAMEOFASG" ] && [ "$ASGSelfMonitorTerminationInterval" != "Disabled"
 
       aws autoscaling complete-lifecycle-action --region $AWS_REGION --lifecycle-action-result CONTINUE --instance-id $MYINSTANCEID --lifecycle-hook-name instance-terminating --auto-scaling-group-name $NAMEOFASG
       logit "This instance \($MYINSTANCEID\) is ready for termination"
-      logit "Lifecycle CONTINUE was sent to terminati   on hook in ASG: $NAMEOFASG for this instance \($MYINSTANCEID\)."
+      logit "Lifecycle CONTINUE was sent to termination hook in ASG: $NAMEOFASG for this instance \($MYINSTANCEID\)."
     fi
 EndOfScript
 fi
