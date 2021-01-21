@@ -33,6 +33,8 @@ set -ex
 
 RunnerCompleteTagList="$RunnerOSTags, glexecutor-$GITLABRunnerExecutor, $GITLABRunnerTagList"
 
+if [ -n ${COMPUTETYPE} ]; then RunnerCompleteTagList = "$RunnerCompleteTagList, computetype-${COMPUTETYPE,,}"
+
 # Installing and configuring Gitlab Runner
 if [ ! -d $RunnerInstallRoot ]; then mkdir -p $RunnerInstallRoot; fi
 
