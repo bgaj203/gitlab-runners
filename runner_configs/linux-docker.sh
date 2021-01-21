@@ -118,7 +118,6 @@ aws ec2 create-tags --region $AWS_REGION --resources $MYINSTANCEID --tags Key=Gi
 
 #This approach for termination hook is much simpler than those involving SNS or CloudWatch, but when deployed 
 # on many instances it can result in a lot of ASG Describe API calls (which may be rate limited).
-ASGSelfMonitorTerminationInterval=${5ASGSelfMonitorTerminationInterval}
 if [ ! -z "$NAMEOFASG" ] && [ "$ASGSelfMonitorTerminationInterval" != "Disabled" ] && [ "$WaitingForReboot" != "true" ]; then
   logit "Setting up termination monitoring because 5ASGSelfMonitorTerminationInterval is set to $ASGSelfMonitorTerminationInterval"
   SCRIPTNAME=/etc/cron.d/MonitorTerminationHook.sh
@@ -128,9 +127,9 @@ if [ ! -z "$NAMEOFASG" ] && [ "$ASGSelfMonitorTerminationInterval" != "Disabled"
   #Heredoc script
   cat << EndOfScript > $SCRIPTNAME
     function logit() {
-      LOGSTRING=\"\$(date +"%_b %e %H:%M:%S") \$(hostname) TERMINATIONMON_SCRIPT: \$1\"
-      echo \"\$LOGSTRING\"
-      echo \"\$LOGSTRING\" >> /var/log/messages
+      LOGSTRING="\$(date +'%_b %e %H:%M:%S') \$(hostname) TERMINATIONMON_SCRIPT: \$1"
+      echo "\$LOGSTRING"
+      echo "\$LOGSTRING" >> /var/log/messages
     }
     #These are resolved at script creation time to reduce api calls when this script runs every minute on instances.
 
@@ -141,6 +140,7 @@ if [ ! -z "$NAMEOFASG" ] && [ "$ASGSelfMonitorTerminationInterval" != "Disabled"
 
       aws autoscaling complete-lifecycle-action --region $AWS_REGION --lifecycle-action-result CONTINUE --instance-id $MYINSTANCEID --lifecycle-hook-name instance-terminating --auto-scaling-group-name $NAMEOFASG
       logit "This instance ($MYINSTANCEID) is ready for termination"
-      logit "Lifecycle CONTINUE was sent to termination hook in ASG: $NAMEOFASG for this instance ($MYINSTANCEID)."
+      logit "Lifecycle CONTINUE was sent to terminati   on hook in ASG: $NAMEOFASG for this instance ($MYINSTANCEID)."
     fi
 EndOfScript
+fi

@@ -266,7 +266,7 @@ Parameters:
       count in 5SPOTOnDemandBaseCapacity.
       Set to 0 for a 100% spot cluster.
     Type: Number
-    Default: 0
+    Default: 100
     #Reset above to: 0    
   8DBGCPULoadPercentInitialValue:
     Description: >
@@ -762,6 +762,7 @@ Resources:
                 #RunnerInstallRoot='/usr/local/bin'
                 RunnerInstallRoot='/gitlab-runner'
                 RunnerConfigToml="/etc/gitlab-runner/config.toml"
+                ASGSelfMonitorTerminationInterval="${5ASGSelfMonitorTerminationInterval}"
                 
                 if [[ "${4ASGScheduledStartupCron}" != "Disabled" ]] || [[ "${4ASGScheduledShutdownCron}" != "Disabled" ]]; then GITLABRunnerTagList = "$GITLABRunnerTagList, UsesAWSASGScheduledAvailability"; fi
 
