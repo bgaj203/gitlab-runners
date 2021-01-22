@@ -37,10 +37,6 @@ if [[ -n "$(command -v docker)" ]] ; then
   systemctl start docker.service
 fi
 
-yum install amazon-cloudwatch-agent
-systemctl enable amazon-cloudwatch-agent
-systemctl start amazon-cloudwatch-agent
-
 RunnerCompleteTagList="$RunnerOSTags,glexecutor-$GITLABRunnerExecutor,$GITLABRunnerTagList"
 
 if [ -n ${COMPUTETYPE} ]; then RunnerCompleteTagList="$RunnerCompleteTagList, computetype-${COMPUTETYPE,,}"; fi
@@ -121,3 +117,39 @@ if [ ! -z "$NAMEOFASG" ] && [ "$ASGSelfMonitorTerminationInterval" != "Disabled"
     fi
 EndOfScript
 fi
+
+echo "Settings up CloudWatch Metrics to Enable Scaling on Memory Utilization"
+
+cat << EndOfCWMetricsConfig > /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json
+{
+  "agent": {
+    "metrics_collection_interval": 10,
+    "logfile": "/opt/aws/amazon-cloudwatch-agent/logs/amazon-cloudwatch-agent.log"
+  },
+  "metrics": {
+    "namespace": "AWS/EC2",
+    "metrics_collected": {
+      "mem": {
+        "measurement": [
+          "mem_used_percent",
+          "mem_available_percent"
+        ],
+        "metrics_collection_interval": 1
+      },
+    },
+    "append_dimensions": {
+      "InstanceId": "$MYINSTANCEID",
+      "InstanceType": ""$(curl http://169.254.169.254/latest/meta-data/instance-type)"",
+      "AutoScalingGroupName": "$NAMEOFASG"
+    },
+    "aggregation_dimensions" : [["AutoScalingGroupName"]],
+    "force_flush_interval" : 30
+  }
+}
+EndOfCWMetricsConfig
+yum install amazon-cloudwatch-agent
+systemctl enable amazon-cloudwatch-agent
+systemctl start amazon-cloudwatch-agent
+#Check if running: sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -m ec2 -a status
+#config: /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json
+#log file: tail /opt/aws/amazon-cloudwatch-agent/logs/amazon-cloudwatch-agent.log -f

@@ -458,15 +458,17 @@ Resources:
             - arn:aws:iam::aws:policy/service-role/AmazonSSMMaintenanceWindowRole
             - arn:aws:iam::aws:policy/service-role/AmazonSSMAutomationRole
             - arn:aws:iam::aws:policy/service-role/AmazonEC2RoleforSSM
+            - arn:aws:iam::aws:policy/service-role/CloudWatchAgentServerPolicy
             - !Sub "arn:aws:iam::${AWS::AccountId}:policy/${AWS::StackName}-ASGSelfAccessPolicy"
             - !Sub "arn:aws:iam::${AWS::AccountId}:policy/${AWS::StackName}-EC2SelfAccessPolicy"
             - !Sub "arn:aws:iam::${AWS::AccountId}:policy/${AWS::StackName}-SSMParameterStorePolicy"
             - !Sub "arn:aws:iam::${AWS::AccountId}:policy/${AWS::StackName}-ASGBucketPolicy"                
           - 
+            - arn:aws:iam::aws:policy/service-role/CloudWatchAgentServerPolicy
             - !Sub "arn:aws:iam::${AWS::AccountId}:policy/${AWS::StackName}-ASGSelfAccessPolicy"
             - !Sub "arn:aws:iam::${AWS::AccountId}:policy/${AWS::StackName}-EC2SelfAccessPolicy"
             - !Sub "arn:aws:iam::${AWS::AccountId}:policy/${AWS::StackName}-SSMParameterStorePolicy"
-            - !Sub "arn:aws:iam::${AWS::AccountId}:policy/${AWS::StackName}-ASGBucketPolicy"
+            - !Sub "arn:aws:iam::${AWS::AccountId}:policy/${AWS::StackName}-ASGBucketPolicy"            
 
   SSMSyntheticCPULoad:
     Type: AWS::SSM::Parameter

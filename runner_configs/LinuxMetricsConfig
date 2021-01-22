@@ -4,8 +4,27 @@
     "logfile": "/opt/aws/amazon-cloudwatch-agent/logs/amazon-cloudwatch-agent.log"
   },
   "metrics": {
-    "namespace": "MyCustomNamespace",
+    "namespace": "AWS/EC2",
     "metrics_collected": {
+      "mem": {
+        "measurement": [
+          "mem_used_percent",
+          "mem_available_percent"
+        ],
+        "metrics_collection_interval": 1
+      },
+    },
+    "append_dimensions": {
+      "InstanceId": "i-05fdfd9b9fe4cb784",
+      "InstanceType": "m4.large",
+      "AutoScalingGroupName": "asg-al2-docker-2000-InstanceASG-1P93IUT69C7Y1"
+    },
+    "aggregation_dimensions" : [["AutoScalingGroupName"]],
+    "force_flush_interval" : 30
+  }
+}
+
+Others
       "disk": {
         "resources": [
           "/",
@@ -19,11 +38,7 @@
           "ignore_file_system_types": [
           "sysfs", "devtmpfs"
         ],
-        "metrics_collection_interval": 60,
-        "append_dimensions": {
-          "customized_dimension_key_3": "customized_dimension_value_3",
-          "customized_dimension_key_4": "customized_dimension_value_4"
-        }
+        "metrics_collection_interval": 60
       },
       "diskio": {
         "resources": [
@@ -38,14 +53,6 @@
         ],
         "metrics_collection_interval": 60
       },
-      "mem": {
-        "measurement": [
-          "mem_used",
-          "mem_cached",
-          "mem_total"
-        ],
-        "metrics_collection_interval": 1
-      },
       "net": {
         "resources": [
           "eth0"
@@ -57,14 +64,3 @@
           "drop_out"
         ]
       }
-    },
-    "append_dimensions": {
-      "ImageId": "${aws:ImageId}",
-      "InstanceId": "${aws:InstanceId}",
-      "InstanceType": "${aws:InstanceType}",
-      "AutoScalingGroupName": "${aws:AutoScalingGroupName}"
-    },
-    "aggregation_dimensions" : [["ImageId"], ["InstanceId", "InstanceType"], ["d1"],[]],
-    "force_flush_interval" : 30
-  }
-}
