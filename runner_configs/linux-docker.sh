@@ -42,7 +42,7 @@ curl https://gitlab-runner-downloads.s3.amazonaws.com/latest/binaries/gitlab-run
 chmod +x $RunnerInstallRoot/gitlab-runner
 if ! id -u "gitlab-runner" >/dev/null 2>&1; then
   useradd --comment 'GitLab Runner' --create-home gitlab-runner --shell /bin/bash
-  sudo usermod -a -G docker gitlab-runner
+  #sudo usermod -a -G docker gitlab-runner
 fi
 $RunnerInstallRoot/gitlab-runner install --user="gitlab-runner" --working-directory="/gitlab-runner"
 echo -e "\nRunning scripts as '$(whoami)'\n\n"

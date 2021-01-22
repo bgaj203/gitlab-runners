@@ -727,7 +727,7 @@ Resources:
                 logit "Learn more at: $1AAAReadmeBlogPost"
                 logit "Logs for this are found in /var/log/cloud-init-output.log or /var/log/messsages (non amazon linux)"
                 logit "Rendered script found in /var/lib/cloud/instance/scripts/part-001"   
-                yum install -y jq unzip 
+                yum install -y jq unzip yum-utils
                 if [[ "${8DBGTroubleShootingMode}" == "true" ]]; then
                   if ! ps -ef | grep -q '[a]mazon-ssm-agent'; then
                     logit "8DBGTroubleShootingMode is true - and SSM is not installed, Installing SSM for Session Manager Access..."
