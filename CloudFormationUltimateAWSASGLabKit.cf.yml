@@ -311,9 +311,9 @@ Parameters:
       /aws/service/ami-windows-latest/Windows_Server-2016-English-Full-ContainersLatest,/aws/service/ami-windows-latest/Windows_Server-2019-English-Core-ContainersLatest,
       /aws/service/ami-windows-latest/Windows_Server-2019-English-Full-ContainersLatest,/aws/service/ami-windows-latest/Windows_Server-1903-English-Core-ContainersLatest,
       /aws/service/ami-windows-latest/Windows_Server-1809-English-Core-ContainersLatest
-      COMMON LINUX OPTIONS: /aws/service/ecs/optimized-ami/amazon-linux/recommended/image_id, /aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2
+      COMMON LINUX OPTIONS: /aws/service/ecs/optimized-ami/amazon-linux-2/recommended/image_id (with docker), /aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2 (no docker)
     Type: 'AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>'
-    Default: '/aws/service/ecs/optimized-ami/amazon-linux/recommended/image_id'
+    Default: '/aws/service/ecs/optimized-ami/amazon-linux-2/recommended/image_id'
     #Reset above to: '/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2'
 Conditions: 
   CreateDebugResources: !Equals [ !Ref 8DBGTroubleShootingMode, "true" ]
@@ -725,7 +725,8 @@ Resources:
                 logit "Learn more at: $1AAAReadmeBlogPost"
                 logit "Logs for this are found in /var/log/cloud-init-output.log or /var/log/messsages (non amazon linux)"
                 logit "Rendered script found in /var/lib/cloud/instance/scripts/part-001"   
-                yum install -y jq unzip yum-utils
+                yum install -y jq unzip yum-utils 
+                #amazon-cloudwatch-agent
                 if [[ "${8DBGTroubleShootingMode}" == "true" ]]; then
                   if ! ps -ef | grep -q '[a]mazon-ssm-agent'; then
                     logit "8DBGTroubleShootingMode is true - and SSM is not installed, Installing SSM for Session Manager Access..."
