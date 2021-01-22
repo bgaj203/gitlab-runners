@@ -869,7 +869,7 @@ Resources:
                   chown root:root "$SCRIPTNAME"
                   chmod 644 "$SCRIPTNAME"
                   logit "Adding cron job"
-                  echo "$ASGSelfMonitorTerminationInterval * * * * root bash $SCRIPTNAME" | $SUDO tee -a /etc/crontab > /dev/null
+                  echo "$ASGSelfMonitorTerminationInterval * * * * root bash $SCRIPTNAME" | tee -a /etc/crontab > /dev/null
                   logit "adding to /etc/crontab: $ASGSelfMonitorTerminationInterval * * * * root bash $SCRIPTNAME"
                   chown root:root /etc/crontab
                   chmod 644 /etc/crontab
