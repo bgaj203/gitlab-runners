@@ -91,14 +91,14 @@ if [ ! -z "$NAMEOFASG" ] && [ "$ASGSelfMonitorTerminationInterval" != "Disabled"
   #Heredoc script
   cat << EndOfScript > $SCRIPTNAME
     function logit() {
-      LOGSTRING="\$\(date +'%_b %e %H:%M:%S'\) \$\(hostname\) TERMINATIONMON_SCRIPT: \$1"
+      LOGSTRING="\$(date +'%_b %e %H:%M:%S') \$(hostname) TERMINATIONMON_SCRIPT: \$1"
       echo "\$LOGSTRING"
       echo "\$LOGSTRING" >> /var/log/messages
     }
     #These are resolved at script creation time to reduce api calls when this script runs every minute on instances.
 
-    if [[ "\$\(aws autoscaling describe-auto-scaling-instances --instance-ids $MYINSTANCEID --region $AWS_REGION | jq --raw-output '.AutoScalingInstances[0] .LifecycleState'\)" == *"Terminating"* ]]; then
-      logit "This instance \($MYINSTANCEID\) is being terminated, perform cleanup..."
+    if [[ "\$(aws autoscaling describe-auto-scaling-instances --instance-ids $MYINSTANCEID --region $AWS_REGION | jq --raw-output '.AutoScalingInstances[0] .LifecycleState')" == *"Terminating"* ]]; then
+      logit "This instance ($MYINSTANCEID) is being terminated, perform cleanup..."
 
       $RunnerInstallRoot/gitlab-runner stop
       $RunnerInstallRoot/gitlab-runner unregister --all-runners
@@ -106,8 +106,8 @@ if [ ! -z "$NAMEOFASG" ] && [ "$ASGSelfMonitorTerminationInterval" != "Disabled"
       #### PUT YOUR CLEANUP CODE HERE, DECIDE IF CLEANUP CODE SHOULD ERROR OUT OR SILENTLY FAIL (best effort cleanup)
 
       aws autoscaling complete-lifecycle-action --region $AWS_REGION --lifecycle-action-result CONTINUE --instance-id $MYINSTANCEID --lifecycle-hook-name instance-terminating --auto-scaling-group-name $NAMEOFASG
-      logit "This instance \($MYINSTANCEID\) is ready for termination"
-      logit "Lifecycle CONTINUE was sent to termination hook in ASG: $NAMEOFASG for this instance \($MYINSTANCEID\)."
+      logit "This instance ($MYINSTANCEID) is ready for termination"
+      logit "Lifecycle CONTINUE was sent to termination hook in ASG: $NAMEOFASG for this instance ($MYINSTANCEID)."
     fi
 EndOfScript
 fi
