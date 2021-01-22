@@ -29,7 +29,17 @@ elif [[ -n "$(command -v apt-get)" ]] ; then
 fi
 
 set -ex
-#$PKGMGR update && $PKGMGR install -y wget
+if [[ -n "$(command -v docker)" ]] ; then
+  echo "Docker not present, installing..."
+  amazon-linux-extras install docker
+  usermod -a -G docker ec2-user
+  systemctl enable docker.service
+  systemctl start docker.service
+fi
+
+yum install amazon-cloudwatch-agent
+systemctl enable amazon-cloudwatch-agent
+systemctl start amazon-cloudwatch-agent
 
 RunnerCompleteTagList="$RunnerOSTags,glexecutor-$GITLABRunnerExecutor,$GITLABRunnerTagList"
 
