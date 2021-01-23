@@ -144,6 +144,7 @@ EndOfCWMetricsConfig
 yum install amazon-cloudwatch-agent
 systemctl enable amazon-cloudwatch-agent
 systemctl start amazon-cloudwatch-agent
+#Debugging:
 #Check if running: sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -m ec2 -a status
 #config: cat /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json
 #log file: tail /opt/aws/amazon-cloudwatch-agent/logs/amazon-cloudwatch-agent.log -f
