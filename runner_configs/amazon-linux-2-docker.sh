@@ -127,7 +127,6 @@ cat << EndOfCWMetricsConfig > /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudw
     "logfile": "/opt/aws/amazon-cloudwatch-agent/logs/amazon-cloudwatch-agent.log"
   },
   "metrics": {
-    "namespace": "AWS/EC2",
     "metrics_collected": {
       "mem": {
         "measurement": [
@@ -135,11 +134,11 @@ cat << EndOfCWMetricsConfig > /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudw
           "mem_available_percent"
         ],
         "metrics_collection_interval": 1
-      },
+      }
     },
     "append_dimensions": {
       "InstanceId": "$MYINSTANCEID",
-      "InstanceType": ""$(curl http://169.254.169.254/latest/meta-data/instance-type)"",
+      "InstanceType": "$(curl http://169.254.169.254/latest/meta-data/instance-type)",
       "AutoScalingGroupName": "$NAMEOFASG"
     },
     "aggregation_dimensions" : [["AutoScalingGroupName"]],
