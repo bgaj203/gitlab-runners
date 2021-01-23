@@ -62,6 +62,7 @@ echo -e "\nRunning scripts as '$(whoami)'\n\n"
 
 $RunnerInstallRoot/gitlab-runner register \
   --non-interactive \
+  --name $RunnerName \
   --config $RunnerConfigToml \
   --url "$GITLABRunnerInstanceURL" \
   --registration-token "$GITLABRunnerRegTokenList" \
@@ -122,20 +123,69 @@ echo "Settings up CloudWatch Metrics to Enable Scaling on Memory Utilization"
 
 cat << EndOfCWMetricsConfig > /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json
 {
+  "agent": {
+    "metrics_collection_interval": 30,
+    "run_as_user": "root"
+  },
   "metrics": {
     "append_dimensions": {
-      "AutoScalingGroupName": "$NAMEOFASG",
-      "ImageId": "$(curl http://169.254.169.254/latest/meta-data/ami-id)",
-      "InstanceId": "$MYINSTANCEID",
-      "InstanceType": "$(curl http://169.254.169.254/latest/meta-data/instance-type)"
+            "AutoScalingGroupName": "${aws:AutoScalingGroupName}",
+            "ImageId": "${aws:ImageId}",
+            "InstanceId": "${aws:InstanceId}",
+            "InstanceType": "${aws:InstanceType}"
     },
-    "aggregation_dimensions" : [["AutoScalingGroupName"]],
     "metrics_collected": {
+      "cpu": {
+        "measurement": [
+          "cpu_usage_idle",
+          "cpu_usage_iowait",
+          "cpu_usage_user",
+          "cpu_usage_system"
+        ],
+        "metrics_collection_interval": 30,
+        "totalcpu": false
+      },
+      "disk": {
+        "measurement": [
+          "used_percent",
+          "inodes_free"
+        ],
+        "metrics_collection_interval": 30,
+        "resources": [
+                "*"
+        ]
+      },
+      "diskio": {
+        "measurement": [
+          "io_time",
+          "write_bytes",
+          "read_bytes",
+          "writes",
+          "reads"
+        ],
+        "metrics_collection_interval": 30,
+        "resources": [
+          "*"
+        ]
+      },
       "mem": {
         "measurement": [
-          "mem_used_percent",
-          "mem_available_percent"
-        ]
+          "mem_used_percent"
+        ],
+        "metrics_collection_interval": 30
+      },
+      "netstat": {
+        "measurement": [
+          "tcp_established",
+          "tcp_time_wait"
+        ],
+        "metrics_collection_interval": 30
+      },
+      "swap": {
+        "measurement": [
+          "swap_used_percent"
+        ],
+        "metrics_collection_interval": 30
       }
     }
   }
@@ -147,4 +197,29 @@ systemctl start amazon-cloudwatch-agent
 #Debugging:
 #Check if running: sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -m ec2 -a status
 #config: cat /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json
+#wizard saves: /opt/aws/amazon-cloudwatch-agent/bin/config.json
 #log file: tail /opt/aws/amazon-cloudwatch-agent/logs/amazon-cloudwatch-agent.log -f
+#amazon-linux-extras install -y epel; yum install -y stress-ng
+#stress-ng --vm 1 --vm-bytes 75% --vm-method all --verify -t 10m -v
+#stress-ng --vm-bytes $(awk '/MemAvailable/{printf "%d\n", $2 * 0.9;}' < /proc/meminfo)k --vm-keep -m 1
+
+# {
+#   "metrics": {
+#     "append_dimensions": {
+#       "AutoScalingGroupName": "$NAMEOFASG",
+#       "ImageId": "$(curl http://169.254.169.254/latest/meta-data/ami-id)",
+#       "InstanceId": "$MYINSTANCEID",
+#       "InstanceType": "$(curl http://169.254.169.254/latest/meta-data/instance-type)"
+#     },
+#     "aggregation_dimensions" : [["AutoScalingGroupName"]],
+#     "metrics_collected": {
+#       "mem": {
+#         "measurement": [
+#           "mem_used_percent",
+#           "mem_available_percent"
+#         ],
+#         "metrics_collection_interval": 1
+#       }
+#     }
+#   }
+# }

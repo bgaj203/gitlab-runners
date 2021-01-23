@@ -180,22 +180,28 @@ Parameters:
     Type: String
     Default: 1
     AllowedValues: [0,1,2,3,4,5,Disabled] 
-  5ASGAutoScalingSetScaleOutCPUThreshold:
+  5ASGAutoScalingUtilizationMetricType:
     Description: >
-      What ASG-wide CPU threshold triggers scaling up via step-scaling? Requires 5ASGAutoScalingEnabled=true.
+      Which utilization metric should scaling alarms key off.
+    Type: String
+    Default: Memory
+    AllowedValues: [CPU,Memory]   
+  5ASGAutoScalingSetScaleOutUtilizationThreshold:
+    Description: >
+      What ASG-wide Utilization threshold triggers scaling up via step-scaling? Requires 5ASGAutoScalingEnabled=true.
     Type: Number
     Default: 70  
-  5ASGAutoScalingSetScaleOutCPUThresholdSeconds:
+  5ASGAutoScalingSetScaleOutUtilizationThresholdSeconds:
     Description: >
       How many seconds does the threshold have to be in alarm to trigger scale up via step-scaling? Requires 5ASGAutoScalingEnabled=true.
     Type: Number
     Default: 60     
-  5ASGAutoScalingSetScaleInCPUThreshold:
+  5ASGAutoScalingSetScaleInUtilizationThreshold:
     Description: >
-      What ASG-wide CPU threshold triggers scaling down via step-scaling? Requires 5ASGAutoScalingEnabled=true.
+      What ASG-wide Utilization threshold triggers scaling down via step-scaling? Requires 5ASGAutoScalingEnabled=true.
     Type: Number
     Default: 20  
-  5ASGAutoScalingSetScaleInCPUThresholdSeconds:
+  5ASGAutoScalingSetScaleInUtilizationThresholdSeconds:
     Description: >
       How many seconds does the threshold have to be in alarm to trigger scale down? Requires 5ASGAutoScalingEnabled=true.
     Type: Number
@@ -265,14 +271,14 @@ Parameters:
       Set to 0 for a 100% spot cluster.
     Type: Number
     Default: 100
-    #Reset above to: 0    
-  8DBGCPULoadPercentInitialValue:
+    #Reset above to: 0        
+  8DBGUtilizationLoadPercentInitialValue:
     Description: >
       WARNING: Everything is 1 minute granularity - so don't set this to cause scaling and forget it unless you want a massive AWS bill ;)
-      Test your scaling parameters with synthetic cpu loading.  Enabled by entering a numeric value between 20-95.
-      This will create an SSM parameter named {AWS::Stackname}-SyntheticCPULoad with the initial value entered here.
-      The userdata script will then run a CPU stressing utility in a loop, checking the parameter every minute for
-      updated values.  The value updates the CPU consumption in all ASG members so you can observe whether your scaling
+      Test your scaling parameters with synthetic utlization loading.  Enabled by entering a numeric value between 20-95.
+      This will create an SSM parameter named {AWS::Stackname}-SyntheticUtilizationLoad with the initial value entered here.
+      The userdata script will then run a utilization stressing utility in a loop, checking the parameter every minute for
+      updated values.  The value updates the utilization consumption in all ASG members so you can observe whether your scaling
       policy works.  Set to a non-numeric value to terminate the Synthetic Loading (cannot be reenabled without rebuilding stack).
       AWS Resources are only created to support this functionality if a value is provided during stack deployment.
       The utility for Windows has a challenge generating loads above 90 percent, if you have a better cli utility, I'm all ears.
@@ -311,7 +317,7 @@ Parameters:
       /aws/service/ami-windows-latest/Windows_Server-1809-English-Core-ContainersLatest
       COMMON LINUX OPTIONS: /aws/service/ecs/optimized-ami/amazon-linux-2/recommended/image_id (with docker), /aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2 (no docker)
     Type: 'AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>'
-    Default: '/aws/service/ecs/optimized-ami/amazon-linux-2/recommended/image_id'
+    Default: '/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2'
     #Reset above to: '/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2'
 Conditions: 
   CreateDebugResources: !Equals [ !Ref 8DBGTroubleShootingMode, "true" ]
@@ -320,7 +326,7 @@ Conditions:
   UseLatestAMI: !Equals [ !Ref 1OSPeggedAMIID, "AlwaysUseLatest"]
   BuildInstanceRoleToUse: !Equals [ !Ref 9AWSSpecifiedIAMRoleNAME, "CreateOneForMe" ]
   ConfigureAutoscaling: !Equals [ !Ref 5ASGAutoScalingEnabled, "true" ]
-  SetupSythenticCPULoad: !Not [ !Equals [ !Ref 8DBGCPULoadPercentInitialValue, "" ]]
+  SetupSythenticUtilizationLoad: !Not [ !Equals [ !Ref 8DBGUtilizationLoadPercentInitialValue, "" ]]
   Provided5SPOTInstanceType1: !Not [ !Equals [ !Ref 5SPOTInstanceType1, "" ]]
   Provided5SPOTInstanceType2: !Not [ !Equals [ !Ref 5SPOTInstanceType2, "" ]]
   Provided5SPOTInstanceType3: !Not [ !Equals [ !Ref 5SPOTInstanceType3, "" ]]
@@ -330,6 +336,8 @@ Conditions:
   CreateS3BucketAndPermissions: !Equals [ !Ref 5ASGBucketName, "CreateOneForMe" ]
   CreateStartSchedule: !Not [ !Equals [ !Ref 4ASGScheduledStartupCron, "Disabled" ]]
   CreateStopSchedule: !Not [ !Equals [ !Ref 4ASGScheduledShutdownCron, "Disabled" ]]
+  UseCPUUtilizationMetric: !Equals [ !Ref 5ASGAutoScalingUtilizationMetricType, "CPU" ]
+  MemoryUtilizationMetric: !Equals [ !Ref 5ASGAutoScalingUtilizationMetricType, "Memory" ]
 
 Rules:
   WindowsPlatformShouldNotUseDefaultSSMParameter:
@@ -418,7 +426,7 @@ Resources:
           Effect: Allow
           Sid: WhitelistedGet
 
-  #Give access to CPU Percent for ASG Scaling Testing
+  #Give access to Utilization Percent for ASG Scaling Testing
   #Because hacking together a conditional dependency in CF is a lot of extra code, this policy is always created (not least config)
   SSMParameterStorePolicy:
     Type: AWS::IAM::ManagedPolicy
@@ -428,7 +436,7 @@ Resources:
         Version: 2012-10-17
         Statement:
         - Sid: SSMParameterStorePolicy
-          Resource: !Sub "arn:aws:autoscaling:${AWS::Region}:${AWS::AccountId}:parameter/${AWS::StackName}-SyntheticCPULoad"
+          Resource: !Sub "arn:aws:autoscaling:${AWS::Region}:${AWS::AccountId}:parameter/${AWS::StackName}-SyntheticUtilizationLoad"
           Effect: Allow
           Action: 
             - ssm:GetParameters
@@ -470,14 +478,14 @@ Resources:
             - !Sub "arn:aws:iam::${AWS::AccountId}:policy/${AWS::StackName}-SSMParameterStorePolicy"
             - !Sub "arn:aws:iam::${AWS::AccountId}:policy/${AWS::StackName}-ASGBucketPolicy"            
 
-  SSMSyntheticCPULoad:
+  SSMSyntheticUtilizationLoad:
     Type: AWS::SSM::Parameter
-    Condition: SetupSythenticCPULoad    
+    Condition: SetupSythenticUtilizationLoad    
     Properties:
-      Name: !Sub "${AWS::StackName}-SyntheticCPULoad"
+      Name: !Sub "${AWS::StackName}-SyntheticUtilizationLoad"
       Type: String 
-      Value: !Ref 8DBGCPULoadPercentInitialValue
-      Description: Named as stackname-SyntheticCPULoad, contains CPU Load Percent Value.
+      Value: !Ref 8DBGUtilizationLoadPercentInitialValue
+      Description: Named as stackname-SyntheticUtilizationLoad, contains Utilization Load Percent Value.
 
   ASGBucket:
     Type: AWS::S3::Bucket
@@ -519,10 +527,11 @@ Resources:
           - ScheduledActions
       AutoScalingReplacingUpdate:
         # WillReplace=true will make ReplacingUpdate take precedent over RollingUpdate
-        !If
-          - ReplaceEntireASG
-          - WillReplace: true
-          - WillReplace: false
+        WillReplace: !If [ReplaceEntireASG,true,false]
+        # !If
+        #   - ReplaceEntireASG
+        #   - WillReplace: true
+        #   - WillReplace: false
     Properties:
       HealthCheckGracePeriod: 3
       AvailabilityZones:
@@ -639,44 +648,44 @@ Resources:
       MetricAggregationType: 'Average'
       EstimatedInstanceWarmup: !If [InstancePlatformLinux,60,600]
 
-  LowCpuUsageAlarm:
+  LowUtilizationAlarm:
     Type: AWS::CloudWatch::Alarm
     Condition: ConfigureAutoscaling     
     DependsOn: InstanceASG
     Properties:
-      AlarmDescription: "Low CPU alarm for: "
-      MetricName: CPUUtilization
+      AlarmDescription: "Low Utilization alarm for : "
+      Namespace: !If [UseCPUUtilizationMetric,AWS/EC2,CWAgent]
+      MetricName: !If [UseCPUUtilizationMetric,CPUUtilization,mem_used_percent]
       Unit: Percent
-      Namespace: AWS/EC2
       Dimensions:
         - Name: AutoScalingGroupName
           Value:
             Ref: InstanceASG
       Statistic: Average
-      Period: !Ref 5ASGAutoScalingSetScaleInCPUThresholdSeconds
+      Period: !Ref 5ASGAutoScalingSetScaleInUtilizationThresholdSeconds
       EvaluationPeriods: 1
-      Threshold: !Ref 5ASGAutoScalingSetScaleInCPUThreshold
+      Threshold: !Ref 5ASGAutoScalingSetScaleInUtilizationThreshold
       ComparisonOperator: LessThanOrEqualToThreshold
       AlarmActions:
         - !Ref ScaleDownPolicy
 
-  HighCpuUsageAlarm:
+  HighUtilizationAlarm:
     Type: AWS::CloudWatch::Alarm
     Condition: ConfigureAutoscaling     
     DependsOn: InstanceASG
     Properties:
-      AlarmDescription: "High CPU alarm for: "
-      MetricName: CPUUtilization
+      AlarmDescription: "High Utilization alarm for : "
+      Namespace: !If [UseCPUUtilizationMetric,AWS/EC2,CWAgent]
+      MetricName: !If [UseCPUUtilizationMetric,CPUUtilization,mem_used_percent]
       Unit: Percent      
-      Namespace: AWS/EC2
       Dimensions:
         - Name: AutoScalingGroupName
           Value:
             Ref: InstanceASG
       Statistic: Average
-      Period: !Ref 5ASGAutoScalingSetScaleOutCPUThresholdSeconds
+      Period: !Ref 5ASGAutoScalingSetScaleOutUtilizationThresholdSeconds
       EvaluationPeriods: 1
-      Threshold: !Ref 5ASGAutoScalingSetScaleOutCPUThreshold
+      Threshold: !Ref 5ASGAutoScalingSetScaleOutUtilizationThreshold
       ComparisonOperator: GreaterThanOrEqualToThreshold
       AlarmActions:
         - !Ref ScaleUpPolicy
@@ -951,20 +960,20 @@ Resources:
                   /opt/aws/bin/cfn-signal --success true --stack ${AWS::StackName} --resource InstanceASG --region $AWS_REGION
                 fi
 
-                DBGCPULoadPercentInitialValue=${8DBGCPULoadPercentInitialValue}
-                if [ "$WaitingForReboot" != "true" ] && [ -n "$DBGCPULoadPercentInitialValue" ]; then
-                  logit "Setting up CPU stressing because 8DBGCPULoadPercentInitialValue was set to $DBGCPULoadPercentInitialValue"
+                DBGUtilizationLoadPercentInitialValue=${8DBGUtilizationLoadPercentInitialValue}
+                if [ "$WaitingForReboot" != "true" ] && [ -n "$DBGUtilizationLoadPercentInitialValue" ]; then
+                  logit "Setting up Utilization stressing because 8DBGUtilizationLoadPercentInitialValue was set to $DBGUtilizationLoadPercentInitialValue"
                   if [[ ! -z "$(command -v amazon-linux-extras)" ]] ; then
                     amazon-linux-extras install epel -y
                   fi
                   yum install -y curl stress-ng
-                  CPUPercent="$(aws --region=$AWS_REGION ssm get-parameter --name "$NAMEOFSTACK-SyntheticCPULoad" --output text --query Parameter.Value | grep -E ^\-?[0-9]+$)"
-                  while [ "$CPUPercent" != '' ]; do
-                    logit "Stressing for 1 minute at $CPUPercent percent CPU utilization before checking for updated percentage."
-                    stress-ng -c 0 -l $CPUPercent --timeout 60
-                    CPUPercent="$(aws --region=$AWS_REGION ssm get-parameter --name "$NAMEOFSTACK-SyntheticCPULoad" --output text --query Parameter.Value | grep -E ^\-?[0-9]+$)"
+                  UtilizationPercent="$(aws --region=$AWS_REGION ssm get-parameter --name "$NAMEOFSTACK-SyntheticUtilizationLoad" --output text --query Parameter.Value | grep -E ^\-?[0-9]+$)"
+                  while [ "$UtilizationPercent" != '' ]; do
+                    logit "Stressing for 1 minute at $UtilizationPercent percent utilization before checking for updated percentage."
+                    stress-ng -c 0 -l $UtilizationPercent --timeout 60
+                    UtilizationPercent="$(aws --region=$AWS_REGION ssm get-parameter --name "$NAMEOFSTACK-SyntheticUtilizationLoad" --output text --query Parameter.Value | grep -E ^\-?[0-9]+$)"
                   done
-                  logit "Stopping CPU stressing due to receving non-numeric value: \"$(aws --region=$AWS_REGION ssm get-parameter --name "$NAMEOFSTACK-SyntheticCPULoad" --output text --query Parameter.Value)\""
+                  logit "Stopping Utilization stressing due to receving non-numeric value: \"$(aws --region=$AWS_REGION ssm get-parameter --name "$NAMEOFSTACK-SyntheticUtilizationLoad" --output text --query Parameter.Value)\""
                 fi              
             - 
               # **************
@@ -1219,16 +1228,16 @@ Resources:
                   cf-success
                 }
 
-                $DBGCPULoadPercentInitialValue=${8DBGCPULoadPercentInitialValue}
-                if (($WaitingForReboot -ne $True ) -AND ($DBGCPULoadPercentInitialValue)) {
-                  logit "Setting up CPU stressing because 8DBGCPULoadPercentInitialValue was set to $DBGCPULoadPercentInitialValue"
+                $DBGUtilizationLoadPercentInitialValue=${8DBGUtilizationLoadPercentInitialValue}
+                if (($WaitingForReboot -ne $True ) -AND ($DBGUtilizationLoadPercentInitialValue)) {
+                  logit "Setting up Utilization stressing because 8DBGUtilizationLoadPercentInitialValue was set to $DBGUtilizationLoadPercentInitialValue"
                   Invoke-WebRequest https://github.com/vikyd/go-cpu-load/releases/download/0.0.1/go-cpu-load-win-amd64.exe -UseBasicParsing -outfile go-cpu-load-win-amd64.exe
-                  $CPUPercent="$(aws --region=$AWS_REGION ssm get-parameter --name $NAMEOFSTACK-SyntheticCPULoad --output text --query Parameter.Value)"
-                  while ( $CPUPercent -match "^[\d\.]+$" ) {
-                    logit "Stressing for 1 minutes at $CPUPercent percent CPU utilization."
-                    . .\go-cpu-load-win-amd64.exe -p $CPUPercent -t 60
-                    $CPUPercent="$(aws --region=$AWS_REGION ssm get-parameter --name $NAMEOFSTACK-SyntheticCPULoad --output text --query Parameter.Value)"
+                  $UtilizationPercent="$(aws --region=$AWS_REGION ssm get-parameter --name $NAMEOFSTACK-SyntheticUtilizationLoad --output text --query Parameter.Value)"
+                  while ( $UtilizationPercent -match "^[\d\.]+$" ) {
+                    logit "Stressing for 1 minutes at $UtilizationPercent percent Utilization utilization."
+                    . .\go-cpu-load-win-amd64.exe -p $UtilizationPercent -t 60
+                    $UtilizationPercent="$(aws --region=$AWS_REGION ssm get-parameter --name $NAMEOFSTACK-SyntheticUtilizationLoad --output text --query Parameter.Value)"
                   }
-                  logit "Stopping CPU stressing due to receving non-numeric value: `"$CPUPercent`""
+                  logit "Stopping Utilization stressing due to receving non-numeric value: `"$UtilizationPercent`""
                 }
                 </powershell>              
