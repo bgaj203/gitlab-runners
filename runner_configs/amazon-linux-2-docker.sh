@@ -120,7 +120,8 @@ EndOfScript
 fi
 
 echo "Settings up CloudWatch Metrics to Enable Scaling on Memory Utilization"
-
+yum install amazon-cloudwatch-agent
+systemctl stop amazon-cloudwatch-agent
 cat << EndOfCWMetricsConfig > /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json
 {
   "agent": {
@@ -129,10 +130,10 @@ cat << EndOfCWMetricsConfig > /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudw
   },
   "metrics": {
     "append_dimensions": {
-            "AutoScalingGroupName": "${aws:AutoScalingGroupName}",
-            "ImageId": "${aws:ImageId}",
-            "InstanceId": "${aws:InstanceId}",
-            "InstanceType": "${aws:InstanceType}"
+      "AutoScalingGroupName": "$NAMEOFASG",
+      "ImageId": "$(curl http://169.254.169.254/latest/meta-data/ami-id)",
+      "InstanceId": "$MYINSTANCEID",
+      "InstanceType": "$(curl http://169.254.169.254/latest/meta-data/instance-type)"
     },
     "metrics_collected": {
       "cpu": {
@@ -191,12 +192,11 @@ cat << EndOfCWMetricsConfig > /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudw
   }
 }
 EndOfCWMetricsConfig
-yum install amazon-cloudwatch-agent
 systemctl enable amazon-cloudwatch-agent
-systemctl start amazon-cloudwatch-agent
+systemctl restart amazon-cloudwatch-agent
 #Debugging:
 #Check if running: sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -m ec2 -a status
-#config: cat /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json
+#config: cat cat ca
 #wizard saves: /opt/aws/amazon-cloudwatch-agent/bin/config.json
 #log file: tail /opt/aws/amazon-cloudwatch-agent/logs/amazon-cloudwatch-agent.log -f
 #amazon-linux-extras install -y epel; yum install -y stress-ng
