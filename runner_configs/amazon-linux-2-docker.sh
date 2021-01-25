@@ -122,7 +122,7 @@ fi
 echo "Settings up CloudWatch Metrics to Enable Scaling on Memory Utilization"
 yum install amazon-cloudwatch-agent
 systemctl stop amazon-cloudwatch-agent
-cat << EndOfCWMetricsConfig > /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json
+cat << 'EndOfCWMetricsConfig' > /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json
 {
   "agent": {
     "metrics_collection_interval": 30,
@@ -130,7 +130,6 @@ cat << EndOfCWMetricsConfig > /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudw
   },
   "metrics": {
     "aggregation_dimensions" : [["AutoScalingGroupName"], ["InstanceId"], ["InstanceType"], ["InstanceId","InstanceType"]],
-    "metrics": {
       "append_dimensions": {
         "AutoScalingGroupName": "${aws:AutoScalingGroupName}",
         "ImageId": "${aws:ImageId}",
@@ -198,14 +197,14 @@ systemctl enable amazon-cloudwatch-agent
 systemctl restart amazon-cloudwatch-agent
 #Debugging:
 #Check if running: sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -m ec2 -a status
-#config: opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json
+#config: cat /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json
 #log file: tail /opt/aws/amazon-cloudwatch-agent/logs/amazon-cloudwatch-agent.log -f
 #wizard saves: /opt/aws/amazon-cloudwatch-agent/bin/config.json
 #amazon-linux-extras install -y epel; yum install -y stress-ng
 #stress-ng --vm 1 --vm-bytes 75% --vm-method all --verify -t 10m -v
 #stress-ng --vm-hang 2 --vm-keep --verify --timeout 600 --verbose --vm 2 --vm-bytes $(awk '/MemTotal/{printf "%d\n", $2;}' < /proc/meminfo)k
 # --vm-method all 
-stress-ng --vm-hang 2 --vm-keep --verify --timeout 600 --verbose --vm 2 --vm-bytes $(awk '/MemAvailable/{printf "%d\n", $2 * 0.9;}' < /proc/meminfo)k
+#stress-ng --vm-hang 2 --vm-keep --verify --timeout 600 --verbose --vm 2 --vm-bytes $(awk '/MemAvailable/{printf "%d\n", $2 * 0.9;}' < /proc/meminfo)k
 
 
 #90% of available memory: $(awk '/MemAvailable/{printf "%d\n", $2 * 0.9;}' < /proc/meminfo)k
