@@ -12,7 +12,6 @@ Runner Specific or Highlighted Features:
 - Runner information tagged in AWS and instance name and AWS account set as runner name for easy mapping of runners in GitLab to instances in AWS and vice versa.
 - Runners self-tag as computetype-spot or computetype-ondemand to allow GitLab CI job level routing based on this information.
 - Runners self-tag with gitlab runner executor type
-- 
 
 Each runner supported as a bash or powershell script in the "runner_configs" directory. The parameter that take these scripts can be point to any available URL. When pointing it to GitLab, be sure to use a full raw URL that is accessible directly from your instance as it spins up in AWS.
 
@@ -66,7 +65,25 @@ Yes - because:
 #### CloudWatch Scaling
 Alarms are not simple thresholds, they must be **breached* to enact the associated scaling rule.  For instance if your CPU utilization low threshold is 20% and your ASG starts and never goes above 20%, scale down will not occur because the alarm was not breached - the utilization simply never was above the threshold.
 
+#### AWS ASG Scaling Configuration Flexibility
+
+While this template allows:
+
+* One high and one low threshold on
+* Either CPU or Memory Utilization Metrics
+
+AWS ASG itself supports many alarms on many metrics.  Multi-metric / multi-alarm scaling can get complex and cause thrashing - if it is done is should be based on actual tested thresholds based on actual runner workloads.  For instance, perhaps scaling up on CPU > 80% and seperately Memory Util > 60% - but such a configuration should come from actual load signatures of an actual customer-like mix of runner jobs.
+
+##### Considerations and Cautions
+
+* By definition ASG scaling alarms for a cluster are based on a metric for all existing hosts in the cluster.
+* Many metrics that can be chosen, including GitLab CI Job Queue Length, are non-deterministic to actual ASG cluster loading - this is because individual jobs can have a very wide variety of memory and cpu utilization based on what is in them and whether they docker executor is in use. While responsiveness is important, it is also important not to hyperscale a cluster that is running at 50% overall utilization.
+* Jobs that are in a polling cycle (say for external status), consume a GitLab Concurrency slot - but hardly any CPU. So CPU utilization alone does not tell a whole story.
+* Docker runners will have low memory pressure even if all slots are filled if the exact same container is running for more than one of the slots because the shared container memory is reused by multiple containers. So memory utilization 
+* Step scaling is an AWS ASG feature that should be used to improve scale up and down responsiveness, rather than using alternative metrics.  For instance, switching to a metrix that is non-deterministic of actual ASG loading (e.g. GitLab CI Job Queue Length) may be much less efficient than a more elemental set of metrics that have proper step scaling configured for responsiveness.
+
 #### Ways To Test
+
 * Generate Load
 * Edit Scaling Alarms and Change Thresholds
 #### CloudWatch Configuration and Operation (for memory and other stats)
