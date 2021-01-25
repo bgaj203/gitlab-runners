@@ -29,7 +29,7 @@ elif [[ -n "$(command -v apt-get)" ]] ; then
 fi
 
 set -ex
-if [[ -n "$(command -v docker)" ]] ; then
+if [[ -z "$(command -v docker)" ]] ; then
   echo "Docker not present, installing..."
   amazon-linux-extras install docker
   usermod -a -G docker ec2-user

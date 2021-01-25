@@ -41,15 +41,27 @@ Yes - because:
   * **Linux**: Generally assumes an AWS prepared AMI (all AWS utilities installed and configured for default operation). For Amazon Linux - assumes Amazon Linux **2**.
   * **Windows**: Generally assumes AWS prepared AMI (all AWS utilities installed and configured for default operation) using upgraded AWS EC2Launch client (and NOT older EC2Config) (For AWS prepared AMIs this equates to Server 2012 and later)
 
-#### Logs of UserData scripts on instance
-Both the script encapsulated in the CloudFormation Script and the downloaded runner configuration script:
-  * **Linux Command**: tail /var/log/cloud-init-output.log
-  * **Windoww**: cat C:\programdata\Amazon\EC2-Windows\Launch\Log\UserdataExecution.log
-* Resolved (All variables expanded) Userdata script Location:
-  * **Linux Command**: tail /var/log/cloud-init-output.log
-  * **Windoww**: cat C:\programdata\Amazon\EC2-Windows\Launch\Log\UserdataExecution.log
+#### Linux
+##### Userdata (includes download and execution of runner configuraiton script)
+* **Resolved Script**: 
+* **Userdata Execution Log**: cat /var/log/cloud-init-output.log
+* **Rendered Custom Runner Configuration Script**: cat /custom_instance_configuration_script.sh
+* **Termination Monitoring Script**: cat /etc/cron.d/MonitorTerminationHook.sh
+* **Schedule of Termination Monitoring**: cat /etc/crontab
 
+#### Windows
+##### Userdata
+* **Resolved Script**: cat C:\Windows\TEMP\UserScript.ps1
+* **Userdata Execution Log**: cat C:\programdata\Amazon\EC2-Windows\Launch\Log\UserdataExecution.log
+* **Rendered Custom Runner Configuration Script**: cat $env:public\custom_instance_configuration_script.ps1
+* **Termination Monitoring Script**: cat $env:public\MonitorTerminationHook.ps1
+* **Schedule of Termination Monitoring**: schtasks /query /TN MonitorTerminationHook.ps1
 ### Scaling Troubleshooting and Testing
+
+#### Windows
+* Use this oneliner to install the console based text file editor 'nano' on headless windows: 
+  
+  `If (!(Test-Path env:chocolateyinstall)) {iwr https://chocolatey.org/install.ps1 -UseBasicParsing | iex} ; cinst -y nano`
 
 #### CloudWatch Scaling
 Alarms are not simple thresholds, they must be **breached* to enact the associated scaling rule.  For instance if your CPU utilization low threshold is 20% and your ASG starts and never goes above 20%, scale down will not occur because the alarm was not breached - the utilization simply never was above the threshold.

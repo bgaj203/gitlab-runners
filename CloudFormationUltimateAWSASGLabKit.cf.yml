@@ -503,14 +503,6 @@ Resources:
       ResourceSignal:   
         Timeout: !If [InstancePlatformLinux,PT15M,PT1H] 
         Count: !Ref 4ASGDesiredCapacity          
-        # !If
-        #   - InstancePlatformLinux
-        #   - 
-        #     Timeout: PT15M
-        #     Count: !Ref 4ASGDesiredCapacity
-        #   - 
-        #     Timeout: PT1H
-        #     Count: !Ref 4ASGDesiredCapacity
     # Decide which UpdatePolicy to uncomment to see this template work with either one.
     UpdatePolicy:
       AutoScalingRollingUpdate:
@@ -528,10 +520,6 @@ Resources:
       AutoScalingReplacingUpdate:
         # WillReplace=true will make ReplacingUpdate take precedent over RollingUpdate
         WillReplace: !If [ReplaceEntireASG,true,false]
-        # !If
-        #   - ReplaceEntireASG
-        #   - WillReplace: true
-        #   - WillReplace: false
     Properties:
       HealthCheckGracePeriod: 3
       AvailabilityZones:
@@ -1007,7 +995,7 @@ Resources:
                   $AWSCLIURL="https://s3.amazonaws.com/aws-cli/AWSCLI64PY3.msi" #v1
                   #$AWSCLIURL="https://awscli.amazonaws.com/AWSCLIV2.msi" #v2
                   Invoke-WebRequest $AWSCLIURL -OutFile $env:USERPROFILE\AWSCLI.msi
-                  Start-Process	 -wait -nonewwindow -FilePath "msiexec.exe" -ArgumentList "/i $env:USERPROFILE\AWSCLI.msi /l*v $env:USERPROFILE\\AWSCLI-install.log /qn"
+                  Start-Process	 -wait -nonewwindow -FilePath "msiexec.exe" -ArgumentList "/i $env:USERPROFILE\AWSCLI.msi /l*v $env:USERPROFILE\AWSCLI-install.log /qn"
                   $env:PATH="$env:PATH;C:\Program Files\Amazon\AWSCLI\bin"
                   #$env:PATH="$env:PATH;C:\Program Files\Amazon\AWSCLIV2"
                   If (![bool](get-command aws.exe)) {
