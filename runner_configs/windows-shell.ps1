@@ -197,5 +197,12 @@ set-content $env:ProgramData\Amazon\AmazonCloudWatchAgent\amazon-cloudwatch-agen
 }
 '@
 
+Write-Host "Checking if $env:ProgramData\Amazon\AmazonCloudWatchAgent\amazon-cloudwatch-agent.json exists..."
+If (Test-Path $env:ProgramData\Amazon\AmazonCloudWatchAgent\amazon-cloudwatch-agent.json)
+{
+  Write-host "$env:ProgramData\Amazon\AmazonCloudWatchAgent\amazon-cloudwatch-agent.json EXISTS! Displaying contents..."
+  Write-host cat $env:ProgramData\Amazon\AmazonCloudWatchAgent\amazon-cloudwatch-agent.json
+}
+
 Write-Host "Starting CloudWatch Agent"
 & "C:\Program Files\Amazon\AmazonCloudWatchAgent\amazon-cloudwatch-agent-ctl.ps1" -a fetch-config -m ec2 -s -c file:$env:ProgramData\Amazon\AmazonCloudWatchAgent\amazon-cloudwatch-agent.json
