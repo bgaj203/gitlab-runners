@@ -130,11 +130,11 @@ cat << 'EndOfCWMetricsConfig' > /opt/aws/amazon-cloudwatch-agent/etc/amazon-clou
   },
   "metrics": {
     "aggregation_dimensions" : [["AutoScalingGroupName"], ["InstanceId"], ["InstanceType"], ["InstanceId","InstanceType"]],
-      "append_dimensions": {
-        "AutoScalingGroupName": "${aws:AutoScalingGroupName}",
-        "ImageId": "${aws:ImageId}",
-        "InstanceId": "${aws:InstanceId}",
-        "InstanceType": "${aws:InstanceType}"
+    "append_dimensions": {
+      "AutoScalingGroupName": "${aws:AutoScalingGroupName}",
+      "ImageId": "${aws:ImageId}",
+      "InstanceId": "${aws:InstanceId}",
+      "InstanceType": "${aws:InstanceType}"
     },
     "metrics_collected": {
       "cpu": {

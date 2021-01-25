@@ -655,7 +655,7 @@ Resources:
     Properties:
       AlarmDescription: "Low Utilization alarm for : "
       Namespace: !If [UseCPUUtilizationMetric,AWS/EC2,CWAgent]
-      MetricName: !If [UseCPUUtilizationMetric,CPUUtilization,mem_used_percent]
+      MetricName: !If [UseCPUUtilizationMetric,CPUUtilization,!If [InstancePlatformLinux,mem_used_percent,"% Committed Bytes In Use"]]
       Unit: Percent
       Dimensions:
         - Name: AutoScalingGroupName
@@ -676,7 +676,7 @@ Resources:
     Properties:
       AlarmDescription: "High Utilization alarm for : "
       Namespace: !If [UseCPUUtilizationMetric,AWS/EC2,CWAgent]
-      MetricName: !If [UseCPUUtilizationMetric,CPUUtilization,mem_used_percent]
+      MetricName: !If [UseCPUUtilizationMetric,CPUUtilization,!If [InstancePlatformLinux,mem_used_percent,"% Committed Bytes In Use"]]
       Unit: Percent      
       Dimensions:
         - Name: AutoScalingGroupName

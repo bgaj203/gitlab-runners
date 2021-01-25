@@ -104,3 +104,96 @@ if ( (aws autoscaling describe-auto-scaling-instances --instance-ids $MYINSTANCE
 "@
 #unregister all runners
 #stop service (wait for completion)
+
+#cloudwatch metrics for Windows (https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/install-CloudWatch-Agent-commandline-fleet.html)
+# Get binary; Invoke-WebRequest -UseBasicParsing -Uri https://s3.amazonaws.com/amazoncloudwatch-agent/windows/amd64/latest/amazon-cloudwatch-agent.msi -Outfile amazon-cloudwatch-agent.msi
+# install it: msiexec /i amazon-cloudwatch-agent.msi /l*v $env:ProgramData\Amazon\amazon-cloudwatch-agent-install.log /qn
+# configuration wizard: cd "C:\Program Files\Amazon\AmazonCloudWatchAgent" ; ./amazon-cloudwatch-agent-config-wizard.exe
+# config agent config file location: $env:ProgramFiles\Amazon\AmazonCloudWatchAgent\config.json
+# documentation advised location for custom config: $Env:ProgramData\Amazon\AmazonCloudWatchAgent\amazon-cloudwatch-agent.json
+# Start Agent: & "C:\Program Files\Amazon\AmazonCloudWatchAgent\amazon-cloudwatch-agent-ctl.ps1" -a fetch-config -m ec2 -s -c file:$env:ProgramData\Amazon\AmazonCloudWatchAgent\amazon-cloudwatch-agent.json
+# Logs: C:\ProgramData\Amazon\AmazonCloudWatchAgent\Logs\amazon-cloudwatch-agent.log, C:\ProgramData\Amazon\AmazonCloudWatchAgent\Logs\configuration-validation.log
+
+write-host "Install CloudWatch Agent"
+Invoke-WebRequest -UseBasicParsing -Uri https://s3.amazonaws.com/amazoncloudwatch-agent/windows/amd64/latest/amazon-cloudwatch-agent.msi -Outfile amazon-cloudwatch-agent.msi
+msiexec /i amazon-cloudwatch-agent.msi /l*v $env:ProgramData\Amazon\amazon-cloudwatch-agent-install.log /qn
+
+Write-host "Writing CloudWatch Agent configuration"
+set-content $env:ProgramData\Amazon\AmazonCloudWatchAgent\amazon-cloudwatch-agent.json -Value @'
+{
+  "metrics": {
+    "aggregation_dimensions" : [["AutoScalingGroupName"], ["InstanceId"], ["InstanceType"], ["InstanceId","InstanceType"]],
+    "append_dimensions": {
+      "AutoScalingGroupName": "${aws:AutoScalingGroupName}",
+      "ImageId": "${aws:ImageId}",
+      "InstanceId": "${aws:InstanceId}",
+      "InstanceType": "${aws:InstanceType}"
+    },
+    "metrics_collected": {
+      "LogicalDisk": {
+        "measurement": [
+          "% Free Space"
+        ],
+        "metrics_collection_interval": 60,
+        "resources": [
+          "*"
+        ]
+      },
+      "Memory": {
+        "measurement": [
+          "% Committed Bytes In Use"
+        ],
+        "metrics_collection_interval": 60
+      },
+      "Paging File": {
+        "measurement": [
+          "% Usage"
+        ],
+        "metrics_collection_interval": 60,
+        "resources": [
+          "*"
+        ]
+      },
+      "PhysicalDisk": {
+        "measurement": [
+          "% Disk Time",
+          "Disk Write Bytes/sec",
+          "Disk Read Bytes/sec",
+          "Disk Writes/sec",
+          "Disk Reads/sec"
+        ],
+        "metrics_collection_interval": 60,
+        "resources": [
+          "*"
+        ]
+      },
+      "Processor": {
+        "measurement": [
+          "% User Time",
+          "% Idle Time",
+          "% Interrupt Time"
+        ],
+        "metrics_collection_interval": 60,
+        "resources": [
+          "_Total"
+        ]
+      },
+      "TCPv4": {
+        "measurement": [
+          "Connections Established"
+        ],
+        "metrics_collection_interval": 60
+      },
+      "TCPv6": {
+        "measurement": [
+          "Connections Established"
+        ],
+        "metrics_collection_interval": 60
+      }
+    }
+  }
+}
+'@
+
+Write-Host "Starting CloudWatch Agent"
+& "C:\Program Files\Amazon\AmazonCloudWatchAgent\amazon-cloudwatch-agent-ctl.ps1" -a fetch-config -m ec2 -s -c file:$env:ProgramData\Amazon\AmazonCloudWatchAgent\amazon-cloudwatch-agent.json
