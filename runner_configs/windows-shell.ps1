@@ -53,7 +53,7 @@ log_level = "warning"
 "@
 
 
-cd $RunnerInstallRoot
+pushd $RunnerInstallRoot
 .\gitlab-runner.exe install
 
 foreach ($RunnerRegToken in $GITLABRunnerRegTokenList.split(',')) {
@@ -112,11 +112,13 @@ if ( (aws autoscaling describe-auto-scaling-instances --instance-ids $MYINSTANCE
 # config agent config file location: $env:ProgramFiles\Amazon\AmazonCloudWatchAgent\config.json
 # documentation advised location for custom config: $Env:ProgramData\Amazon\AmazonCloudWatchAgent\amazon-cloudwatch-agent.json
 # Start Agent: & "C:\Program Files\Amazon\AmazonCloudWatchAgent\amazon-cloudwatch-agent-ctl.ps1" -a fetch-config -m ec2 -s -c file:$env:ProgramData\Amazon\AmazonCloudWatchAgent\amazon-cloudwatch-agent.json
-# Logs: C:\ProgramData\Amazon\AmazonCloudWatchAgent\Logs\amazon-cloudwatch-agent.log, C:\ProgramData\Amazon\AmazonCloudWatchAgent\Logs\configuration-validation.log
+# Logs: cat C:\ProgramData\Amazon\AmazonCloudWatchAgent\Logs\amazon-cloudwatch-agent.log, C:\ProgramData\Amazon\AmazonCloudWatchAgent\Logs\configuration-validation.log
+
+popd
 
 write-host "Install CloudWatch Agent"
-Invoke-WebRequest -UseBasicParsing -Uri https://s3.amazonaws.com/amazoncloudwatch-agent/windows/amd64/latest/amazon-cloudwatch-agent.msi -Outfile amazon-cloudwatch-agent.msi
-msiexec /i amazon-cloudwatch-agent.msi /l*v $env:ProgramData\Amazon\amazon-cloudwatch-agent-install.log /qn
+Invoke-WebRequest -UseBasicParsing -Uri https://s3.amazonaws.com/amazoncloudwatch-agent/windows/amd64/latest/amazon-cloudwatch-agent.msi -Outfile $env:public\amazon-cloudwatch-agent.msi
+msiexec /i $env:public\amazon-cloudwatch-agent.msi /l*v $env:Public\amazon-cloudwatch-agent-install.log /qn ALLUSERS=1
 
 Write-host "Writing CloudWatch Agent configuration"
 set-content $env:ProgramData\Amazon\AmazonCloudWatchAgent\amazon-cloudwatch-agent.json -Value @'

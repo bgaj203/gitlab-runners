@@ -37,6 +37,9 @@ Yes - because:
 * Docker-machine should be able to be completely replaced by a well tuned ASG housing the plain docker executor.
 
 ### TroubleShooting Guide
+
+**IMPORTANT**: The number one suspected cause in debugging cloud automation is "You probably are not being patient enough and waiting long enough to see the desired result." (whether waiting for automation to complete or metrics to flow or other things to trigger as designed)
+
   * **Linux**: Generally assumes an AWS prepared AMI (all AWS utilities installed and configured for default operation). For Amazon Linux - assumes Amazon Linux **2**.
   * **Windows**: Generally assumes AWS prepared AMI (all AWS utilities installed and configured for default operation) using upgraded AWS EC2Launch client (and NOT older EC2Config) (For AWS prepared AMIs this equates to Server 2012 and later)
 
@@ -57,6 +60,12 @@ Yes - because:
 * **Schedule of Termination Monitoring**: schtasks /query /TN MonitorTerminationHook.ps1
 ### Scaling Troubleshooting and Testing
 
+**IMPORTANT**: DO NOT use the built in CPU stressing capability of this template because at this time it prevents proper completion of CloudFormation which eventually puts the stack into Rollback.
+#### Both Operating Systems
+* Should be accessible via the SSM agent - which means zero configuration to get a command console (non-GUI on Windows) via Ec2. Use it as follows:
+  1. Right click an instance and choose "Connect"
+  2. Select the "Session Manager" tab.
+  3. Click "Connect".  If the button is not enabled you most likely have to wait a while until full configuration has been completed.
 #### Windows
 * Use this oneliner to install the console based text file editor 'nano' on headless windows: 
   
@@ -81,6 +90,9 @@ AWS ASG itself supports many alarms on many metrics.  Multi-metric / multi-alarm
 * Jobs that are in a polling cycle (say for external status), consume a GitLab Concurrency slot - but hardly any CPU. So CPU utilization alone does not tell a whole story.
 * Docker runners will have low memory pressure even if all slots are filled if the exact same container is running for more than one of the slots because the shared container memory is reused by multiple containers. So memory utilization 
 * Step scaling is an AWS ASG feature that should be used to improve scale up and down responsiveness, rather than using alternative metrics.  For instance, switching to a metrix that is non-deterministic of actual ASG loading (e.g. GitLab CI Job Queue Length) may be much less efficient than a more elemental set of metrics that have proper step scaling configured for responsiveness.
+##### Optimizations
+
+* In this template, the CloudWatch agents have been configured to allow analysis of differences between AWS Instance Types and AMIs.  This can help reveal if a specific instance type is optimized for the purpose at hand.  For instance, a given ML Ops workload may be better on CPU optimized instances while another is better on Memory optimized - but running the workload on each, performance statistics can be compared.
 
 #### Ways To Test
 
