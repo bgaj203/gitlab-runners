@@ -36,3 +36,30 @@ Yes - because:
 * the dispatcher node should be in a single instance ASG for warm HA (respawn on death).  
 * It benefits from all the other features of this template including maintenance by repulling the latest AMI, latest patches and latest runner version upon a simple CF stack update.
 * Docker-machine should be able to be completely replaced by a well tuned ASG housing the plain docker executor.
+
+### TroubleShooting Guide
+  * **Linux**: Generally assumes an AWS prepared AMI (all AWS utilities installed and configured for default operation). For Amazon Linux - assumes Amazon Linux **2**.
+  * **Windows**: Generally assumes AWS prepared AMI (all AWS utilities installed and configured for default operation) using upgraded AWS EC2Launch client (and NOT older EC2Config) (For AWS prepared AMIs this equates to Server 2012 and later)
+
+#### Logs of UserData scripts on instance
+Both the script encapsulated in the CloudFormation Script and the downloaded runner configuration script:
+  * **Linux Command**: tail /var/log/cloud-init-output.log
+  * **Windoww**: cat C:\programdata\Amazon\EC2-Windows\Launch\Log\UserdataExecution.log
+* Resolved (All variables expanded) Userdata script Location:
+  * **Linux Command**: tail /var/log/cloud-init-output.log
+  * **Windoww**: cat C:\programdata\Amazon\EC2-Windows\Launch\Log\UserdataExecution.log
+
+### Scaling Troubleshooting and Testing
+
+#### CloudWatch Scaling
+Alarms are not simple thresholds, they must be **breached* to enact the associated scaling rule.  For instance if your CPU utilization low threshold is 20% and your ASG starts and never goes above 20%, scale down will not occur because the alarm was not breached - the utilization simply never was above the threshold.
+
+#### Ways To Test
+* Generate Load
+* Edit Scaling Alarms and Change Thresholds
+#### CloudWatch Configuration and Operation (for memory and other stats)
+##### Linux
+* config: opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json
+* log file: tail /opt/aws/amazon-cloudwatch-agent/logs/amazon-cloudwatch-agent.log -f
+* Running Status: sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -m ec2 -a status
+* Running Status: sudo systemctl status amazon-cloudwatch-agent

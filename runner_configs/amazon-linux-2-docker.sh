@@ -129,11 +129,13 @@ cat << EndOfCWMetricsConfig > /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudw
     "run_as_user": "root"
   },
   "metrics": {
-    "append_dimensions": {
-      "AutoScalingGroupName": "$NAMEOFASG",
-      "ImageId": "$(curl http://169.254.169.254/latest/meta-data/ami-id)",
-      "InstanceId": "$MYINSTANCEID",
-      "InstanceType": "$(curl http://169.254.169.254/latest/meta-data/instance-type)"
+    "aggregation_dimensions" : [["AutoScalingGroupName"], ["InstanceId"], ["InstanceType"], ["InstanceId","InstanceType"]],
+    "metrics": {
+      "append_dimensions": {
+        "AutoScalingGroupName": "${aws:AutoScalingGroupName}",
+        "ImageId": "${aws:ImageId}",
+        "InstanceId": "${aws:InstanceId}",
+        "InstanceType": "${aws:InstanceType}"
     },
     "metrics_collected": {
       "cpu": {
@@ -196,12 +198,19 @@ systemctl enable amazon-cloudwatch-agent
 systemctl restart amazon-cloudwatch-agent
 #Debugging:
 #Check if running: sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -m ec2 -a status
-#config: cat cat ca
-#wizard saves: /opt/aws/amazon-cloudwatch-agent/bin/config.json
+#config: opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json
 #log file: tail /opt/aws/amazon-cloudwatch-agent/logs/amazon-cloudwatch-agent.log -f
+#wizard saves: /opt/aws/amazon-cloudwatch-agent/bin/config.json
 #amazon-linux-extras install -y epel; yum install -y stress-ng
 #stress-ng --vm 1 --vm-bytes 75% --vm-method all --verify -t 10m -v
-#stress-ng --vm-bytes $(awk '/MemAvailable/{printf "%d\n", $2 * 0.9;}' < /proc/meminfo)k --vm-keep -m 1
+#stress-ng --vm-hang 2 --vm-keep --verify --timeout 600 --verbose --vm 2 --vm-bytes $(awk '/MemTotal/{printf "%d\n", $2;}' < /proc/meminfo)k
+# --vm-method all 
+stress-ng --vm-hang 2 --vm-keep --verify --timeout 600 --verbose --vm 2 --vm-bytes $(awk '/MemAvailable/{printf "%d\n", $2 * 0.9;}' < /proc/meminfo)k
+
+
+#90% of available memory: $(awk '/MemAvailable/{printf "%d\n", $2 * 0.9;}' < /proc/meminfo)k
+#100% of total memory: $(awk '/MemTotal/{printf "%d\n", $2;}' < /proc/meminfo)k
+# cpus * 2: $(awk '/cpu cores/{printf "%d\n", $4 * 2;}' < /proc/cpuinfo)
 
 # {
 #   "metrics": {
