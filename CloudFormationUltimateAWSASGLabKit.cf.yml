@@ -272,19 +272,19 @@ Parameters:
     Type: Number
     Default: 100
     #Reset above to: 0        
-  # 8DBGUtilizationLoadPercentInitialValue:
-  #   Description: >
-  #     WARNING: Everything is 1 minute granularity - so don't set this to cause scaling and forget it unless you want a massive AWS bill ;)
-  #     Test your scaling parameters with synthetic utlization loading.  Enabled by entering a numeric value between 20-95.
-  #     This will create an SSM parameter named {AWS::Stackname}-SyntheticUtilizationLoad with the initial value entered here.
-  #     The userdata script will then run a utilization stressing utility in a loop, checking the parameter every minute for
-  #     updated values.  The value updates the utilization consumption in all ASG members so you can observe whether your scaling
-  #     policy works.  Set to a non-numeric value to terminate the Synthetic Loading (cannot be reenabled without rebuilding stack).
-  #     AWS Resources are only created to support this functionality if a value is provided during stack deployment.
-  #     The utility for Windows has a challenge generating loads above 90 percent, if you have a better cli utility, I'm all ears.
-  #     For parameters above that range, setup your steps below 90 and test them and then once verified, update the numbers to the
-  #     higher values.
-  #   Type: String
+  8DBGUtilizationLoadPercentInitialValue:
+    Description: >
+      WARNING: NOT READY, DO NOT USE. Everything is 1 minute granularity - so don't set this to cause scaling and forget it unless you want a massive AWS bill ;)
+      Test your scaling parameters with synthetic utlization loading.  Enabled by entering a numeric value between 20-95.
+      This will create an SSM parameter named {AWS::Stackname}-SyntheticUtilizationLoad with the initial value entered here.
+      The userdata script will then run a utilization stressing utility in a loop, checking the parameter every minute for
+      updated values.  The value updates the utilization consumption in all ASG members so you can observe whether your scaling
+      policy works.  Set to a non-numeric value to terminate the Synthetic Loading (cannot be reenabled without rebuilding stack).
+      AWS Resources are only created to support this functionality if a value is provided during stack deployment.
+      The utility for Windows has a challenge generating loads above 90 percent, if you have a better cli utility, I'm all ears.
+      For parameters above that range, setup your steps below 90 and test them and then once verified, update the numbers to the
+      higher values.
+    Type: String
   8DBGKeypairName:
     Description: Spins instances with a keypair to allow connection. Not needed if TroubleShootingMode is enabled.
     Type: String
@@ -341,10 +341,6 @@ Conditions:
 
 Rules:
   WindowsPlatformShouldNotUseDefaultSSMParameter:
-    RuleCondition: !Equals [ !Ref 1OSInstanceOSPlatform, "Windows" ]
-    Assertions:
-      - Assert: !Not [ !Equals [ !Ref 9AWSRetrieveLatestAWSOSAmiIdFromSSM, "/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2" ]]
-        AssertDescription: "You have indicated the Windows platform in the parameter 1OSInstanceOSPlatform, but left the default Linux SSM Parameter path in 9AWSRetrieveLatestAWSOSAmiIdFromSSM"
     RuleCondition: !Equals [ !Ref 1OSInstanceOSPlatform, "Windows" ]
     Assertions:
       - Assert: !Not [ !Equals [ !Ref 9AWSRetrieveLatestAWSOSAmiIdFromSSM, "/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2" ]]
@@ -752,7 +748,6 @@ Resources:
                 GITLABRunnerRegTokenList="${3GITLABRunnerRegTokenList}"
                 GITLABRunnerVersion="${3GITLABRunnerVersion}"
                 GITLABRunnerTagList="${3GITLABRunnerTagList}"
-                GITLABRunnerExecutor="${3GITLABRunnerExecutor}"
                 INSTANCEOSPLATFORM="${1OSInstanceOSPlatform}"
                 RunnerOSTags="$(echo $INSTANCEOSPLATFORM | awk '{print tolower($0)}' )"
                 #RunnerConfigTomlTemplate #(Embedded, local or s3:// or http*://)
@@ -1021,7 +1016,6 @@ Resources:
                 $GITLABRunnerRegTokenList="${3GITLABRunnerRegTokenList}"
                 $GITLABRunnerVersion="${3GITLABRunnerVersion}"
                 $GITLABRunnerTagList="${3GITLABRunnerTagList}"
-                $GITLABRunnerExecutor="${3GITLABRunnerExecutor}"
                 $INSTANCEOSPLATFORM="${1OSInstanceOSPlatform}"
                 $RunnerOSTags="$($INSTANCEOSPLATFORM.ToLower())"
                 $RunnerConfigTomlTemplate #(Embedded, local or s3:// or http*://)
