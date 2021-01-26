@@ -13,7 +13,7 @@
 #$NAMEOFASG=$(aws ec2 describe-tags --region $AWS_REGION --filters Name=resource-id,Values=$MYINSTANCEID Name=key,Values=aws:autoscaling:groupName | convertfrom-json).tags.value
 #$MYINSTANCEID="$(invoke-restmethod http://169.254.169.254/latest/meta-data/instance-id)"
 # $GITLABRunnerVersion="latest"
-# $RunnerExecutor='shell'
+$GITLABRunnerExecutor='shell'
 # $RunnerOSTags="$($INSTANCEOSPLATFORM.ToLower())"
 # $GITLABRunnerTagList="TagA,TagB"
 # $RunnerConfigTomlTemplate #(Embedded, local or s3:// or http*://)

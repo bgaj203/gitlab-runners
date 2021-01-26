@@ -75,15 +75,15 @@ Parameters:
     AllowedValues: 
       - true
       - false 
-  3GITLABRunnerExecutor:
-    Description: Type of runner executor
-    Type: String
-    Default: docker
-    #Reset to: docker
-    AllowedValues: 
-      - shell
-      - docker
-      - docker+machine 
+  # 3GITLABRunnerExecutor:
+  #   Description: Type of runner executor
+  #   Type: String
+  #   Default: docker
+  #   #Reset to: docker
+  #   AllowedValues: 
+  #     - shell
+  #     - docker
+  #     - docker+machine 
   3GITLABRunnerInstanceURL:
     Description: >
       The url of the instance that the runner will register (must be reachable from runner instance on port 443 with return conversations).
@@ -272,19 +272,19 @@ Parameters:
     Type: Number
     Default: 100
     #Reset above to: 0        
-  8DBGUtilizationLoadPercentInitialValue:
-    Description: >
-      WARNING: Everything is 1 minute granularity - so don't set this to cause scaling and forget it unless you want a massive AWS bill ;)
-      Test your scaling parameters with synthetic utlization loading.  Enabled by entering a numeric value between 20-95.
-      This will create an SSM parameter named {AWS::Stackname}-SyntheticUtilizationLoad with the initial value entered here.
-      The userdata script will then run a utilization stressing utility in a loop, checking the parameter every minute for
-      updated values.  The value updates the utilization consumption in all ASG members so you can observe whether your scaling
-      policy works.  Set to a non-numeric value to terminate the Synthetic Loading (cannot be reenabled without rebuilding stack).
-      AWS Resources are only created to support this functionality if a value is provided during stack deployment.
-      The utility for Windows has a challenge generating loads above 90 percent, if you have a better cli utility, I'm all ears.
-      For parameters above that range, setup your steps below 90 and test them and then once verified, update the numbers to the
-      higher values.
-    Type: String
+  # 8DBGUtilizationLoadPercentInitialValue:
+  #   Description: >
+  #     WARNING: Everything is 1 minute granularity - so don't set this to cause scaling and forget it unless you want a massive AWS bill ;)
+  #     Test your scaling parameters with synthetic utlization loading.  Enabled by entering a numeric value between 20-95.
+  #     This will create an SSM parameter named {AWS::Stackname}-SyntheticUtilizationLoad with the initial value entered here.
+  #     The userdata script will then run a utilization stressing utility in a loop, checking the parameter every minute for
+  #     updated values.  The value updates the utilization consumption in all ASG members so you can observe whether your scaling
+  #     policy works.  Set to a non-numeric value to terminate the Synthetic Loading (cannot be reenabled without rebuilding stack).
+  #     AWS Resources are only created to support this functionality if a value is provided during stack deployment.
+  #     The utility for Windows has a challenge generating loads above 90 percent, if you have a better cli utility, I'm all ears.
+  #     For parameters above that range, setup your steps below 90 and test them and then once verified, update the numbers to the
+  #     higher values.
+  #   Type: String
   8DBGKeypairName:
     Description: Spins instances with a keypair to allow connection. Not needed if TroubleShootingMode is enabled.
     Type: String

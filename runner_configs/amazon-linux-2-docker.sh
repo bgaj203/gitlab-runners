@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # Update packages
-
+$GITLABRunnerExecutor='docker'
 #GITLABRunnerVersion="latest"
 #RunnerOSTags="$($INSTANCEOSPLATFORM.ToLower())"
 #GITLABRunnerTagList="TagA,TagB"
