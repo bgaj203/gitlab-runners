@@ -66,7 +66,7 @@ foreach ($RunnerRegToken in $GITLABRunnerRegTokenList.split(',')) {
      --registration-token $RunnerRegToken `
      --name $RunnerName `
      --tag-list $RunnerCompleteTagList `
-     --executor $GITLABRunnerExecutor
+     --executor shell
 }
 
 #rename instance to include -glrunner ?
