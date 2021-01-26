@@ -43,34 +43,61 @@ Yes - because:
   * **Linux**: Generally assumes an AWS prepared AMI (all AWS utilities installed and configured for default operation). For Amazon Linux - assumes Amazon Linux **2**.
   * **Windows**: Generally assumes AWS prepared AMI (all AWS utilities installed and configured for default operation) using upgraded AWS EC2Launch client (and NOT older EC2Config) (For AWS prepared AMIs this equates to Server 2012 and later)
 
-#### Linux
-##### Userdata (includes download and execution of runner configuraiton script)
-* **Resolved Script**: 
-* **Userdata Execution Log**: cat /var/log/cloud-init-output.log
-* **Rendered Custom Runner Configuration Script**: cat /custom_instance_configuration_script.sh
-* **Termination Monitoring Script**: cat /etc/cron.d/MonitorTerminationHook.sh
-* **Schedule of Termination Monitoring**: cat /etc/crontab
-
-#### Windows
-##### Userdata
-* **Resolved Script**: cat C:\Windows\TEMP\UserScript.ps1
-* **Userdata Execution Log**: cat C:\programdata\Amazon\EC2-Windows\Launch\Log\UserdataExecution.log
-* **Rendered Custom Runner Configuration Script**: cat $env:public\custom_instance_configuration_script.ps1
-* **Termination Monitoring Script**: cat $env:public\MonitorTerminationHook.ps1
-* **Schedule of Termination Monitoring**: schtasks /query /TN MonitorTerminationHook.ps1
-### Scaling Troubleshooting and Testing
-
-**IMPORTANT**: DO NOT use the built in CPU stressing capability of this template because at this time it prevents proper completion of CloudFormation which eventually puts the stack into Rollback.
 #### Both Operating Systems
 * Should be accessible via the SSM agent - which means zero configuration to get a command console (non-GUI on Windows) via Ec2. Use it as follows:
   1. Right click an instance and choose "Connect"
   2. Select the "Session Manager" tab.
   3. Click "Connect".  If the button is not enabled you most likely have to wait a while until full configuration has been completed.
+#### Linux
+##### Linux Userdata (includes download and execution of runner configuraiton script)
+* **Resolved Script**: 
+* **Userdata Execution Log**: cat /var/log/cloud-init-output.log
+
+##### Linux Runner Configuration
+
+- **Rendered Custom Runner Configuration Script**: cat /custom_instance_configuration_script.sh
+
+##### Linux Termination Monitoring
+
+* **Termination Monitoring Script**: cat /etc/cron.d/MonitorTerminationHook.sh
+* **Schedule of Termination Monitoring**: cat /etc/crontab
+
+##### Linux CloudWatch Metrics
+
+
+
 #### Windows
+
+##### Techniques for Non-GUI Windows Troubleshooting
 * Use this oneliner to install the console based text file editor 'nano' on headless windows: 
   
   `If (!(Test-Path env:chocolateyinstall)) {iwr https://chocolatey.org/install.ps1 -UseBasicParsing | iex} ; cinst -y nano`
 
+* Use this oneliner to create a function to tail windows event logs in the console (similar to `tail -f /var/log/messages`):
+
+  `Function Tail ($logspec="Application",$pastmins=5,[switch]$f,$computer=$env:computername) {$lastdate=$(Get-date).addminutes(-$pastmins); Do {$newdate=get-date;get-winevent $logspec -ComputerName $computer -ea 0 | ? {$_.TimeCreated -ge $lastdate -AND $_.TimeCreated -le $newdate} | Sort-Object TimeCreated;$lastdate=$newdate;start-sleep -milliseconds 330} while ($f)}; Tail`
+  
+  Tail takes positional parameters the first one is a log spec which can contain a comma seperated list and wildcards like this (for Appliation and Security logs for the last 10 minutes and waiting for more):
+  
+  `Tail Applica\*,Securi\* 10`
+  
+  Note: This is useful for tailing the Application log to watch whether the termination script is processing as desired.
+
+##### Windows Userdata
+* **Resolved Script**: cat C:\Windows\TEMP\UserScript.ps1
+* **Userdata Execution Log**: cat C:\programdata\Amazon\EC2-Windows\Launch\Log\UserdataExecution.log
+##### Windows Runner Configuration
+
+* **Rendered Custom Runner Configuration Script**: cat $env:public\custom_instance_configuration_script.ps1
+##### Windows Termination Monitoring
+
+* **Termination Monitoring Script**: cat $env:public\MonitorTerminationHook.ps1
+* **Schedule of Termination Monitoring**: schtasks /query /TN MonitorTerminationHook.ps1
+##### Windows CloudWatch Metrics
+
+### Scaling Troubleshooting and Testing
+
+**IMPORTANT**: DO NOT use the built in CPU stressing capability of this template because at this time it prevents proper completion of CloudFormation which eventually puts the stack into Rollback.
 #### CloudWatch Scaling
 Alarms are not simple thresholds, they must be **breached* to enact the associated scaling rule.  For instance if your CPU utilization low threshold is 20% and your ASG starts and never goes above 20%, scale down will not occur because the alarm was not breached - the utilization simply never was above the threshold.
 
@@ -90,6 +117,9 @@ AWS ASG itself supports many alarms on many metrics.  Multi-metric / multi-alarm
 * Jobs that are in a polling cycle (say for external status), consume a GitLab Concurrency slot - but hardly any CPU. So CPU utilization alone does not tell a whole story.
 * Docker runners will have low memory pressure even if all slots are filled if the exact same container is running for more than one of the slots because the shared container memory is reused by multiple containers. So memory utilization 
 * Step scaling is an AWS ASG feature that should be used to improve scale up and down responsiveness, rather than using alternative metrics.  For instance, switching to a metrix that is non-deterministic of actual ASG loading (e.g. GitLab CI Job Queue Length) may be much less efficient than a more elemental set of metrics that have proper step scaling configured for responsiveness.
+* Do not run scale up utilization thresholds too high (e.g. to the levels done in managing dedicated hardware) because it will not allow for natural spikiness with individual ASG runners that receive a big job when they are at the capacity that triggers scaling.
+* Concurrent job settings that are too low can prevent reaching the scale up thresholds of external metrics like CPU or Memory Utilization. In theory the **Concurrent** settings of a runner would be quite high - especially with docker - in order to allow general computing metrics to be relied upon to scale.
+* Hyper-scaling of runners for things like ML Ops will be less sensitive to terminations and spotty slow jobs than to cost. Due to cost, these configurations will benefit from pushing harder - specifically giving values for concurrent that are beyond the hardware limits of the machine and creating sensitive step scaling to accomodate fast scaling.
 ##### Optimizations
 
 * In this template, the CloudWatch agents have been configured to allow analysis of differences between AWS Instance Types and AMIs.  This can help reveal if a specific instance type is optimized for the purpose at hand.  For instance, a given ML Ops workload may be better on CPU optimized instances while another is better on Memory optimized - but running the workload on each, performance statistics can be compared.
