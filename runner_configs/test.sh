@@ -8,7 +8,7 @@ sudo chmod +x /usr/local/bin/gitlab-runner
 sudo useradd --comment 'GitLab Runner' --create-home gitlab-runner --shell /bin/bash
 sudo /usr/local/bin/gitlab-runner install --user="gitlab-runner" --working-directory="/home/gitlab-runner"
 sudo usermod -a -G docker gitlab-runner
-sudo /usr/local/bin/gitlab-runner register --non-interactive --config /etc/gitlab-runner/config.toml -url https://citi.gitlabms.com/ --registration-token KYpsqhgp-zwU_x14wLyV --executor docker --docker-volumes "/var/run/docker.sock:/var/run/docker.sock" --docker-image "docker:latest"  --docker-privileged --name “New Runner From Scratch” --run-untagged="true" --locked 0
+sudo /usr/local/bin/gitlab-runner register --non-interactive --config /etc/gitlab-runner/config.toml -url https://abc.gitlab.com/ --registration-token KYpsqdadfhgp-zwU_x14wLyV --executor docker --docker-volumes "/var/run/docker.sock:/var/run/docker.sock" --docker-image "docker:latest"  --docker-privileged --name “New Runner From Scratch” --run-untagged="true" --locked 0
 sudo /usr/local/bin/gitlab-runner start
 
 #use an ecs optimized AMI

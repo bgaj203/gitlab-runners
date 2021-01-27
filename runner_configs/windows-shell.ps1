@@ -72,6 +72,10 @@ foreach ($RunnerRegToken in $GITLABRunnerRegTokenList.split(',')) {
 #rename instance to include -glrunner ?
 #aws ec2 describe-tags --filters "Name=resource-id,Values=$MYINSTANCEID"
 
+Write-Host "Installing Git (via Chocolatey) for the shell runner..."
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12,[Net.SecurityProtocolType]::Tls11; 
+If (!(Test-Path env:chocolateyinstall)) {iwr https://chocolatey.org/install.ps1 -UseBasicParsing | iex} ; cinst -y git
+
 aws ec2 create-tags --region $AWS_REGION --resources $MYINSTANCEID --tags "Key=`"GitLabRunnerName`",Value=$RunnerName" "Key=`"GitLabURL`",Value=$GITLABRunnerInstanceURL" "Key=`"GitLabRunnerTags`",`"Value=$($RunnerCompleteTagList.split(',') -join ('\,'))`""
 
 .\gitlab-runner.exe start

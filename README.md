@@ -51,20 +51,26 @@ Yes - because:
 #### Linux
 ##### Linux Userdata (includes download and execution of runner configuraiton script)
 * **Resolved Script**: 
-* **Userdata Execution Log**: cat /var/log/cloud-init-output.log
+* **Userdata Execution Log**: `cat /var/log/cloud-init-output.log`
 
 ##### Linux Runner Configuration
 
-- **Rendered Custom Runner Configuration Script**: cat /custom_instance_configuration_script.sh
+- **Rendered Custom Runner Configuration Script**: `cat /custom_instance_configuration_script.sh`
 
 ##### Linux Termination Monitoring
 
-* **Termination Monitoring Script**: cat /etc/cron.d/MonitorTerminationHook.sh
-* **Schedule of Termination Monitoring**: cat /etc/crontab
+* **Termination Monitoring Script**: `cat /etc/cron.d/MonitorTerminationHook.sh`
+* **Schedule of Termination Monitoring**: `cat /etc/crontab`
 
 ##### Linux CloudWatch Metrics
 
-
+* Config file created by script (get's translated to a TOML): `cat /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json`
+* Check running status: 
+  * `sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -m ec2 -a status`
+  * `systemctl status amazon-cloudwatch-agent`
+  * start: `systemctl start amazon-cloudwatch-agent`
+  * stop: `systemctl stop amazon-cloudwatch-agent`
+* Tail Log: `tail /opt/aws/amazon-cloudwatch-agent/logs/amazon-cloudwatch-agent.log -f`
 
 #### Windows
 
@@ -84,16 +90,25 @@ Yes - because:
   Note: This is useful for tailing the Application log to watch whether the termination script is processing as desired.
 
 ##### Windows Userdata
-* **Resolved Script**: cat C:\Windows\TEMP\UserScript.ps1
-* **Userdata Execution Log**: cat C:\programdata\Amazon\EC2-Windows\Launch\Log\UserdataExecution.log
+* **Resolved Script**: `cat C:\Windows\TEMP\UserScript.ps1`
+* **Userdata Execution Log**: `cat C:\programdata\Amazon\EC2-Windows\Launch\Log\UserdataExecution.log`
 ##### Windows Runner Configuration
 
-* **Rendered Custom Runner Configuration Script**: cat $env:public\custom_instance_configuration_script.ps1
+* **Rendered Custom Runner Configuration Script**: `cat $env:public\custom_instance_configuration_script.ps1`
 ##### Windows Termination Monitoring
 
-* **Termination Monitoring Script**: cat $env:public\MonitorTerminationHook.ps1
-* **Schedule of Termination Monitoring**: schtasks /query /TN MonitorTerminationHook.ps1
+* **Termination Monitoring Script**: `cat $env:public\MonitorTerminationHook.ps1`
+* **Schedule of Termination Monitoring**: `schtasks /query /TN MonitorTerminationHook.ps1`
 ##### Windows CloudWatch Metrics
+
+* Config file created by script (get's translated to a TOML and deleted - so if it is actually here that is a problem): `cat $env:ProgramFiles\Amazon\AmazonCloudWatchAgent\config.json`
+* Check running status: 
+  * `sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -m ec2 -a status`
+  * `systemctl status amazon-cloudwatch-agent`
+  * start: `systemctl start amazon-cloudwatch-agent`
+  * stop: `systemctl stop amazon-cloudwatch-agent`
+* Tail operational Log: `cat C:\ProgramData\Amazon\AmazonCloudWatchAgent\Logs\amazon-cloudwatch-agent.log`
+* Configuraiton validation log: `cat C:\ProgramData\Amazon\AmazonCloudWatchAgent\Logs\configuration-validation.log`
 
 ### Scaling Troubleshooting and Testing
 
