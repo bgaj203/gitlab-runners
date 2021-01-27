@@ -231,6 +231,8 @@ windows-docker-helloworld:
 
 Successful status from the above:
 
+![job-success.png](./job-success.png)
+
 ### Example GitLab Runners Display
 
 Shows all four types registered.
