@@ -18,9 +18,14 @@ Do use nitro instances because they have MVNe storage drivers and ENA network dr
 
 Generally no - this creates an entire artifact release cycle in front of an already complex Infrastructure as Code stack - testing is long enough without that additional development cycle.  Additionally, you will likely have to update the runner binary (and maybe others) as soon as you boot an old AMI.  Many times automation to adequately replace software will take longer than starting with a clean machine.  Developing automation to "replace an old software package" is definitely more intense that clean slate.
 
-### Scaling Testing
+### Running This in CloudFormation
 
-- Scaling down testing is the easiest - simply launch the template with a Desired Capacity of 2 and Minimum Capacity of 1 and shortly after CloudFormation completes, the ASG will start scaling down.
+1. Clone the repository locally.
+2. Logon to AWS and go to the [CloudFormation Console](https://console.aws.amazon.com/cloudformation/home).
+3. Click "Create Stack"
+4. Navigate on your local hard drive to the repository location and select: [GitLabElasticScalingRunner.cf.yml](./GitLabElasticScalingRunner.cf.yml)
+5. Click "Next"
+6. You will be presented with a comprehensive set of parameters with full help text.
 
 ### The Runner Part
 
@@ -61,10 +66,14 @@ Yes - because:
   * **Windows**: Generally assumes AWS prepared AMI (all AWS utilities installed and configured for default operation) using upgraded AWS EC2Launch client (and NOT older EC2Config) (For AWS prepared AMIs this equates to Server 2012 and later)
 
 #### Both Operating Systems
-* Should be accessible via the SSM agent - which means zero configuration to get a command console (non-GUI on Windows) via Ec2. This obviates the need for a public address, security groups that open SSH or RDP and a Internet gateway. Use SSM for a console as follows:
+1. Should be accessible via the SSM agent - which means zero configuration to get a command console (non-GUI on Windows) via Ec2. This obviates the need for a public address, security groups that open SSH or RDP and a Internet gateway. Use SSM for a console as follows:
   1. Right click an instance and choose "Connect"
   2. Select the "Session Manager" tab.
   3. Click "Connect".  If the button is not enabled you most likely have to wait a while until full configuration has been completed.
+2. **IMPORTANT:** If you are iterating over a runner configuration script AND you are sourcing the script from a raw git url - you do NOT need to teardown the entire stack simple to test changes to this script because it is dynamically sourced during the ASG spin up of the instance.
+   1. Edit the ASG and set the Desired and Minimum to zero
+   2. update the script in the git repository
+   3. Edit the ASG and set the Desired and Minimum counts to at least 1.
 #### Linux
 ##### Linux Userdata (includes download and execution of runner configuraiton script)
 * **Userdata Execution Log**: `cat /var/log/cloud-init-output.log`
@@ -130,6 +139,7 @@ Yes - because:
 ### Scaling Troubleshooting and Testing
 
 **IMPORTANT**: DO NOT use the built in CPU stressing capability of this template because at this time it prevents proper completion of CloudFormation which eventually puts the stack into Rollback.
+
 #### AWS ASG Scaling Configuration Flexibility
 
 While this template allows:
@@ -141,6 +151,7 @@ AWS ASG itself supports many alarms on many metrics.  Multi-metric / multi-alarm
 
 ##### Considerations and Cautions
 
+* Scaling down testing is the easiest - simply launch the template with a Desired Capacity of 2 and Minimum Capacity of 1 and shortly after CloudFormation completes, the ASG will start scaling down.
 * By definition ASG scaling alarms for a cluster are based on a metric for all existing hosts in the cluster.
 * Many metrics that can be chosen, including GitLab CI Job Queue Length, are non-deterministic to actual ASG cluster loading - this is because individual jobs can have a very wide variety of memory and cpu utilization based on what is in them and whether they docker executor is in use. While responsiveness is important, it is also important not to hyperscale a cluster that is running at 50% overall utilization.
 * Jobs that are in a polling cycle (say for external status), consume a GitLab Concurrency slot - but hardly any CPU. So CPU utilization alone does not tell a whole story.
@@ -220,10 +231,8 @@ windows-docker-helloworld:
 
 Successful status from the above:
 
-
-
 ### Example GitLab Runners Display
 
 Shows all four types registered.
 
-![Screen Shot 2021-01-27 at 9.19.59 AM](/Users/dsanoy/Documents/repos/gitlab-runner-autoscaling-aws-asg/runner-panel.png)
+![Runner Panel](./runner-panel.png)
