@@ -200,7 +200,7 @@ Parameters:
     Description: >
       What ASG-wide Utilization threshold triggers scaling down via step-scaling? Requires 5ASGAutoScalingEnabled=true.
     Type: Number
-    Default: 20  
+    Default: 40  
   5ASGAutoScalingSetScaleInUtilizationThresholdSeconds:
     Description: >
       How many seconds does the threshold have to be in alarm to trigger scale down? Requires 5ASGAutoScalingEnabled=true.

@@ -69,7 +69,6 @@ foreach ($RunnerRegToken in $GITLABRunnerRegTokenList.split(',')) {
      --name $RunnerName `
      --tag-list $RunnerCompleteTagList `
      --executor $GITLABRunnerExecutor `
-     --docker-volumes "/var/run/docker.sock:/var/run/docker.sock" `
      --docker-image "docker:latest" `
      --docker-privileged `
      --locked 0 `
@@ -78,6 +77,7 @@ foreach ($RunnerRegToken in $GITLABRunnerRegTokenList.split(',')) {
      --docker-shm-size 0 `
      --request-concurrency $GITLABRunnerConcurrentJobs
 }
+     #--docker-volumes "/var/run/docker.sock:/var/run/docker.sock" `
 
 #rename instance to include -glrunner ?
 #aws ec2 describe-tags --filters "Name=resource-id,Values=$MYINSTANCEID"

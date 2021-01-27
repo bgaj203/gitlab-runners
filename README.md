@@ -147,12 +147,12 @@ The follow Runner configuration scripts are provided with the template.
 
 Note: The runner configuration script CloudFormation parameter can take an git raw URL on the public internet - so you can also iterate forward on any runner configuration by starting with these and placing it on a public repository somewhere.
 
-| Runner Executor                                              | Readiness                           | Script Name (Last file on full Git RAW URL) |
-| ------------------------------------------------------------ | ----------------------------------- | ------------------------------------------- |
-| Linux Docker on Amazon Linux 2                               | Working with CPU and Memory Scaling | amazon-linux-2-docker.sh                    |
-| Linux Shell on Amazon Linux 2                                |                                     | amazon-linux-2-docker.sh                    |
-| Windows Shell on Whatever Windows AMI You Choose             | Working                             | windows-shell.ps1                           |
-| Windows Docker on Whatever **ECS Optimized** Windows AMI You Choose (Docker preinstalled) |                                     | windows-docker.ps1                          |
+| Runner Executor                                              | Readiness                                                    | Script Name (Last file on full Git RAW URL) |
+| ------------------------------------------------------------ | ------------------------------------------------------------ | ------------------------------------------- |
+| Linux Docker on Amazon Linux 2                               | Working<br />- Working: Reporting CPU & Memory in CloudWatch<br />- Working: CPU and Memory Scaling | amazon-linux-2-docker.sh                    |
+| Linux Shell on Amazon Linux 2                                | Working<br />- Working: Reporting CPU & Memory in CloudWatch<br />- **NOT** Working: CPU and Memory Scaling | amazon-linux-2-docker.sh                    |
+| Windows Shell on Whatever Windows AMI You Choose             | Working                                                      | windows-shell.ps1                           |
+| Windows Docker on Whatever **ECS Optimized** Windows AMI You Choose (Docker preinstalled) |                                                              | windows-docker.ps1                          |
 
 ### GitLab CI YAML Hello World
 
@@ -192,10 +192,12 @@ windows-docker-helloworld:
     - TagA
     - TagB
     - computetype-ondemand
-    - glexecutor-docker
+    - glexecutor-docker-windows
     - windows
   script:
     - |
       write-host "Hello from the windows ltsc2019 container"
 ```
+
+### Example GitLab Runners Display
 
