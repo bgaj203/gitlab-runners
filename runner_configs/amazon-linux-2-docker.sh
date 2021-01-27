@@ -13,7 +13,7 @@ $GITLABRunnerExecutor='docker'
 
 MYIP="$(curl http://169.254.169.254/latest/meta-data/local-ipv4)"
 MYACCOUNTID="$(curl http://169.254.169.254/latest/dynamic/instance-identity/document|grep accountId| awk '{print $3}'|sed  's/"//g'|sed 's/,//g')"
-RunnerName="$MYINSTANCEID-in-$MYACCOUNTID"
+RunnerName="$MYINSTANCEID-in-$MYACCOUNTID-at-$AWS_REGION"
 
 function logit() {
   LOGSTRING="$(date +"%_b %e %H:%M:%S") $(hostname) USERDATA_SCRIPT: $1"

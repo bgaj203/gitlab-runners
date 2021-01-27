@@ -8,7 +8,7 @@ The baseline for this template is the Ultimate AWS ASG Kickstart and Lab Kit wit
 ### The Runner Part
 
 Runner Specific or Highlighted Features:
-- Start / Stop ASG schedule - specify a cron expression for when the cluster scales to 0 for Min and Desired (stop) and when it scales to 1 Min <yourvalue> Desired (start), after which autoscaling takes over.
+- Start / Stop ASG schedule - specify a cron expression for when the cluster scales to 0 for Min and Desired (stop schedule) and when it scales to "Min=1" "Desired=<yourvalue> " (start schedule), after which autoscaling takes over.
 - Runner information tagged in AWS and instance name and AWS account set as runner name for easy mapping of runners in GitLab to instances in AWS and vice versa.
 - Runners self-tag as computetype-spot or computetype-ondemand to allow GitLab CI job level routing based on this information.
 - Runners self-tag with gitlab runner executor type
@@ -40,11 +40,11 @@ Yes - because:
 
 **IMPORTANT**: The number one suspected cause in debugging cloud automation is "You probably are not being patient enough and waiting long enough to see the desired result." (whether waiting for automation to complete or metrics to flow or other things to trigger as designed)
 
-  * **Linux**: Generally assumes an AWS prepared AMI (all AWS utilities installed and configured for default operation). For Amazon Linux - assumes Amazon Linux **2**.
+  * **Linux**: Generally assumes an AWS prepared AMI (all AWS utilities installed and configured for default operation). For Amazon Linux - assumes Amazon Linux **2**. (CentOS7 Compatibile / systemd for services)
   * **Windows**: Generally assumes AWS prepared AMI (all AWS utilities installed and configured for default operation) using upgraded AWS EC2Launch client (and NOT older EC2Config) (For AWS prepared AMIs this equates to Server 2012 and later)
 
 #### Both Operating Systems
-* Should be accessible via the SSM agent - which means zero configuration to get a command console (non-GUI on Windows) via Ec2. Use it as follows:
+* Should be accessible via the SSM agent - which means zero configuration to get a command console (non-GUI on Windows) via Ec2. This obviates the need for a public address, security groups that open SSH or RDP and a Internet gateway. Use SSM for a console as follows:
   1. Right click an instance and choose "Connect"
   2. Select the "Session Manager" tab.
   3. Click "Connect".  If the button is not enabled you most likely have to wait a while until full configuration has been completed.
@@ -143,9 +143,3 @@ AWS ASG itself supports many alarms on many metrics.  Multi-metric / multi-alarm
 
 * Generate Load
 * Edit Scaling Alarms and Change Thresholds
-#### CloudWatch Configuration and Operation (for memory and other stats)
-##### Linux
-* config: opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json
-* log file: tail /opt/aws/amazon-cloudwatch-agent/logs/amazon-cloudwatch-agent.log -f
-* Running Status: sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -m ec2 -a status
-* Running Status: sudo systemctl status amazon-cloudwatch-agent

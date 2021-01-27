@@ -28,7 +28,7 @@ if (Test-Path variable:COMPUTETYPE) {$RunnerCompleteTagList = $RunnerCompleteTag
 
 $MYIP="$(invoke-restmethod http://169.254.169.254/latest/meta-data/local-ipv4)"
 $MYACCOUNTID="$((invoke-restmethod http://169.254.169.254/latest/dynamic/instance-identity/document).accountId)"
-$RunnerName="$MYINSTANCEID-in-$MYACCOUNTID"
+$RunnerName="$MYINSTANCEID-in-$MYACCOUNTID-in-$AWS_REGION"
 
 Function logit ($Msg, $MsgType='Information', $ID='1') {
   If ($script:PSCommandPath -ne '' ) { $SourcePathName = $script:PSCommandPath ; $SourceName = split-path -leaf $SourcePathName } else { $SourceName = "Automation Code"; $SourcePathName = "Unknown" }

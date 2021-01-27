@@ -758,8 +758,7 @@ Resources:
                 
                 if [[ "${4ASGScheduledStartupCron}" != "Disabled" ]] || [[ "${4ASGScheduledShutdownCron}" != "Disabled" ]]; then GITLABRunnerTagList = "$GITLABRunnerTagList, UsesAWSASGScheduledAvailability"; fi
 
-                AWS_REGION="$(curl -s 169.254.169.254/latest/meta-data/placement/availability-zone | sed 's/.$//')"
-                GITLABRunnerTagList = "$GITLABRunnerTagList, AWSRegion-$AWS_REGION"                
+                AWS_REGION="$(curl -s 169.254.169.254/latest/meta-data/placement/availability-zone | sed 's/.$//')"              
 
                 LAST_CF_PATCH_RUN="${1OSPatchRunDate}" #Forces change for patching rolling replacement and documents last CF triggered patching
                 ACTUAL_PATCH_DATE=$(date +%Y-%m-%d)
@@ -1025,7 +1024,6 @@ Resources:
                 If (("${4ASGScheduledStartupCron}" -ine "Disabled") -OR ("${4ASGScheduledShutdownCron}" -ine "Disabled")) { $GITLABRunnerTagList = "$GITLABRunnerTagList, UsesAWSASGScheduledAvailability"}
 
                 $AWS_REGION="$($(invoke-restmethod 169.254.169.254/latest/meta-data/placement/availability-zone) -replace '.$')"
-                $GITLABRunnerTagList = "$GITLABRunnerTagList, AWSRegion-$AWS_REGION"
 
                 $LAST_CF_PATCH_RUN="${1OSPatchRunDate}" #Forces change for patching rolling replacement and documents last CF triggered patching
                 $ACTUAL_PATCH_DATE="$(date -format 'yyyy-MM-dd')"
