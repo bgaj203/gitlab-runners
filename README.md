@@ -113,9 +113,6 @@ Yes - because:
 ### Scaling Troubleshooting and Testing
 
 **IMPORTANT**: DO NOT use the built in CPU stressing capability of this template because at this time it prevents proper completion of CloudFormation which eventually puts the stack into Rollback.
-#### CloudWatch Scaling
-Alarms are not simple thresholds, they must be **breached* to enact the associated scaling rule.  For instance if your CPU utilization low threshold is 20% and your ASG starts and never goes above 20%, scale down will not occur because the alarm was not breached - the utilization simply never was above the threshold.
-
 #### AWS ASG Scaling Configuration Flexibility
 
 While this template allows:
@@ -143,3 +140,62 @@ AWS ASG itself supports many alarms on many metrics.  Multi-metric / multi-alarm
 
 * Generate Load
 * Edit Scaling Alarms and Change Thresholds
+
+### Prebuilt Runner Configuration Scripts
+
+The follow Runner configuration scripts are provided with the template.
+
+Note: The runner configuration script CloudFormation parameter can take an git raw URL on the public internet - so you can also iterate forward on any runner configuration by starting with these and placing it on a public repository somewhere.
+
+| Runner Executor                                              | Readiness                           | Script Name (Last file on full Git RAW URL) |
+| ------------------------------------------------------------ | ----------------------------------- | ------------------------------------------- |
+| Linux Docker on Amazon Linux 2                               | Working with CPU and Memory Scaling | amazon-linux-2-docker.sh                    |
+| Linux Shell on Amazon Linux 2                                |                                     | amazon-linux-2-docker.sh                    |
+| Windows Shell on Whatever Windows AMI You Choose             | Working                             | windows-shell.ps1                           |
+| Windows Docker on Whatever **ECS Optimized** Windows AMI You Choose (Docker preinstalled) |                                     | windows-docker.ps1                          |
+
+### GitLab CI YAML Hello World
+
+```bash
+
+linux-docker-helloworld:
+  image: bash
+  script:
+    - |
+      echo "Hello from the linux bash container"
+
+linux-shell-helloworld:
+  tags:
+    - TagA
+    - TagB
+    - computetype-ondemand
+    - glexecutor-shell
+    - linux
+  script:
+    - |
+      echo "Hello from the linux bash container"
+
+windows-shell-helloworld:
+  tags:
+    - TagA
+    - TagB
+    - computetype-ondemand
+    - glexecutor-shell
+    - windows
+  script:
+    - |
+      write-host "Hello from a Windows Shell runner"    
+
+windows-docker-helloworld:
+  image: mcr.microsoft.com/windows/servercore:ltsc2019
+  tags:
+    - TagA
+    - TagB
+    - computetype-ondemand
+    - glexecutor-docker
+    - windows
+  script:
+    - |
+      write-host "Hello from the windows ltsc2019 container"
+```
+

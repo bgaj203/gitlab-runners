@@ -99,6 +99,7 @@ Parameters:
   3GITLABRunnerRegTokenList:
     Description: One or more runner tokens to register (comma delimited)
     Type: String
+    AllowedPattern: .+
   3GITLABRunnerVersion:
     Description: Version of the GitLab Runner to install (defaults to latest)
     Type: String
