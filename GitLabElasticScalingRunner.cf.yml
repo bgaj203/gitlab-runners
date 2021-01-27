@@ -101,7 +101,9 @@ Parameters:
     Type: String
     AllowedPattern: .+
   3GITLABRunnerVersion:
-    Description: Version of the GitLab Runner to install (defaults to latest)
+    Description: >
+      Version of the GitLab Runner to install (defaults to latest).  Use the version numbers exactly as listed here: https://gitlab.com/gitlab-org/gitlab-runner/-/releases
+      For example 'v13.7.0' or 'v13.8.0-rc1' You can actually see the version number in the download path of all the built packages.
     Type: String
     Default: latest
   4ASGDesiredCapacity:
