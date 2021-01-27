@@ -50,7 +50,7 @@ Yes - because:
   3. Click "Connect".  If the button is not enabled you most likely have to wait a while until full configuration has been completed.
 #### Linux
 ##### Linux Userdata (includes download and execution of runner configuraiton script)
-* **Resolved Script**: 
+* **Resolved Script (CF Variables Expanded)**: `cat /var/lib/cloud/instance/scripts/part-00`
 * **Userdata Execution Log**: `cat /var/log/cloud-init-output.log`
 
 ##### Linux Runner Configuration
@@ -90,7 +90,7 @@ Yes - because:
   Note: This is useful for tailing the Application log to watch whether the termination script is processing as desired.
 
 ##### Windows Userdata
-* **Resolved Script**: `cat C:\Windows\TEMP\UserScript.ps1`
+* **Resolved Script (CF Variables Expanded)**: `cat C:\Windows\TEMP\UserScript.ps1`
 * **Userdata Execution Log**: `cat C:\programdata\Amazon\EC2-Windows\Launch\Log\UserdataExecution.log`
 ##### Windows Runner Configuration
 
