@@ -78,7 +78,9 @@ Parameters:
   3GITLABRunnerConcurrentJobs:
     Description: >
       How many desired concurrent jobs can this runner take at a time.
-      Generally, for external autoscaling, this will need to be enough to likely raise the monitored utilization threshold high enough to trigger scaling.
+      For external autoscaling on machine metrics like CPU or memory, this will need to be enough to cause the monitored utilization 
+      threshold to be high enough to trigger scaling, rather than comfortably match the machine size.  Typically instances with the same
+      memory and cpu sizes should be choosen for the instances to maintain consistent performance across all ASG runner instances.
     Type: Number
     Default: 10          
   3GITLABRunnerInstanceURL:

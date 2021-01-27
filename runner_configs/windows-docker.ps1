@@ -22,6 +22,8 @@ $GITLABRunnerExecutor='docker'
 # $RunnerInstallRoot='C:\GitLab-Runner'
 # $RunnerConfigToml="$RunnerInstallRoot\config.toml"
 
+Write-Host "****ATTENTION: Windows Docker Executor support for this template is experimental."
+
 $RunnerCompleteTagList = $RunnerOSTags, "glexecutor-$GITLABRunnerExecutor", $GITLABRunnerTagList -join ','
 
 if (Test-Path variable:COMPUTETYPE) {$RunnerCompleteTagList = $RunnerCompleteTagList, "computetype-$($COMPUTETYPE.ToLower())" -join ','}
