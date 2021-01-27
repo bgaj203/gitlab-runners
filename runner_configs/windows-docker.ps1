@@ -74,6 +74,7 @@ foreach ($RunnerRegToken in $GITLABRunnerRegTokenList.split(',')) {
      --docker-tlsverify false `
      --docker-disable-cache false `
      --docker-shm-size 0 `
+     --docker-pull-policy if-not-present `
      --maximum-timeout 10800 `
      --request-concurrency $GITLABRunnerConcurrentJobs
 }
