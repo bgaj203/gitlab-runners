@@ -2,7 +2,24 @@
 
 The baseline for this template is the Ultimate AWS ASG Kickstart and Lab Kit with Spot Support.  It has many features and attibutes to learn about Autoscaling and spot and all of that is described here: https://gitlab.com/DarwinJS/ultimate-aws-asg-lab-kit/-/blob/master/README.md - It's worth it to read through the many features.
 
+### Why Amazon Linux 2?
+
+AWS has engineered Amazon Linux 2 for the maxium efficiency and server density on Ec2 and for container hosts. With the newer Linux kernel it is also able to have more optimal docker performance with the overlay2 storage driver.
+
+The defaulting of this template does not preclude anyone from creating a custom runner configuration script for any other bistro.  Generally you want to build on the AMIs built by AWS because they tend to be optimized with at least MVNe storage drivers and ENA network drivers.
+
+### What Instance Types?
+
+Do not use bursty instances types (t2/t3) because their irradict behavior will confuse the results for what autoscaling can do.
+
+Do use nitro instances because they have MVNe storage drivers and ENA network drivers and are automatically EBS optimized.  Use a minimum of the m5 class to gain all these benefits in a general computing instance type.  Better performance may be had if you tune your instance selection to your actual workload behaviors.
+
+### Should I Create an AMI with the Runner Embedded?
+
+Generally no - this creates an entire artifact release cycle in front of an already complex Infrastructure as Code stack - testing is long enough without that additional development cycle.  Additionally, you will likely have to update the runner binary (and maybe others) as soon as you boot an old AMI.  Many times automation to adequately replace software will take longer than starting with a clean machine.  Developing automation to "replace an old software package" is definitely more intense that clean slate.
+
 ### Scaling Testing
+
 - Scaling down testing is the easiest - simply launch the template with a Desired Capacity of 2 and Minimum Capacity of 1 and shortly after CloudFormation completes, the ASG will start scaling down.
 
 ### The Runner Part
@@ -36,7 +53,7 @@ Yes - because:
 * It benefits from all the other features of this template including maintenance by repulling the latest AMI, latest patches and latest runner version upon a simple CF stack update.
 * Docker-machine should be able to be completely replaced by a well tuned ASG housing the plain docker executor.
 
-### TroubleShooting Guide
+### TroubleShooting Guide For All The IaC Parts
 
 **IMPORTANT**: The number one suspected cause in debugging cloud automation is "You probably are not being patient enough and waiting long enough to see the desired result." (whether waiting for automation to complete or metrics to flow or other things to trigger as designed)
 
@@ -149,10 +166,10 @@ Note: The runner configuration script CloudFormation parameter can take an git r
 
 | Runner Executor                                              | Readiness                                                    | Script Name (Last file on full Git RAW URL) |
 | ------------------------------------------------------------ | ------------------------------------------------------------ | ------------------------------------------- |
-| Linux Docker on Amazon Linux 2                               | Working<br />- Working: Reporting CPU & Memory in CloudWatch<br />- Working: CPU and Memory Scaling | amazon-linux-2-docker.sh                    |
-| Linux Shell on Amazon Linux 2                                | Working<br />- Working: Reporting CPU & Memory in CloudWatch<br />- **NOT** Working: CPU and Memory Scaling | amazon-linux-2-docker.sh                    |
-| Windows Shell on Whatever Windows AMI You Choose             | Working                                                      | windows-shell.ps1                           |
-| Windows Docker on Whatever **ECS Optimized** Windows AMI You Choose (Docker preinstalled) |                                                              | windows-docker.ps1                          |
+| Linux Docker on Amazon Linux 2                               | - Working: Termination Monitor / Unregister<br />- Working: Reporting CPU & Memory in CloudWatch<br />- Working: CPU and Memory Scaling | amazon-linux-2-docker.sh                    |
+| Linux Shell on Amazon Linux 2                                | - Working: Termination Monitor / Unregister<br />- Working: Reporting CPU & Memory in CloudWatch<br />- Working: CPU and Memory Scaling | amazon-linux-2-docker.sh                    |
+| Windows Shell on Whatever Windows AMI You Choose             | - Working: Termination Monitor / Unregister<br />- Working: Reporting CPU & Memory in CloudWatch<br />- Working: CPU Scaling<br />- **NOT** Working: Memory Scaling | windows-shell.ps1                           |
+| Windows Docker on Whatever **ECS Optimized** Windows AMI You Choose (Docker preinstalled) | - Working: Termination Monitor / Unregister<br />- Working: Reporting CPU & Memory in CloudWatch<br />- Working: CPU Scaling<br />- **NOT** Working: Memory Scaling | windows-docker.ps1                          |
 
 ### GitLab CI YAML Hello World
 
@@ -199,5 +216,12 @@ windows-docker-helloworld:
       write-host "Hello from the windows ltsc2019 container"
 ```
 
+Successful status from the above:
+
+
+
 ### Example GitLab Runners Display
 
+Shows all four types registered.
+
+![Screen Shot 2021-01-27 at 9.19.59 AM](/Users/dsanoy/Documents/repos/gitlab-runner-autoscaling-aws-asg/runner-panel.png)

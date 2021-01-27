@@ -70,11 +70,11 @@ foreach ($RunnerRegToken in $GITLABRunnerRegTokenList.split(',')) {
      --tag-list $RunnerCompleteTagList `
      --executor $GITLABRunnerExecutor `
      --docker-image "docker:latest" `
-     --docker-privileged `
      --locked 0 `
      --docker-tlsverify false `
      --docker-disable-cache false `
      --docker-shm-size 0 `
+     --maximum-timeout 10800 `
      --request-concurrency $GITLABRunnerConcurrentJobs
 }
      #--docker-volumes "/var/run/docker.sock:/var/run/docker.sock" `
