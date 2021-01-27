@@ -76,7 +76,7 @@ $RunnerInstallRoot/gitlab-runner register \
   --docker-tlsverify false \
   --docker-disable-cache false \
   --docker-shm-size 0 \
-  --request-concurrency 4
+  --request-concurrency "$GITLABRunnerConcurrentJobs"
 
 $RunnerInstallRoot/gitlab-runner start
 
