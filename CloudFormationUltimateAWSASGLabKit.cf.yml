@@ -263,6 +263,7 @@ Parameters:
     #Reset above to: 0
   5SPOTOnDemandPercentageAboveBaseCapacity: 
     Description: >
+      ATTENTION: Brand new AWS accounts have a spot quota of zero - request a limit increase before testing this. 
       ATTENTION: DISABLING SPOT *instance usage* is achieved by setting this value to 100 (zero). It still results in a spot setup, but none of
       the instances will be spot instances.
       What percent of the cluster should be Spot (with the remainder being on demand).  Percentage only applied to instances started after
