@@ -210,24 +210,3 @@ systemctl restart amazon-cloudwatch-agent
 #90% of available memory: $(awk '/MemAvailable/{printf "%d\n", $2 * 0.9;}' < /proc/meminfo)k
 #100% of total memory: $(awk '/MemTotal/{printf "%d\n", $2;}' < /proc/meminfo)k
 # cpus * 2: $(awk '/cpu cores/{printf "%d\n", $4 * 2;}' < /proc/cpuinfo)
-
-# {
-#   "metrics": {
-#     "append_dimensions": {
-#       "AutoScalingGroupName": "$NAMEOFASG",
-#       "ImageId": "$(curl http://169.254.169.254/latest/meta-data/ami-id)",
-#       "InstanceId": "$MYINSTANCEID",
-#       "InstanceType": "$(curl http://169.254.169.254/latest/meta-data/instance-type)"
-#     },
-#     "aggregation_dimensions" : [["AutoScalingGroupName"]],
-#     "metrics_collected": {
-#       "mem": {
-#         "measurement": [
-#           "mem_used_percent",
-#           "mem_available_percent"
-#         ],
-#         "metrics_collection_interval": 1
-#       }
-#     }
-#   }
-# }
