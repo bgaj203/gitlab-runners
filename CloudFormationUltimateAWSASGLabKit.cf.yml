@@ -740,7 +740,7 @@ Resources:
                   yum install -y https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-latest.amzn1.noarch.rpm
                   sudo ln -s /usr/local/lib/python2.7/site-packages/cfnbootstrap /usr/lib/python2.7/site-packages/cfnbootstrap
                 fi      
-                GITLABRunnerConcurrentJobs="${GITLABRunnerConcurrentJobs}"
+                GITLABRunnerConcurrentJobs="${3GITLABRunnerConcurrentJobs}"
                 GITLABRunnerInstanceURL="${3GITLABRunnerInstanceURL}"
                 GITLABRunnerRegTokenList="${3GITLABRunnerRegTokenList}"
                 GITLABRunnerVersion="${3GITLABRunnerVersion}"
@@ -1008,7 +1008,7 @@ Resources:
                   ((Test-Path "HKLM:SYSTEM\CurrentControlSet\Services\Netlogon\JoinDomain") -OR (Test-Path "HKLM:SYSTEM\CurrentControlSet\Services\Netlogon\AvoidSpnSet")))
                 }
 
-                $GITLABRunnerConcurrentJobs="${GITLABRunnerConcurrentJobs}"
+                $GITLABRunnerConcurrentJobs="${3GITLABRunnerConcurrentJobs}"
                 $GITLABRunnerInstanceURL="${3GITLABRunnerInstanceURL}"
                 $GITLABRunnerRegTokenList="${3GITLABRunnerRegTokenList}"
                 $GITLABRunnerVersion="${3GITLABRunnerVersion}"
