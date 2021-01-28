@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 ## [v1.4.0-alpha4] - 2021-01-28
 
 - This is really a **first MVP** release - will need everyone's help to refine.
-- Rename to GitLab Runner Vending Machine for AWS
+- Rename to GitLab Scaling Runner Vending Machine for AWS
 - removed default parameters for autoscaling scaling because we do not currently have a tested and advised default for general runner deployment
 - updated template parameter names and help text
 - enablement video added to readme

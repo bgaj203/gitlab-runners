@@ -1,4 +1,4 @@
-# GitLab Runner Vending Machine for AWS: HA, Elastic Scaling, Spot & Windows
+# GitLab Scaling Runner Vending Machine for AWS: HA, Elastic Scaling, Spot & Windows
 
 The baseline for this template is the Ultimate AWS ASG Kickstart and Lab Kit with Spot Support.  It has many features and attibutes to learn about Autoscaling and spot and all of that is described here: https://gitlab.com/DarwinJS/ultimate-aws-asg-lab-kit/-/blob/master/README.md - It's worth it to read through the many features.
 
