@@ -116,6 +116,10 @@ Yes - because:
 #### Windows
 
 ##### Techniques for Non-GUI Windows Troubleshooting
+* Viewing text files in the console - windows powershell has many linux aliases - so just use cat:
+
+  `cat somefile.txt`
+
 * Use this oneliner to install the console based text file editor 'nano' on headless windows: 
   
   `If (!(Test-Path env:chocolateyinstall)) {iwr https://chocolatey.org/install.ps1 -UseBasicParsing | iex} ; cinst -y nano`
