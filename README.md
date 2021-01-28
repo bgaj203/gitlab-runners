@@ -1,6 +1,21 @@
-# GitLab Runner Autoscaling on AWS with Spot
+# GitLab Runner Vending Machine for AWS: HA, Elastic Scaling, Spot & Windows
 
 The baseline for this template is the Ultimate AWS ASG Kickstart and Lab Kit with Spot Support.  It has many features and attibutes to learn about Autoscaling and spot and all of that is described here: https://gitlab.com/DarwinJS/ultimate-aws-asg-lab-kit/-/blob/master/README.md - It's worth it to read through the many features.
+
+### Only Need HA Runners or Self-Service?  You're In The Right Place
+
+This template still has a lot of benefits when not used for autoscaling, some of them are:
+
+- Self-Service Vending (SMA) of Runners by Developers.
+- Runners are built with IaC, rather than hand crafted.
+- Automatic Hot (2 hosts) or Warm (1 host that respawns) High Availability.
+- Automatic availability scheduling (runner is off during off hours).
+
+### Walk Through Video
+
+This video does not cover everything in this readme - both need to be reviewed to be productive with this code.
+
+[GitLab Runner Vending Machine for AWS: HA and/or Autoscaling on AWS with Spot](https://youtu.be/llbSTVEeY28)
 
 ### Why Amazon Linux 2?
 

@@ -3,28 +3,30 @@ AWSTemplateFormatVersion: '2010-09-09'
 Description: >
   NOTE: If you are allowing autocreation of a bucket, the stack name is used in the bucketname an only lowercase letters are allowed in bucket names.
 Parameters:
-  1AAAAATTENTION:
-    Description: "YOUR STACK NAME CHARACTERS MUST BE ALL LOWER CASE"
+  1AAAAATTENTIONDoesStackNameOnlyHaveLowerCaseCharacters:
+    Description: "ARE ALL CHARACTERS IN YOUR STACK NAME LOWER CASE?"
     Type: String
-    Default: "DOUBLE CHECK THAT YOUR STACK NAME ONLY CONTAINS LOWERCASE CHARACTERS"
-    AllowedValues: [ "DOUBLE CHECK THAT YOUR STACK NAME ONLY CONTAINS LOWERCASE CHARACTERS" ]
-    ConstraintDescription: "This is an informational parameter so can't be changed."
-  1AAAAGitLabRunnerASGVersion:
-    Description: "Read Only - GitLab Runner Autoscaling on AWS with Spot Support."
+    Default: "Yes All Characters In The Stack Name Are Lower Case."
+    AllowedValues: [ "Yes All Characters In The Stack Name Are Lower Case." ]
+    ConstraintDescription: "This must be set to 'Yes All Characters In The Stack Name Are Lower Case.'"
+  1AAAATemplateVersion:
+    Description: "Version of this template."
     Type: String
-    Default: "v1.4.0-alpha3"
-    AllowedValues: [ "v1.4.0-alpha3" ]
-    ConstraintDescription: "Version number is used in the template and cannot be changed."
-  1AAAReadme:
-    Description: Read the following to learn why this template is helpful.
+    Default: "v1.4.0-alpha4"
+    AllowedValues: [ "v1.4.0-alpha4" ]
+    ConstraintDescription: "1AAAATemplateVersion is the template version number and cannot be changed at runtime."
+  1AAASourceProject:
+    Description: >
+      Please read the readme and watch the video linked in the readme.
+      CONTRIBUTIONS / ENHANCEMENTS / BUG REPORTING: Please report bugs in the issues section of this project.
     Type: String
-    Default: https://gitlab.com/guided-explorations/gitlab-deployment/gitlab-runner-autoscaling-aws-asg/-/blob/master/README.md
-    AllowedValues: [ "https://gitlab.com/guided-explorations/gitlab-deployment/gitlab-runner-autoscaling-aws-asg/-/blob/master/README.md" ]
-    ConstraintDescription: "Readme Blog post is for documentation purposes only and cannot be changed."
+    Default: https://gitlab.com/guided-explorations/gitlab-deployment/gitlab-runner-autoscaling-aws-asg/
+    AllowedValues: [ "https://gitlab.com/guided-explorations/gitlab-deployment/gitlab-runner-autoscaling-aws-asg/" ]
+    ConstraintDescription: "1AAASourceProject is an information parameter that cannot be changed."
   1OSPeggedAMIID:
     Description: >
       99% of the time you will want to leave this as "latest".  Override here if you have a dependency on a specific AMI or have prepared a custom one.
-      Can be Windows or Linux, but the value choosen for 1OSInstanceOSPlatform must match the OS platform contained in the AMI.
+      Can be Windows or Linux, but the value chosen for 1OSInstanceOSPlatform must match the OS platform contained in the AMI.
       For testing pick an older one that will need a kernel patch or other reboot required patch for sure.
       For Linux - due to optimization and AWS ECR Creds Helper, Amazon Linux 2 is assumed, but other Redhat parentage distros may work (yum packager).
       CentOS7 (use M4): ami-4bf3d731.
@@ -35,7 +37,6 @@ Parameters:
       Enter "Linux" or "Windows".  AMI specified in 9AWSRetrieveLatestAWSOSAmiIdFromSSM or 1OSPeggedAMIID must contain this platform choice.
     Type: String
     Default: Linux
-    #Reset above to: Linux
     AllowedValues: 
       - Linux
       - Windows
@@ -48,15 +49,15 @@ Parameters:
     Type: String
     Default: 2019-06-04
   1OSPatchScope:
-    Description: What types of patches to apply
+    Description: >
+      What types of patches to apply. "NoPatching-OnlyForDebugging" - No patching will be done - this setting is for debugging only (patch dates will still be set)
+      This can be changed on an update if you setup an ASG and realize you would like to keep it.
     Type: String
-    Default: NoPatching-OnlyForDebugging
-    #Reset above to: All
+    Default: SecurityOnly
     AllowedValues: 
       - All
       - SecurityOnly
-      - NoPatching-OnlyForDebugging   
-      #For "NoPatching-OnlyForDebugging" - No patching will be done - this setting is for debugging only (patch dates will still be set)   
+      - NoPatching-OnlyForDebugging     
   3INSTConfigurationScript:
     Description: >
       Allows additional script commands during startup. This is parameterized for testing new versions and to enable one
@@ -70,7 +71,8 @@ Parameters:
       (e.g. via a custom AMI)
       The instance must have a network route and permission to any remote locations.
       The code you write must be idempotent so that it does the correct thing when run again after a patching reboot.
-      There is an example at: https://gitlab.com/DarwinJS/ultimate-aws-asg-lab-kit/-/raw/master/CustomInstanceConfigurationScriptSample.sh_and_ps1
+      Runner examples provided in this project are: amazon-linux-2-shell.sh, amazon-linux-2-docker.sh, windows-shell.ps1 and windows-docker-windows.ps1 at 
+      git raw url: https://gitlab.com/guided-explorations/aws/gitlab-runner-autoscaling-aws-asg/-/raw/master/runner_configs/
     Type: String
     Default: https://gitlab.com/guided-explorations/aws/gitlab-runner-autoscaling-aws-asg/-/raw/master/runner_configs/amazon-linux-2-docker.sh
     #Reset above to: https://gitlab.com/guided-explorations/aws/gitlab-runner-autoscaling-aws-asg/-/raw/master/runner_configs/amazon-linux-2-docker.sh
@@ -161,7 +163,7 @@ Parameters:
       Setting to false still allows for High Availability - either HOT/Warm HA with 1 instance or HOT/HOT HA for 2 or more instances. 
       AWS resources for autoscaling are not created if this is false. The 'step scaling' policy is used.
     Type: String
-    Default: true
+    Default: false
     AllowedValues: 
       - true
       - false
@@ -188,32 +190,32 @@ Parameters:
     Type: String
     Default: 1
     AllowedValues: [0,1,2,3,4,5,Disabled] 
-  5ASGAutoScalingUtilizationMetricType:
+  5ASGAutoScalingMetricTypeToMonitor:
     Description: >
       Which utilization metric should scaling alarms key off.
     Type: String
-    Default: Memory
+    Default: CPU
     AllowedValues: [CPU,Memory]   
   5ASGAutoScalingSetScaleOutUtilizationThreshold:
     Description: >
       What ASG-wide Utilization threshold triggers scaling up via step-scaling? Requires 5ASGAutoScalingEnabled=true.
     Type: Number
-    Default: 70  
+    Default: 0
   5ASGAutoScalingSetScaleOutUtilizationThresholdSeconds:
     Description: >
       How many seconds does the threshold have to be in alarm to trigger scale up via step-scaling? Requires 5ASGAutoScalingEnabled=true.
-    Type: Number
-    Default: 60     
+    Type: Number  
+    Default: 0
   5ASGAutoScalingSetScaleInUtilizationThreshold:
     Description: >
       What ASG-wide Utilization threshold triggers scaling down via step-scaling? Requires 5ASGAutoScalingEnabled=true.
     Type: Number
-    Default: 40  
+    Default: 0
   5ASGAutoScalingSetScaleInUtilizationThresholdSeconds:
     Description: >
       How many seconds does the threshold have to be in alarm to trigger scale down? Requires 5ASGAutoScalingEnabled=true.
     Type: Number
-    Default: 60
+    Default: 0
   5ASGBucketName:
     Description: >
       A bucket to which all instances will be given read and write permissions for purposes such as CodeDeploy, SSM Remote Command and Inventory.
@@ -225,13 +227,12 @@ Parameters:
     Default: CreateOneForMe        
   5SPOTInstanceType1:
     Description: >
-      ATTENTION: DISABLING SPOT *instance usage* is achieved by setting 5SPOTOnDemandPercentageAboveBaseCapacity to 0 (zero).
-      It still results in a spot setup, but none of the instances will be spot instances.
+      ATTENTION: DISABLING SPOT *instance usage* is achieved by setting 5SPOTOnDemandPercentageAboveBaseCapacity to 100.
       At least one instancetype is required, use at least 2 to demonstrate spot. You do not have to keep your instance
       sizes small because the lowest price will always be choosen and is likely cheaper than small on demand instances.
       More information: https://docs.aws.amazon.com/autoscaling/ec2/APIReference/API_InstancesDistribution.html
     Type: String
-    Default: "m4.large"
+    Default: "m5.large"
     AllowedPattern: ^[A-Za-z0-9.]+$
     ConstraintDescription: At least two instancetypes are required, use at least 2 to demonstrate spot.
   5SPOTInstanceType2:
@@ -240,7 +241,7 @@ Parameters:
       sizes small because the lowest price will always be choosen and is likely cheaper than small on demand instances.
       More information: https://docs.aws.amazon.com/autoscaling/ec2/APIReference/API_InstancesDistribution.html
     Type: String
-    Default: "m5.large"
+    Default: "m4.large"
     #Remove Default
   5SPOTInstanceType3:
     Description: >
@@ -268,8 +269,7 @@ Parameters:
       Sets a minimum number of always on on-demand (non-spot) base capacity.  The number of instances here will benefit from InstanceType 
       exhaustion, but not spot pricing. Set to 0 for a 100% spot cluster.
     Type: Number
-    Default: 1
-    #Reset above to: 0
+    Default: 0
   5SPOTOnDemandPercentageAboveBaseCapacity: 
     Description: >
       ATTENTION: Brand new AWS accounts have a spot quota of zero - request a limit increase before testing this. 
@@ -279,8 +279,7 @@ Parameters:
       count in 5SPOTOnDemandBaseCapacity.
       Set to 0 for a 100% spot cluster.
     Type: Number
-    Default: 100
-    #Reset above to: 0        
+    Default: 100       
   8DBGUtilizationLoadPercentInitialValue:
     Description: >
       WARNING: NOT READY, DO NOT USE. Everything is 1 minute granularity - so don't set this to cause scaling and forget it unless you want a massive AWS bill ;)
@@ -295,13 +294,12 @@ Parameters:
       higher values.
     Type: String
   8DBGKeypairName:
-    Description: Spins instances with a keypair to allow connection. Not needed if TroubleShootingMode is enabled.
+    Description: Spins instances with a keypair to allow connection. It is easier and more secure to use SSM Session Manager by enabling 8DBGTroubleShootingMode.
     Type: String
   8DBGTroubleShootingMode:
     Description: Enables troubleshooting - enables SSM and configures Instance Profile IAM so SSM Session Manager can logon.
     Type: String
     Default: true
-    #Reset above to: false
     AllowedValues: 
       - true
       - false     
@@ -345,8 +343,8 @@ Conditions:
   CreateS3BucketAndPermissions: !Equals [ !Ref 5ASGBucketName, "CreateOneForMe" ]
   CreateStartSchedule: !Not [ !Equals [ !Ref 4ASGScheduledStartupCron, "Disabled" ]]
   CreateStopSchedule: !Not [ !Equals [ !Ref 4ASGScheduledShutdownCron, "Disabled" ]]
-  UseCPUUtilizationMetric: !Equals [ !Ref 5ASGAutoScalingUtilizationMetricType, "CPU" ]
-  MemoryUtilizationMetric: !Equals [ !Ref 5ASGAutoScalingUtilizationMetricType, "Memory" ]
+  UseCPUUtilizationMetric: !Equals [ !Ref 5ASGAutoScalingMetricTypeToMonitor, "CPU" ]
+  MemoryUtilizationMetric: !Equals [ !Ref 5ASGAutoScalingMetricTypeToMonitor, "Memory" ]
 
 Rules:
   WindowsPlatformShouldNotUseDefaultSSMParameter:
@@ -716,14 +714,14 @@ Resources:
               Fn::Base64: !Sub | 
                 #!/bin/bash
                 set -xv
-                AWSASGLabKitVersion="${1AAAAUltimateASGVersion}"
+                ThisTemplateVersion="${1AAAATemplateVersion}"
                 function logit() {
                   LOGSTRING="$(date +"%_b %e %H:%M:%S") $(hostname) USERDATA_SCRIPT: $1"
                   echo "$LOGSTRING"
                   #For CloudFormation, if you already collect /var/log/cloud-init-output.log or /var/log/messsages (non amazon linux), then you could mute the next logging line
                   echo "$LOGSTRING" >> /var/log/messages
                 }                     
-                logit "Building Linux Instance... with AWS ASG Lab Kit Version: $AWSASGLabKitVersion"
+                logit "Building Linux Instance... with AWS Elastic Scaling Runner Version: $ThisTemplateVersion"
                 logit "Learn more at: $1AAAReadmeBlogPost"
                 logit "Logs for this are found in /var/log/cloud-init-output.log or /var/log/messsages (non amazon linux)"
                 logit "Rendered script found in /var/lib/cloud/instance/scripts/part-001"   
@@ -971,7 +969,7 @@ Resources:
               # Windows UserData
               Fn::Base64: !Sub | 
                 <powershell>
-                $AWSASGLabKitVersion="${1AAAAUltimateASGVersion}"
+                $ThisTemplateVersion="${1AAAATemplateVersion}"
                 Function lc-success {aws autoscaling complete-lifecycle-action --region $AWS_REGION --lifecycle-action-result CONTINUE --instance-id $MYINSTANCEID --lifecycle-hook-name instance-patching-reboot --auto-scaling-group-name $NAMEOFASG}
                 Function cf-success {cfn-signal --success true --stack ${AWS::StackName} --resource InstanceASG --region $AWS_REGION}
                 Trap { if ($8DBGTroubleShootingMode -eq 'true') { lc-success; cf-success}}
@@ -982,7 +980,7 @@ Resources:
                   $applog.Source="$SourceName"
                   $applog.WriteEntry("From: $SourcePathName : $Msg", $MsgType, $ID)
                 }                
-                logit "Building Instance... with AWS ASG Lab Kit Version: $AWSASGLabKitVersion"
+                logit "Building Instance... with AWS Elastic Scaling Runner Version: $ThisTemplateVersion"
                 logit "Learn more at: $1AAAReadmeBlogPost"
                 logit "On 2012 R2 and earlier (Ec2Config) errors are logged to cat C:\Program Files\Amazon\Ec2ConfigService\Logs\Ec2ConfigLog.txt"
                 logit "On 2016 and later (Ec2Launch) errors are logged to cat C:\programdata\Amazon\EC2-Windows\Launch\Log\UserdataExecution.log" 
