@@ -4,16 +4,16 @@ Description: >
   NOTE: If you are allowing autocreation of a bucket, the stack name is used in the bucketname an only lowercase letters are allowed in bucket names.
 Parameters:
   1AAAAATTENTION:
-    Description: "YOUR STACKNAME CHARACTERS MUST BE ALL LOWER CASE"
+    Description: "YOUR STACK NAME CHARACTERS MUST BE ALL LOWER CASE"
     Type: String
-    Default: "DOUBLE CHECK THAT YOUR STACKNAME ONLY CONTAINS LOWERCASE CHARACTERS"
-    AllowedValues: [ "DOUBLE CHECK THAT YOUR STACKNAME ONLY CONTAINS LOWERCASE CHARACTERS" ]
+    Default: "DOUBLE CHECK THAT YOUR STACK NAME ONLY CONTAINS LOWERCASE CHARACTERS"
+    AllowedValues: [ "DOUBLE CHECK THAT YOUR STACK NAME ONLY CONTAINS LOWERCASE CHARACTERS" ]
     ConstraintDescription: "This is an informational parameter so can't be changed."
   1AAAAGitLabRunnerASGVersion:
     Description: "Read Only - GitLab Runner Autoscaling on AWS with Spot Support."
     Type: String
-    Default: "v1.4.0-alpha1"
-    AllowedValues: [ "v1.4.0-alpha1" ]
+    Default: "v1.4.0-alpha3"
+    AllowedValues: [ "v1.4.0-alpha3" ]
     ConstraintDescription: "Version number is used in the template and cannot be changed."
   1AAAReadme:
     Description: Read the following to learn why this template is helpful.

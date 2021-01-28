@@ -1,6 +1,11 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [v1.4.0-alpha3] - 2021-01-27
+- first release ready for external testing
+- four runner configs working
+- added memory and other instance metrics via cloudwatch
+- memory utilization scaling for Linux
 ## [2.3.0] - 2020-05-20
 ### Updated
 - Sync code with Ultimate ASG Kickstart Version 1.3.0 - especially to enable runner and AWS tagging of "spot" versus "ondemand" runner instances.
