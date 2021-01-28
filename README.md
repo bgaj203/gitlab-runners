@@ -159,6 +159,7 @@ Yes - because:
 
 **IMPORTANT**: DO NOT use the built in CPU stressing capability of this template because at this time it prevents proper completion of CloudFormation which eventually puts the stack into Rollback.
 
+There is a project with a runner stressing utility here: https://gitlab.com/gitlab-org/ci-cd/gitlab-runner-stress  As with all scaled computing - please be very responsible not to run up costs by leaving scaled tests running for too long.
 #### AWS ASG Scaling Configuration Flexibility
 
 While this template allows:
