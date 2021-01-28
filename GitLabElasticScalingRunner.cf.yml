@@ -3,14 +3,20 @@ AWSTemplateFormatVersion: '2010-09-09'
 Description: >
   NOTE: If you are allowing autocreation of a bucket, the stack name is used in the bucketname an only lowercase letters are allowed in bucket names.
 Parameters:
-  1AAAAUltimateASGVersion:
+  1AAAAATTENTION:
+    Description: "YOUR STACKNAME CHARACTERS MUST BE ALL LOWER CASE"
+    Type: String
+    Default: "DOUBLE CHECK THAT YOUR STACKNAME ONLY CONTAINS LOWERCASE CHARACTERS"
+    AllowedValues: [ "DOUBLE CHECK THAT YOUR STACKNAME ONLY CONTAINS LOWERCASE CHARACTERS" ]
+    ConstraintDescription: "This is an informational parameter so can't be changed."
+  1AAAAGitLabRunnerASGVersion:
     Description: "Read Only - GitLab Runner Autoscaling on AWS with Spot Support."
     Type: String
-    Default: "2.3.0"
-    AllowedValues: [ "2.3.0" ]
+    Default: "v1.4.0-alpha1"
+    AllowedValues: [ "v1.4.0-alpha1" ]
     ConstraintDescription: "Version number is used in the template and cannot be changed."
-  1AAAReadmeBlogPost:
-    Description: Read the following post to learn why this template is helpful - Darwin.
+  1AAAReadme:
+    Description: Read the following to learn why this template is helpful.
     Type: String
     Default: https://gitlab.com/guided-explorations/gitlab-deployment/gitlab-runner-autoscaling-aws-asg/-/blob/master/README.md
     AllowedValues: [ "https://gitlab.com/guided-explorations/gitlab-deployment/gitlab-runner-autoscaling-aws-asg/-/blob/master/README.md" ]
@@ -69,7 +75,7 @@ Parameters:
     Default: https://gitlab.com/guided-explorations/aws/gitlab-runner-autoscaling-aws-asg/-/raw/master/runner_configs/amazon-linux-2-docker.sh
     #Reset above to: https://gitlab.com/guided-explorations/aws/gitlab-runner-autoscaling-aws-asg/-/raw/master/runner_configs/amazon-linux-2-docker.sh
   3INSTInstallCodeDeploy:
-    Description: Installs CodeDeploy so it can be used for initial deployments and updates.
+    Description: Installs CodeDeploy so it can be used for updating runners without replacing instances.
     Type: String
     Default: false
     AllowedValues: 
@@ -103,7 +109,7 @@ Parameters:
   3GITLABRunnerVersion:
     Description: >
       Version of the GitLab Runner to install (defaults to latest).  Use the version numbers exactly as listed here: https://gitlab.com/gitlab-org/gitlab-runner/-/releases
-      For example 'v13.7.0' or 'v13.8.0-rc1' You can actually see the version number in the download path of all the built packages.
+      For example: 'v13.7.0' or 'v13.8.0-rc1' (without quotes) You can actually see the version number in the download path of all the built packages.
     Type: String
     Default: latest
   4ASGDesiredCapacity:
