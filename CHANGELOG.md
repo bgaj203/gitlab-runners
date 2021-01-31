@@ -1,4 +1,5 @@
 # Changelog
+
 All notable changes to this project will be documented in this file.
 
 ## [v1.4.0-alpha4] - 2021-01-28
@@ -12,18 +13,22 @@ All notable changes to this project will be documented in this file.
 - four runner configs working
 - added memory and other instance metrics via cloudwatch
 - memory utilization scaling for Linux
+
 ## [v1.4.0-alpha3] - 2021-01-27
 
 - first release ready for external testing
 - four runner configs working
 - added memory and other instance metrics via cloudwatch
 - memory utilization scaling for Linux
+
 ## [1.3.1] - 2020-05-20
+
 ### Updated
 
 - Sync code with Ultimate ASG Kickstart Version 1.3.0 - especially to enable runner and AWS tagging of "spot" versus "ondemand" runner instances.
 
 ## [1.3.0] - 2020-04-17
+
 ### Added (from Ultimate ASG Kickstart and Lab Kit)
 
 - Instances tag themselves as spot or on-demand.  Tag is COMPUTETYPE=SPOT or COMPUTETYPE=ONDEMAND
@@ -37,11 +42,13 @@ All notable changes to this project will be documented in this file.
 - Name change to add "Kickstart" to indicate this is suitable for both getting started quickly for the first time in ASG and/or spot as well as suitable for starting new projects even if you are familiar with implementing these.
 
 ## [1.2.0] - 2020-03-24
+
 ### Added
 
 - Added the ability to download and execute an extension to Userdata from a embedded (no download), local file (no download), s3://, https:// or http://
 
 ## [1.1.0] - 2020-03-23
+
 ### Added
 
 - First version, updates described in [README.md](README.md)

@@ -95,15 +95,13 @@ Parameters:
     Description: >
       The url of the instance that the runner will register (must be reachable from runner instance on port 443 with return conversations).
     Type: String
-    Default: https://gitlab-core.us.gitlabdemo.cloud/
-    #Reset to: https://gitlab.com
+    Default: https://gitlab.com/
   3GITLABRunnerTagList:
     Description: >
       Supplemental tags to identify the runner (comma delimited) in GitLab and AWS Instance tags.
       The runner will automatically have tags for the operating system platform,whether or not the compute is spot or ondemand and the executor type.
       Ec2 tags will also include the runner name and the gitlab instance url.
     Type: String
-    Default: TagA,TagB
   3GITLABRunnerRegTokenList:
     Description: One or more runner tokens to register (comma delimited)
     Type: String
