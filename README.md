@@ -4,7 +4,7 @@
 
 # Table of Contents
 
-[TOC]
+[[_TOC_]]
 
 ### Vending Machine? HA? Scaling?
 
@@ -99,11 +99,60 @@ Yes - because:
 * It benefits from all the other features of this template including maintenance by repulling the latest AMI, latest patches and latest runner version upon a simple CF stack update.
 * Docker-machine should be able to be completely replaced by a well tuned ASG housing the plain docker executor.
 
+### Maintenance And Updates Built-In
+
+The power of going back into a Runner ASG CloudFormation stack and changing stuff is pretty awesome.
+
+Things you can do include:
+
+1. Make one change an update to the latest AMI, give it the latest patches and update to the latest runner.
+2. If you break something in step 1, go back in and peg the AMI and/or Runner version.  Or use an older runner version because you want to match the older version of your Self-hosted instance.
+3. Add, remove, redo runner registration tokens to the ASG.
+4. Change on/off schedules, scaling metrics, instance types, etc.
+5. If you picked simplified parameters to get going and now want to do something advanced like enable autoscaling.
+
+Essentially anything that is parameter can be changed and an update will be pushed.
+
 ### TroubleShooting Guide For All The IaC Parts
 
 **IMPORTANT**: The number one suspected cause in debugging cloud automation is "You probably are not being patient enough and waiting long enough to see the desired result." (whether waiting for automation to complete or metrics to flow or other things to trigger as designed)
 
 Here is the [Testing and Troubleshooting Guide](./TESTING-TROUBLESHOOTING.md)
+
+### Easy Button Quick Start Parameter Sets
+
+Even if you start with a fast start, because you can go back in and do a stack update, you can make your runner more sophisticated after initial deployment.
+
+The following approach enables:
+
+* Specifying your instance specific details
+* Without having to specify other items
+* Keeps your runner tokens more secure
+* You can override parameter file values on the command line
+
+1. Install aws cli and or use the container
+2. Setup your local credentials or use them on the command line (or however your security or IT department requires you to use them locally)
+3. Clone the repository locally and change to it's directory
+4. Before submitting, customize the following command with your values for "3GITLABRunnerInstanceURL" and "3GITLABRunnerRegTokenList"
+
+```
+aws cloudformation create-stack --stack-name "mynewrunner" --template-url https://s3.us-west-2.amazonaws.com/gl-public-templates/cfn/GitLabElasticScalingRunner.cf.yml --capabilities CAPABILITY_NAMED_IAM --parameters $(cat easy-button-parameter-sets/amazon-linux-2-docker-simple-hot-ha.cfparameters.json | jq -r '.[] | "ParameterKey=" + .ParameterKey + ",ParameterValue=" + .ParameterValue') ParameterKey="5SPOTInstanceType1",ParameterValue="m5.xlarge" ParameterKey="3GITLABRunnerInstanceURL",ParameterValue="https://gitlab.com"  ParameterKey="3GITLABRunnerRegTokenList",ParameterValue="your-list-of-comma-seperated-tokens"
+```
+
+#### Easy Buttons Provided
+
+| Name                                                         | Description                                                  |
+| ------------------------------------------------------------ | ------------------------------------------------------------ |
+| amazon-linux-2-docker-simple-hot-ha.cfparameters.json        | Two docker executor instances that will respawn if they terminate, no autoscaling, no spot instances. |
+| amazon-linux-2-docker-simple-scaling-ondemand.cfparameters.json | Two docker executors, scaling based on simple CPU metrics, no spot |
+| amazon-linux-2-docker-simple-scaling-spotonly.cfparameters.json | Two docker executors, scaling based on simple CPU metrix, only spot |
+| amazon-linux-2-docker-simple-scaling-spot-and-ondemand.cfparameters.json | Two docker executors, scaling based on simple CPU metrix, 50/50 mix of spot and ondemand |
+| windows1903-shell-simple-hot-ha.cfparameters.json            | Two docker executor instances that will respawn if they terminate, no autoscaling, no spot instances. |
+| windows1903-shell-simple-scaling-ondemand.cfparameters.json  | Two docker executors, scaling based on simple CPU metrics, no spot |
+| windows1903-shell-simple-scaling-spotonly.cfparameters.json  | Two docker executors, scaling based on simple CPU metrix, only spot |
+| windows1903-shell-simple-scaling-spot-and-ondemand.cfparameters.json | Two docker executors, scaling based on simple CPU metrix, 50/50 mix of spot and ondemand |
+
+
 
 ### Prebuilt Runner Configuration Scripts
 

@@ -1,0 +1,55 @@
+
+[
+  {
+    "ParameterKey": "1OSPeggedAMIID",
+    "ParameterValue": "AlwaysUseLatest"
+  },
+  {
+    "ParameterKey": "1OSInstanceOSPlatform",
+    "ParameterValue": "Linux"
+  },
+  {
+    "ParameterKey": "9AWSRetrieveLatestAWSOSAmiIdFromSSM",
+    "ParameterValue": "/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2"
+  }, 
+  {
+    "ParameterKey": "3INSTConfigurationScript",
+    "ParameterValue": "https://gitlab.com/guided-explorations/aws/gitlab-runner-autoscaling-aws-asg/-/raw/master/runner_configs/amazon-linux-2-docker.sh"
+  },
+  {
+    "ParameterKey": "4ASGDesiredCapacity",
+    "ParameterValue": "2"
+  },
+  {
+    "ParameterKey": "5ASGAutoScalingEnabled",
+    "ParameterValue": "false"
+  }, 
+  {
+    "ParameterKey": "5SPOTOnDemandPercentageAboveBaseCapacity",
+    "ParameterValue": "100"
+  },
+  {
+    "ParameterKey": "3GITLABRunnerTagList",
+    "ParameterValue": ""
+  },
+  {
+    "ParameterKey": "5SPOTInstanceType1",
+    "ParameterValue": "m5.large"
+  },
+  {
+    "ParameterKey": "5SPOTInstanceType2",
+    "ParameterValue": ""
+  },
+  {
+    "ParameterKey": "5SPOTInstanceType3",
+    "ParameterValue": ""
+  },
+  {
+    "ParameterKey": "5SPOTInstanceType4",
+    "ParameterValue": ""
+  },
+  {
+    "ParameterKey": "8DBGKeypairName",
+    "ParameterValue": ""
+  }  
+]

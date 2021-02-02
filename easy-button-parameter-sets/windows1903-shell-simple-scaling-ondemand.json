@@ -1,0 +1,91 @@
+
+[
+  {
+    "ParameterKey": "1OSPeggedAMIID",
+    "ParameterValue": "AlwaysUseLatest"
+  },
+  {
+    "ParameterKey": "1OSInstanceOSPlatform",
+    "ParameterValue": "Windows"
+  },
+  {
+    "ParameterKey": "9AWSRetrieveLatestAWSOSAmiIdFromSSM",
+    "ParameterValue": "/aws/service/ami-windows-latest/Windows_Server-1903-English-Core-ContainersLatest"
+  }, 
+  {
+    "ParameterKey": "3INSTConfigurationScript",
+    "ParameterValue": "https://gitlab.com/guided-explorations/aws/gitlab-runner-autoscaling-aws-asg/-/raw/master/runner_configs/windows-shell.ps1"
+  },
+  {
+    "ParameterKey": "4ASGDesiredCapacity",
+    "ParameterValue": "2"
+  },
+  {
+    "ParameterKey": "5ASGAutoScalingEnabled",
+    "ParameterValue": "false"
+  }, 
+  {
+    "ParameterKey": "5SPOTOnDemandPercentageAboveBaseCapacity",
+    "ParameterValue": "100"
+  },
+  {
+    "ParameterKey": "3GITLABRunnerTagList",
+    "ParameterValue": ""
+  },
+  {
+    "ParameterKey": "5SPOTInstanceType1",
+    "ParameterValue": "m5.large"
+  },
+  {
+    "ParameterKey": "5SPOTInstanceType2",
+    "ParameterValue": ""
+  },
+  {
+    "ParameterKey": "5SPOTInstanceType3",
+    "ParameterValue": ""
+  },
+  {
+    "ParameterKey": "5SPOTInstanceType4",
+    "ParameterValue": ""
+  },
+  {
+    "ParameterKey": "5ASGAutoScalingEnabled",
+    "ParameterValue": "true"
+  },
+  {
+    "ParameterKey": "5ASGAutoScalingMaxSize",
+    "ParameterValue": "10"
+  },
+  {
+    "ParameterKey": "5ASGAutoScalingMetricTypeToMonitor",
+    "ParameterValue": "CPU"
+  },
+  {
+    "ParameterKey": "5ASGAutoScalingSetScaleOutUtilizationThreshold",
+    "ParameterValue": "70"
+  },
+  {
+    "ParameterKey": "5ASGAutoScalingSetScaleOutUtilizationThresholdSeconds",
+    "ParameterValue": "60"
+  },
+  {
+    "ParameterKey": "5ASGAutoScalingSetScaleInUtilizationThreshold",
+    "ParameterValue": "40"
+  },
+  {
+    "ParameterKey": "5ASGAutoScalingSetScaleInUtilizationThresholdSeconds",
+    "ParameterValue": "60"
+  },
+  {
+    "ParameterKey": "5SPOTOnDemandBaseCapacity",
+    "ParameterValue": "1"
+  },
+  {
+    "ParameterKey": "5SPOTOnDemandPercentageAboveBaseCapacity",
+    "ParameterValue": "100"
+  },
+  {
+    "ParameterKey": "8DBGKeypairName",
+    "ParameterValue": ""
+  }  
+]

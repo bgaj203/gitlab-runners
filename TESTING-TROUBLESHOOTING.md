@@ -4,7 +4,7 @@
 
 # Table of Contents
 
-[TOC]
+[[_TOC_]]
 
 ### Scaling Troubleshooting and Testing
 
