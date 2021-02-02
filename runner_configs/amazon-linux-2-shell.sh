@@ -1,15 +1,6 @@
 #!/usr/bin/env bash
 
-# Update packages
 GITLABRunnerExecutor='shell'
-#GITLABRunnerVersion="latest"
-#RunnerOSTags="$($INSTANCEOSPLATFORM.ToLower())"
-#GITLABRunnerTagList="TagA,TagB"
-#RunnerConfigTomlTemplate #(Embedded, local or s3:// or http*://)
-#GITLABRunnerRegTokenList='f3QN1vAeQq-MQx2_u9ML'
-#GITLABRunnerInstanceURL='https://gitlab.demo.i2p.online/'
-#RunnerInstallRoot='/gitlab-runner'
-#RunnerConfigToml="$RunnerInstallRoot/config.toml"
 
 MYIP="$(curl http://169.254.169.254/latest/meta-data/local-ipv4)"
 MYACCOUNTID="$(curl http://169.254.169.254/latest/dynamic/instance-identity/document|grep accountId| awk '{print $3}'|sed  's/"//g'|sed 's/,//g')"
@@ -46,23 +37,26 @@ fi
 $RunnerInstallRoot/gitlab-runner install --user="gitlab-runner" --working-directory="/home/gitlab-runner"
 echo -e "\nRunning scripts as '$(whoami)'\n\n"
 
-
-# cat << EndOfRunnerConfigTOML > $RunnerConfigToml
-# #Docker executor configuration
-# concurrent = 4
-# EndOfRunnerConfigTOML
-
-
-$RunnerInstallRoot/gitlab-runner register \
-  --non-interactive \
-  --name $RunnerName \
-  --config $RunnerConfigToml \
-  --url "$GITLABRunnerInstanceURL" \
-  --registration-token "$GITLABRunnerRegTokenList" \
-  --executor "$GITLABRunnerExecutor" \
-  --tag-list "$RunnerCompleteTagList" \
-  --locked 0 \
-  --request-concurrency "$GITLABRunnerConcurrentJobs"
+for RunnerRegToken in ${GITLABRunnerRegTokenList//;/ }
+do
+  $RunnerInstallRoot/gitlab-runner register \
+    --non-interactive \
+    --name $RunnerName \
+    --config $RunnerConfigToml \
+    --url "$GITLABRunnerInstanceURL" \
+    --registration-token "$RunnerRegToken" \
+    --request-concurrency "$GITLABRunnerConcurrentJobs" \
+    --executor "$GITLABRunnerExecutor" \
+    --run-untagged="true" \
+    --tag-list "$RunnerCompleteTagList" \
+    --locked="false" \
+    --cache-type "s3" \
+    --cache-path "/" \
+    --cache-shared="true" \
+    --cache-s3-server-address "s3.amazonaws.com" \
+    --cache-s3-bucket-name $GITLABRunnerS3CacheBucket \
+    --cache-s3-bucket-location $AWS_REGION
+done
 
 $RunnerInstallRoot/gitlab-runner start
 
@@ -70,7 +64,7 @@ aws ec2 create-tags --region $AWS_REGION --resources $MYINSTANCEID --tags Key=Gi
 
 #$RunnerInstallRoot/gitlab-runner unregister --all-runners
 
-#Escape all parens that are in quotes and all $ for variables that should wait until script runtime to be expanded. 
+#Escape $ for variables that should wait until script runtime to be expanded. 
 #Non-especaped $ will result in variable expansion DURING script writing which is used on purpose by this heredoc.
 #This approach for termination hook is much simpler than those involving SNS or CloudWatch, but when deployed 
 # on many instances it can result in a lot of ASG Describe API calls (which may be rate limited).
@@ -181,6 +175,10 @@ cat << 'EndOfCWMetricsConfig' > /opt/aws/amazon-cloudwatch-agent/etc/amazon-clou
 EndOfCWMetricsConfig
 systemctl enable amazon-cloudwatch-agent
 systemctl restart amazon-cloudwatch-agent
+
+#Install git for shell runner
+yum -y install git
+
 #Debugging:
 #Check if running: sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -m ec2 -a status
 #config: cat /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json
@@ -197,4 +195,3 @@ systemctl restart amazon-cloudwatch-agent
 #100% of total memory: $(awk '/MemTotal/{printf "%d\n", $2;}' < /proc/meminfo)k
 # cpus * 2: $(awk '/cpu cores/{printf "%d\n", $4 * 2;}' < /proc/cpuinfo)
 
-yum -y install git

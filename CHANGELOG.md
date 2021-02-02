@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v1.4.0-alpha5] - 2021-02-02
+
+- Automatically configures a Shared S3 Cache (#8)
+- Removed option for installing SSM Agent - just always install it. (#10)
+- Removed CodeDeploy option leftover from ASG template.  SSM Agent can perform "in-place" updates if they need to be used instead of simply doing a rolling replacement of instances using an CF Stack update. (#9)
+- Enable a list of runner registration tokens for Linx (#2)
+- Add "NoEcho" to parameter for runner token
+- Semicolon delimiting of runner token list to prevent CF parameter problems
+- Easy Button Paramter Set Examples (#11)
+  
 ## [v1.4.0-alpha4] - 2021-01-28
 
 - This is really a **first MVP** release - will need everyone's help to refine.

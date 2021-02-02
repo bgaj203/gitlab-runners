@@ -7,20 +7,7 @@
 # This results in this code only ever running to install (during spin up) or uninstall (termination lifecycle hook)
 # So it does not need to upgrade the runner binary in place or be able to unregister / re-register tokens.
 
-#Runner Token List
-#$INSTANCEOSPLATFORM="Windows"
-#$AWS_REGION="$($(invoke-restmethod 169.254.169.254/latest/meta-data/placement/availability-zone) -replace '.$')"
-#$NAMEOFASG=$(aws ec2 describe-tags --region $AWS_REGION --filters Name=resource-id,Values=$MYINSTANCEID Name=key,Values=aws:autoscaling:groupName | convertfrom-json).tags.value
-#$MYINSTANCEID="$(invoke-restmethod http://169.254.169.254/latest/meta-data/instance-id)"
-# $GITLABRunnerVersion="latest"
 $GITLABRunnerExecutor='docker-windows'
-# $RunnerOSTags="$($INSTANCEOSPLATFORM.ToLower())"
-# $GITLABRunnerTagList="TagA,TagB"
-# $RunnerConfigTomlTemplate #(Embedded, local or s3:// or http*://)
-# #$GITLABRunnerRegTokenList='f3QN1vAeQq-MQx2_u9ML'
-# $GITLABRunnerInstanceURL='https://gitlab.demo.i2p.online/'
-# $RunnerInstallRoot='C:\GitLab-Runner'
-# $RunnerConfigToml="$RunnerInstallRoot\config.toml"
 
 Write-Host "****ATTENTION: Windows Docker Executor support for this template is experimental."
 
@@ -58,30 +45,34 @@ log_level = "warning"
 pushd $RunnerInstallRoot
 .\gitlab-runner.exe install
 
-foreach ($RunnerRegToken in $GITLABRunnerRegTokenList.split(',')) {
+foreach ($RunnerRegToken in $GITLABRunnerRegTokenList.split(';')) {
  
   .\gitlab-runner.exe register `
      --config $RunnerConfigToml `
+     --name $RunnerName `
      $OptionalParameters `
      --non-interactive `
      --url $GITLABRunnerInstanceURL `
      --registration-token $RunnerRegToken `
-     --name $RunnerName `
+     --request-concurrency $GITLABRunnerConcurrentJobs `
      --tag-list $RunnerCompleteTagList `
      --executor $GITLABRunnerExecutor `
+     --locked="false" `
+     --maximum-timeout 10800 `
+     --cache-type "s3" `
+     --cache-path "/" `
+     --cache-shared="true" `
+     --cache-s3-server-address "s3.amazonaws.com" `
+     --cache-s3-bucket-name $GITLABRunnerS3CacheBucket `
+     --cache-s3-bucket-location $AWS_REGION `
      --docker-image "docker:latest" `
-     --locked 0 `
-     --docker-tlsverify false `
-     --docker-disable-cache false `
+     --docker-tlsverify="false"  `
+     --docker-disable-cache="false" `
      --docker-shm-size 0 `
      --docker-pull-policy if-not-present `
-     --maximum-timeout 10800 `
-     --request-concurrency $GITLABRunnerConcurrentJobs
-}
+     --docker-privileged
+    }
      #--docker-volumes "/var/run/docker.sock:/var/run/docker.sock" `
-
-#rename instance to include -glrunner ?
-#aws ec2 describe-tags --filters "Name=resource-id,Values=$MYINSTANCEID"
 
 aws ec2 create-tags --region $AWS_REGION --resources $MYINSTANCEID --tags "Key=`"GitLabRunnerName`",Value=$RunnerName" "Key=`"GitLabURL`",Value=$GITLABRunnerInstanceURL" "Key=`"GitLabRunnerTags`",`"Value=$($RunnerCompleteTagList.split(',') -join ('\,'))`""
 

@@ -12,8 +12,8 @@ Parameters:
   1AAAATemplateVersion:
     Description: "Version of this template."
     Type: String
-    Default: "v1.4.0-alpha4"
-    AllowedValues: [ "v1.4.0-alpha4" ]
+    Default: "v1.4.0-alpha5"
+    AllowedValues: [ "v1.4.0-alpha5" ]
     ConstraintDescription: "1AAAATemplateVersion is the template version number and cannot be changed at runtime."
   1AAASourceProject:
     Description: >
@@ -47,7 +47,7 @@ Parameters:
       It is just a string that you could set to any value and has no role in selecting patches or anything else - but it
       does need to change from it's previous setting in order for the update to be forced.
     Type: String
-    Default: 2019-06-04
+    Default: 2021-01-28
   1OSPatchScope:
     Description: >
       What types of patches to apply. "NoPatching-OnlyForDebugging" - No patching will be done - this setting is for debugging only (patch dates will still be set)
@@ -76,13 +76,6 @@ Parameters:
     Type: String
     Default: https://gitlab.com/guided-explorations/aws/gitlab-runner-autoscaling-aws-asg/-/raw/master/runner_configs/amazon-linux-2-docker.sh
     #Reset above to: https://gitlab.com/guided-explorations/aws/gitlab-runner-autoscaling-aws-asg/-/raw/master/runner_configs/amazon-linux-2-docker.sh
-  3INSTInstallCodeDeploy:
-    Description: Installs CodeDeploy so it can be used for updating runners without replacing instances.
-    Type: String
-    Default: false
-    AllowedValues:
-      - true
-      - false
   3GITLABRunnerConcurrentJobs:
     Description: >
       How many desired concurrent jobs can this runner take at a time.
@@ -96,16 +89,26 @@ Parameters:
       The url of the instance that the runner will register (must be reachable from runner instance on port 443 with return conversations).
     Type: String
     Default: https://gitlab.com/
+  3GITLABRunnerRegTokenList:
+    Description: One or more runner tokens to register (semicolon delimited)
+    Type: String
+    NoEcho: true
+    AllowedPattern: .+
+  3GITLABRunnerS3CacheBucket:
+    Description: >
+      A bucket to which all instances will be given read and write permissions for a shared S3 Cache.
+      Values: "none" - do not create bucket or permissions.
+      "CreateOneForMe" - create a new, ASG unique bucket and permissions. Uses the stack name, which then must be all lowercase for the bucket to create properly.
+      "SpecificName" - presumed to be a preexisting bucket to which read / write permissions are already present. Generally used
+      with a customer override IAM Instance Profile Role.
+    Type: String
+    Default: CreateOneForMe
   3GITLABRunnerTagList:
     Description: >
       Supplemental tags to identify the runner (comma delimited) in GitLab and AWS Instance tags.
       The runner will automatically have tags for the operating system platform,whether or not the compute is spot or ondemand and the executor type.
       Ec2 tags will also include the runner name and the gitlab instance url.
     Type: String
-  3GITLABRunnerRegTokenList:
-    Description: One or more runner tokens to register (comma delimited)
-    Type: String
-    AllowedPattern: .+
   3GITLABRunnerVersion:
     Description: >
       Version of the GitLab Runner to install (defaults to latest).  Use the version numbers exactly as listed here: https://gitlab.com/gitlab-org/gitlab-runner/-/releases
@@ -121,7 +124,6 @@ Parameters:
       For testing all other functionality 1 is sufficient to observe how the userdata code processes to accomplish the yum update and reboot before the lifecycle hook.
     Type: Number
     Default: 2
-    #Reset above to: 1
   4ASGUpdateType:
     Description: (Only Applies To Updates) Whether ASG Update Should Do a Rolling Update or an ASG Replacement.
     Type: String
@@ -179,15 +181,6 @@ Parameters:
     Type: String
     Default: 1
     AllowedValues: [0,1,2,3,4,5,Disabled]
-  5ASGSelfMonitorTerminationInterval:
-    Description: >
-      How often in minutes should the instance check if it is being asked to terminate so it can run a clean up script.
-      Terminations initiated by spot occur two minutes after notification, so this value should less than that for spot implementations.
-      AWS and instance resources for monitoring termination are not created if this value is not provided.
-      It is best practice to delete this if a termination hook truely is not needed for cleanup.
-    Type: String
-    Default: 1
-    AllowedValues: [0,1,2,3,4,5,Disabled]
   5ASGAutoScalingMetricTypeToMonitor:
     Description: >
       Which utilization metric should scaling alarms key off.
@@ -214,15 +207,6 @@ Parameters:
       How many seconds does the threshold have to be in alarm to trigger scale down? Requires 5ASGAutoScalingEnabled=true.
     Type: Number
     Default: 0
-  5ASGBucketName:
-    Description: >
-      A bucket to which all instances will be given read and write permissions for purposes such as CodeDeploy, SSM Remote Command and Inventory.
-      Values: "none" - do not create bucket or permissions.
-      "CreateOneForMe" - create a new, ASG unique bucket and permissions. Uses the stack name, which then must be all lowercase for the bucket to create properly.
-      "SpecificName" - presumed to be a preexisting bucket to which read / write permissions are already present. Generally used
-      with a customer override IAM Instance Profile Role.
-    Type: String
-    Default: CreateOneForMe
   5SPOTInstanceType1:
     Description: >
       ATTENTION: DISABLING SPOT *instance usage* is achieved by setting 5SPOTOnDemandPercentageAboveBaseCapacity to 100.
@@ -239,8 +223,6 @@ Parameters:
       sizes small because the lowest price will always be choosen and is likely cheaper than small on demand instances.
       More information: https://docs.aws.amazon.com/autoscaling/ec2/APIReference/API_InstancesDistribution.html
     Type: String
-    Default: "m4.large"
-    #Remove Default
   5SPOTInstanceType3:
     Description: >
       At least one instancetype is required, use at least 2 to demonstrate spot. You do not have to keep your instance
@@ -278,29 +260,22 @@ Parameters:
       Set to 0 for a 100% spot cluster.
     Type: Number
     Default: 100
-  8DBGUtilizationLoadPercentInitialValue:
-    Description: >
-      WARNING: NOT READY, DO NOT USE. Everything is 1 minute granularity - so don't set this to cause scaling and forget it unless you want a massive AWS bill ;)
-      Test your scaling parameters with synthetic utlization loading.  Enabled by entering a numeric value between 20-95.
-      This will create an SSM parameter named {AWS::Stackname}-SyntheticUtilizationLoad with the initial value entered here.
-      The userdata script will then run a utilization stressing utility in a loop, checking the parameter every minute for
-      updated values.  The value updates the utilization consumption in all ASG members so you can observe whether your scaling
-      policy works.  Set to a non-numeric value to terminate the Synthetic Loading (cannot be reenabled without rebuilding stack).
-      AWS Resources are only created to support this functionality if a value is provided during stack deployment.
-      The utility for Windows has a challenge generating loads above 90 percent, if you have a better cli utility, I'm all ears.
-      For parameters above that range, setup your steps below 90 and test them and then once verified, update the numbers to the
-      higher values.
-    Type: String
+  # 8DBGUtilizationLoadPercentInitialValue:
+  #   Description: >
+  #     WARNING: NOT READY, DO NOT USE. Everything is 1 minute granularity - so don't set this to cause scaling and forget it unless you want a massive AWS bill ;)
+  #     Test your scaling parameters with synthetic utlization loading.  Enabled by entering a numeric value between 20-95.
+  #     This will create an SSM parameter named {AWS::Stackname}-SyntheticUtilizationLoad with the initial value entered here.
+  #     The userdata script will then run a utilization stressing utility in a loop, checking the parameter every minute for
+  #     updated values.  The value updates the utilization consumption in all ASG members so you can observe whether your scaling
+  #     policy works.  Set to a non-numeric value to terminate the Synthetic Loading (cannot be reenabled without rebuilding stack).
+  #     AWS Resources are only created to support this functionality if a value is provided during stack deployment.
+  #     The utility for Windows has a challenge generating loads above 90 percent, if you have a better cli utility, I'm all ears.
+  #     For parameters above that range, setup your steps below 90 and test them and then once verified, update the numbers to the
+  #     higher values.
+  #   Type: String
   8DBGKeypairName:
-    Description: Spins instances with a keypair to allow connection. It is easier and more secure to use SSM Session Manager by enabling 8DBGTroubleShootingMode.
+    Description: Spins instances with a keypair to allow connection. It is easier and more secure to use SSM Session Manager.
     Type: String
-  8DBGTroubleShootingMode:
-    Description: Enables troubleshooting - enables SSM and configures Instance Profile IAM so SSM Session Manager can logon.
-    Type: String
-    Default: true
-    AllowedValues:
-      - true
-      - false
   9AWSSpecifiedIAMRoleNAME:
     Description: >
       Uses the specified IAM Role as the Instance Profile rather than building one. Must be the Role NAME (NOT THE ARN) which
@@ -325,20 +300,19 @@ Parameters:
     Default: '/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2'
     #Reset above to: '/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2'
 Conditions:
-  CreateDebugResources: !Equals [ !Ref 8DBGTroubleShootingMode, "true" ]
   ReplaceEntireASG: !Equals [ !Ref 4ASGUpdateType, "ReplaceEntireASG" ]
   InstancePlatformLinux: !Equals [ !Ref 1OSInstanceOSPlatform, "Linux" ]
   UseLatestAMI: !Equals [ !Ref 1OSPeggedAMIID, "AlwaysUseLatest"]
   BuildInstanceRoleToUse: !Equals [ !Ref 9AWSSpecifiedIAMRoleNAME, "CreateOneForMe" ]
   ConfigureAutoscaling: !Equals [ !Ref 5ASGAutoScalingEnabled, "true" ]
-  SetupSythenticUtilizationLoad: !Not [ !Equals [ !Ref 8DBGUtilizationLoadPercentInitialValue, "" ]]
+  #SetupSythenticUtilizationLoad: !Not [ !Equals [ !Ref 8DBGUtilizationLoadPercentInitialValue, "" ]]
   Provided5SPOTInstanceType1: !Not [ !Equals [ !Ref 5SPOTInstanceType1, "" ]]
   Provided5SPOTInstanceType2: !Not [ !Equals [ !Ref 5SPOTInstanceType2, "" ]]
   Provided5SPOTInstanceType3: !Not [ !Equals [ !Ref 5SPOTInstanceType3, "" ]]
   Provided5SPOTInstanceType4: !Not [ !Equals [ !Ref 5SPOTInstanceType4, "" ]]
   UseKeypair: !Not [ !Equals [ !Ref 8DBGKeypairName, "" ]]
   EnableSelfTerminationMonitoring: !Not [ !Equals [ !Ref 5ASGSelfMonitorTerminationInterval, "Disabled" ]]
-  CreateS3BucketAndPermissions: !Equals [ !Ref 5ASGBucketName, "CreateOneForMe" ]
+  CreateS3BucketAndPermissions: !Equals [ !Ref 3GITLABRunnerS3CacheBucket, "CreateOneForMe" ]
   CreateStartSchedule: !Not [ !Equals [ !Ref 4ASGScheduledStartupCron, "Disabled" ]]
   CreateStopSchedule: !Not [ !Equals [ !Ref 4ASGScheduledShutdownCron, "Disabled" ]]
   UseCPUUtilizationMetric: !Equals [ !Ref 5ASGAutoScalingMetricTypeToMonitor, "CPU" ]
@@ -382,10 +356,6 @@ Resources:
           Action:
             - autoscaling:CompleteLifecycleAction
             - autoscaling:RecordLifecycleActionHeartbeat
-          #To use a tag condition, update Resource to '*' and uncomment this segement
-          #Condition:
-          #  StringEquals:
-          #    autoscaling :ResourceTag/Name: !Ref AWS::StackName
 
   EC2SelfAccessPolicy:
     Type: AWS::IAM::ManagedPolicy
@@ -422,34 +392,18 @@ Resources:
                 - !Sub 'arn:${AWS::Partition}:s3:::${ASGBucket}'
                 - !Sub 'arn:${AWS::Partition}:s3:::${ASGBucket}/*'
               -
-                - !Sub 'arn:${AWS::Partition}:s3:::${5ASGBucketName}'
-                - !Sub 'arn:${AWS::Partition}:s3:::${5ASGBucketName}/*'
+                - !Sub 'arn:${AWS::Partition}:s3:::${3GITLABRunnerS3CacheBucket}'
+                - !Sub 'arn:${AWS::Partition}:s3:::${3GITLABRunnerS3CacheBucket}/*'
           Effect: Allow
           Sid: WhitelistedGet
 
-  #Give access to Utilization Percent for ASG Scaling Testing
-  #Because hacking together a conditional dependency in CF is a lot of extra code, this policy is always created (not least config)
-  SSMParameterStorePolicy:
-    Type: AWS::IAM::ManagedPolicy
-    Properties:
-      ManagedPolicyName: !Sub "${AWS::StackName}-SSMParameterStorePolicy"
-      PolicyDocument:
-        Version: 2012-10-17
-        Statement:
-        - Sid: SSMParameterStorePolicy
-          Resource: !Sub "arn:aws:autoscaling:${AWS::Region}:${AWS::AccountId}:parameter/${AWS::StackName}-SyntheticUtilizationLoad"
-          Effect: Allow
-          Action:
-            - ssm:GetParameters
-
-  ASGRebootRole:
+          ASGRebootRole:
     Type: AWS::IAM::Role
     Condition: BuildInstanceRoleToUse
     DependsOn:
       - ASGSelfAccessPolicy
       - EC2SelfAccessPolicy
       - ASGBucketPolicy
-      - SSMParameterStorePolicy
     Properties:
       Path: /
       AssumeRolePolicyDocument:
@@ -461,32 +415,13 @@ Resources:
             Service:
               - ec2.amazonaws.com
       ManagedPolicyArns:
-        !If
-          - CreateDebugResources
-          -
-            - arn:aws:iam::aws:policy/service-role/AmazonSSMMaintenanceWindowRole
-            - arn:aws:iam::aws:policy/service-role/AmazonSSMAutomationRole
-            - arn:aws:iam::aws:policy/service-role/AmazonEC2RoleforSSM
-            - arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy
-            - !Sub "arn:aws:iam::${AWS::AccountId}:policy/${AWS::StackName}-ASGSelfAccessPolicy"
-            - !Sub "arn:aws:iam::${AWS::AccountId}:policy/${AWS::StackName}-EC2SelfAccessPolicy"
-            - !Sub "arn:aws:iam::${AWS::AccountId}:policy/${AWS::StackName}-SSMParameterStorePolicy"
-            - !Sub "arn:aws:iam::${AWS::AccountId}:policy/${AWS::StackName}-ASGBucketPolicy"
-          -
-            - arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy
-            - !Sub "arn:aws:iam::${AWS::AccountId}:policy/${AWS::StackName}-ASGSelfAccessPolicy"
-            - !Sub "arn:aws:iam::${AWS::AccountId}:policy/${AWS::StackName}-EC2SelfAccessPolicy"
-            - !Sub "arn:aws:iam::${AWS::AccountId}:policy/${AWS::StackName}-SSMParameterStorePolicy"
-            - !Sub "arn:aws:iam::${AWS::AccountId}:policy/${AWS::StackName}-ASGBucketPolicy"
-
-  SSMSyntheticUtilizationLoad:
-    Type: AWS::SSM::Parameter
-    Condition: SetupSythenticUtilizationLoad
-    Properties:
-      Name: !Sub "${AWS::StackName}-SyntheticUtilizationLoad"
-      Type: String
-      Value: !Ref 8DBGUtilizationLoadPercentInitialValue
-      Description: Named as stackname-SyntheticUtilizationLoad, contains Utilization Load Percent Value.
+        - arn:aws:iam::aws:policy/service-role/AmazonSSMMaintenanceWindowRole
+        - arn:aws:iam::aws:policy/service-role/AmazonSSMAutomationRole
+        - arn:aws:iam::aws:policy/service-role/AmazonEC2RoleforSSM
+        - arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy
+        - !Sub "arn:aws:iam::${AWS::AccountId}:policy/${AWS::StackName}-ASGSelfAccessPolicy"
+        - !Sub "arn:aws:iam::${AWS::AccountId}:policy/${AWS::StackName}-EC2SelfAccessPolicy"
+        - !Sub "arn:aws:iam::${AWS::AccountId}:policy/${AWS::StackName}-ASGBucketPolicy"
 
   ASGBucket:
     Type: AWS::S3::Bucket
@@ -725,13 +660,12 @@ Resources:
                 logit "Rendered script found in /var/lib/cloud/instance/scripts/part-001"
                 yum install -y jq unzip yum-utils amazon-linux-extras amazon-cloudwatch-agent
 
-                if [[ "${8DBGTroubleShootingMode}" == "true" ]]; then
-                  if ! ps -ef | grep -q '[a]mazon-ssm-agent'; then
-                    logit "8DBGTroubleShootingMode is true - and SSM is not installed, Installing SSM for Session Manager Access..."
-                    sudo yum install -y https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/linux_amd64/amazon-ssm-agent.rpm
-                    sudo start amazon-ssm-agent
-                  fi
+                if ! ps -ef | grep -q '[a]mazon-ssm-agent'; then
+                  logit "SSM Agent is not installed, Installing SSM for Session Manager Access..."
+                  sudo yum install -y https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/linux_amd64/amazon-ssm-agent.rpm
+                  sudo start amazon-ssm-agent
                 fi
+
                 if [[ -z "$(command -v aws)" ]] ; then
                   logit "AWS CLI is not present, installing it to control asg lifecycle hook completion..."
                   if [[ -z "$(command -v pip)" ]] ; then
@@ -748,11 +682,13 @@ Resources:
                   yum install -y https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-latest.amzn1.noarch.rpm
                   sudo ln -s /usr/local/lib/python2.7/site-packages/cfnbootstrap /usr/lib/python2.7/site-packages/cfnbootstrap
                 fi
+                GITLABRunnerS3CacheBucket="${3GITLABRunnerS3CacheBucket}"
+                if [ "${3GITLABRunnerS3CacheBucket}" == "CreateOneForMe" ]; then GITLABRunnerS3CacheBucket="${ASGBucket}"; fi
                 GITLABRunnerConcurrentJobs="${3GITLABRunnerConcurrentJobs}"
                 GITLABRunnerInstanceURL="${3GITLABRunnerInstanceURL}"
                 GITLABRunnerRegTokenList="${3GITLABRunnerRegTokenList}"
                 GITLABRunnerVersion="${3GITLABRunnerVersion}"
-                GITLABRunnerTagList="${3GITLABRunnerTagList}"
+                if [[ -n "${3GITLABRunnerTagList}" ]]; then GITLABRunnerTagList="${3GITLABRunnerTagList}"; fi
                 INSTANCEOSPLATFORM="${1OSInstanceOSPlatform}"
                 RunnerOSTags="$(echo $INSTANCEOSPLATFORM | awk '{print tolower($0)}' )"
                 #RunnerConfigTomlTemplate #(Embedded, local or s3:// or http*://)
@@ -761,7 +697,7 @@ Resources:
                 RunnerConfigToml="/etc/gitlab-runner/config.toml"
                 ASGSelfMonitorTerminationInterval="${5ASGSelfMonitorTerminationInterval}"
 
-                if [[ "${4ASGScheduledStartupCron}" != "Disabled" ]] || [[ "${4ASGScheduledShutdownCron}" != "Disabled" ]]; then GITLABRunnerTagList = "$GITLABRunnerTagList, UsesAWSASGScheduledAvailability"; fi
+                if [[ "${4ASGScheduledStartupCron}" != "Disabled" ]] || [[ "${4ASGScheduledShutdownCron}" != "Disabled" ]]; then GITLABRunnerTagList="$GITLABRunnerTagList, UsesAWSASGScheduledAvailability"; fi
 
                 AWS_REGION="$(curl -s 169.254.169.254/latest/meta-data/placement/availability-zone | sed 's/.$//')"
 
@@ -817,16 +753,6 @@ Resources:
                 if [ ! -z $NAMEOFASG ]; then
                   logit "Sending a heart beat to reset the timeout counter while doing more things (just as an example)..."
                   aws autoscaling record-lifecycle-action-heartbeat --region $AWS_REGION --instance-id $MYINSTANCEID --lifecycle-hook-name instance-patching-reboot --auto-scaling-group-name $NAMEOFASG
-                fi
-
-                #Check if already installed or running
-                if [[ "${3INSTInstallCodeDeploy}" == "true" ]]; then
-                  logit "Code Deploy Install..."
-                  yum install -y ruby
-                  cd /tmp
-                  aws s3 cp s3://aws-codedeploy-us-east-1/latest/install . --region $AWS_REGION
-                  chmod +x ./install
-                  ./install auto
                 fi
 
                 #This approach for termination hook is much simpler than those involving SNS or CloudWatch, but when deployed
@@ -947,21 +873,6 @@ Resources:
                   /opt/aws/bin/cfn-signal --success true --stack ${AWS::StackName} --resource InstanceASG --region $AWS_REGION
                 fi
 
-                DBGUtilizationLoadPercentInitialValue=${8DBGUtilizationLoadPercentInitialValue}
-                if [ "$WaitingForReboot" != "true" ] && [ -n "$DBGUtilizationLoadPercentInitialValue" ]; then
-                  logit "Setting up Utilization stressing because 8DBGUtilizationLoadPercentInitialValue was set to $DBGUtilizationLoadPercentInitialValue"
-                  if [[ ! -z "$(command -v amazon-linux-extras)" ]] ; then
-                    amazon-linux-extras install epel -y
-                  fi
-                  yum install -y curl stress-ng
-                  UtilizationPercent="$(aws --region=$AWS_REGION ssm get-parameter --name "$NAMEOFSTACK-SyntheticUtilizationLoad" --output text --query Parameter.Value | grep -E ^\-?[0-9]+$)"
-                  while [ "$UtilizationPercent" != '' ]; do
-                    logit "Stressing for 1 minute at $UtilizationPercent percent utilization before checking for updated percentage."
-                    stress-ng -c 0 -l $UtilizationPercent --timeout 60
-                    UtilizationPercent="$(aws --region=$AWS_REGION ssm get-parameter --name "$NAMEOFSTACK-SyntheticUtilizationLoad" --output text --query Parameter.Value | grep -E ^\-?[0-9]+$)"
-                  done
-                  logit "Stopping Utilization stressing due to receving non-numeric value: \"$(aws --region=$AWS_REGION ssm get-parameter --name "$NAMEOFSTACK-SyntheticUtilizationLoad" --output text --query Parameter.Value)\""
-                fi
             -
               # **************
               # Windows UserData
@@ -970,7 +881,6 @@ Resources:
                 $ThisTemplateVersion="${1AAAATemplateVersion}"
                 Function lc-success {aws autoscaling complete-lifecycle-action --region $AWS_REGION --lifecycle-action-result CONTINUE --instance-id $MYINSTANCEID --lifecycle-hook-name instance-patching-reboot --auto-scaling-group-name $NAMEOFASG}
                 Function cf-success {cfn-signal --success true --stack ${AWS::StackName} --resource InstanceASG --region $AWS_REGION}
-                Trap { if ($8DBGTroubleShootingMode -eq 'true') { lc-success; cf-success}}
                 Function logit ($Msg, $MsgType='Information', $ID='1') {
                   If ($script:PSCommandPath -ne '' ) { $SourcePathName = $script:PSCommandPath ; $SourceName = split-path -leaf $SourcePathName } else { $SourceName = "Automation Code"; $SourcePathName = "Unknown" }
                   Write-Host "[$(Get-date -format 'yyyy-MM-dd HH:mm:ss zzz')] $MsgType : From: $SourcePathName : $Msg"
@@ -984,8 +894,8 @@ Resources:
                 logit "On 2016 and later (Ec2Launch) errors are logged to cat C:\programdata\Amazon\EC2-Windows\Launch\Log\UserdataExecution.log"
                 logit "Rendered script on an instance will be found at: C:\Windows\TEMP\UserScript.ps1"
 
-                If ((![bool](get-process amazon-ssm-agent -ErrorAction SilentlyContinue)) -AND ($8DBGTroubleShootingMode -eq 'true')) {
-                  logit "8DBGTroubleShootingMode is true and SSM is not present - Installing SSM for Session Manager Access..."
+                If (![bool](get-process amazon-ssm-agent -ErrorAction SilentlyContinue)) {
+                  logit "SSM Agent is not present - Installing SSM for Session Manager Access..."
                   Invoke-WebRequest https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/windows_amd64/AmazonSSMAgentSetup.exe -OutFile $env:USERPROFILE\SSMAgent_latest.exe
                   Start-Process	-FilePath $env:USERPROFILE\SSMAgent_latest.exe -ArgumentList "/S"
                 }
@@ -1015,12 +925,14 @@ Resources:
                   ((get-itemproperty 'HKLM:SYSTEM\CurrentControlSet\Control\ComputerName\ComputerName\' | Select-Object -Expand 'ComputerName') -ine (get-itemproperty 'HKLM:SYSTEM\CurrentControlSet\Control\ComputerName\ComputerName\' | Select-Object -Expand 'ComputerName')) -OR
                   ((Test-Path "HKLM:SYSTEM\CurrentControlSet\Services\Netlogon\JoinDomain") -OR (Test-Path "HKLM:SYSTEM\CurrentControlSet\Services\Netlogon\AvoidSpnSet")))
                 }
-
+                $GITLABRunnerS3CacheBucket="${3GITLABRunnerS3CacheBucket}"
+                If ( "${3GITLABRunnerS3CacheBucket}" -ieq "CreateOneForMe" ) { $GITLABRunnerS3CacheBucket="${ASGBucket}" }
                 $GITLABRunnerConcurrentJobs="${3GITLABRunnerConcurrentJobs}"
                 $GITLABRunnerInstanceURL="${3GITLABRunnerInstanceURL}"
                 $GITLABRunnerRegTokenList="${3GITLABRunnerRegTokenList}"
                 $GITLABRunnerVersion="${3GITLABRunnerVersion}"
-                $GITLABRunnerTagList="${3GITLABRunnerTagList}"
+                $Tags="${3GITLABRunnerTagList}"
+                if ($Tags) { $GITLABRunnerTagList="${3GITLABRunnerTagList}" }
                 $INSTANCEOSPLATFORM="${1OSInstanceOSPlatform}"
                 $RunnerOSTags="$($INSTANCEOSPLATFORM.ToLower())"
                 $RunnerConfigTomlTemplate #(Embedded, local or s3:// or http*://)
@@ -1087,12 +999,6 @@ Resources:
                   set-content $env:public/lastpatchingdata.ps1 "$LAST_CF_PATCH_RUN=$LAST_CF_PATCH_RUN"
                   logit "ACTUAL_PATCH_DATE: $ACTUAL_PATCH_DATE"
                   add-content $env:public/lastpatchingdata.ps1 "$ACTUAL_PATCH_DATE=$ACTUAL_PATCH_DATE"
-                }
-
-                if (("${3INSTInstallCodeDeploy}" -eq "true") -AND (![bool](get-service codedeployagent -ErrorAction SilentlyContinue))) {
-                  logit "Code deploy is requested, but not present, installing CodeDeploy"
-                  aws s3 cp s3://aws-codedeploy-$AWS_REGION/latest/codedeploy-agent.msi $env:USERPROFILE\codedeploy-agent.msi  --region $AWS_REGION
-                  Start-Process	 -wait -nonewwindow -FilePath "msiexec.exe" -ArgumentList "/i $env:USERPROFILE\codedeploy-agent.msi /l*v $env:USERPROFILE\codedeploy-agent.log /qn"
                 }
 
                 #This approach for termination hook is much simpler than those involving SNS or CloudWatch, but when deployed
@@ -1212,18 +1118,5 @@ Resources:
                 if (!$WaitingForReboot) {
                   logit "Cfn-signaling success..."
                   cf-success
-                }
-
-                $DBGUtilizationLoadPercentInitialValue=${8DBGUtilizationLoadPercentInitialValue}
-                if (($WaitingForReboot -ne $True ) -AND ($DBGUtilizationLoadPercentInitialValue)) {
-                  logit "Setting up Utilization stressing because 8DBGUtilizationLoadPercentInitialValue was set to $DBGUtilizationLoadPercentInitialValue"
-                  Invoke-WebRequest https://github.com/vikyd/go-cpu-load/releases/download/0.0.1/go-cpu-load-win-amd64.exe -UseBasicParsing -outfile go-cpu-load-win-amd64.exe
-                  $UtilizationPercent="$(aws --region=$AWS_REGION ssm get-parameter --name $NAMEOFSTACK-SyntheticUtilizationLoad --output text --query Parameter.Value)"
-                  while ( $UtilizationPercent -match "^[\d\.]+$" ) {
-                    logit "Stressing for 1 minutes at $UtilizationPercent percent Utilization utilization."
-                    . .\go-cpu-load-win-amd64.exe -p $UtilizationPercent -t 60
-                    $UtilizationPercent="$(aws --region=$AWS_REGION ssm get-parameter --name $NAMEOFSTACK-SyntheticUtilizationLoad --output text --query Parameter.Value)"
-                  }
-                  logit "Stopping Utilization stressing due to receving non-numeric value: `"$UtilizationPercent`""
                 }
                 </powershell>
