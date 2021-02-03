@@ -21,7 +21,7 @@ All notable changes to this project will be documented in this file.
 - Enable a list of runner registration tokens for Linx (#2)
 - Add "NoEcho" to parameter for runner token
 - Semicolon delimiting of runner token list to prevent CF parameter problems
-- Easy Button Paramter Set Examples (#11)
+- Easy Button Parameter Set Examples (#11)
   
 ## [v1.4.0-alpha4] - 2021-01-28
 
