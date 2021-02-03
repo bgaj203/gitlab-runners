@@ -40,7 +40,6 @@ concurrent = 4
 log_level = "warning"
 "@
 
-
 pushd $RunnerInstallRoot
 .\gitlab-runner.exe install
 
@@ -87,9 +86,13 @@ if ( (aws autoscaling describe-auto-scaling-instances --instance-ids $MYINSTANCE
 
   cd $RunnerInstallRoot
 
-  .\gitlab-runner.exe stop
-
-  .\gitlab-runner.exe unregister --config $RunnerInstallRoot\config.toml --all-runners 
+  if ( $($COMPUTETYPE.ToLower()) -ne "spot" ) {
+    logit "Instance is not spot compute, draining running jobs..."
+    . $RunnerInstallRoot\gitlab-runner stop
+  else
+    logit "Instance is spot compute, deregistering runner immediately without draining running jobs..."
+  }
+  . $RunnerInstallRoot\gitlab-runner unregister --all-runners
 
   aws autoscaling complete-lifecycle-action --region $AWS_REGION --lifecycle-action-result CONTINUE --instance-id $MYINSTANCEID --lifecycle-hook-name instance-terminating --auto-scaling-group-name $NAMEOFASG
   logit "This instance ($MYINSTANCEID) is ready for termination"
