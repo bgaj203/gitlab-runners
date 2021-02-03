@@ -12,8 +12,8 @@ Parameters:
   1AAAATemplateVersion:
     Description: "Version of this template."
     Type: String
-    Default: "v1.4.0-alpha5"
-    AllowedValues: [ "v1.4.0-alpha5" ]
+    Default: "v1.4.0-alpha6"
+    AllowedValues: [ "v1.4.0-alpha6" ]
     ConstraintDescription: "1AAAATemplateVersion is the template version number and cannot be changed at runtime."
   1AAASourceProject:
     Description: >
@@ -40,6 +40,14 @@ Parameters:
     AllowedValues:
       - Linux
       - Windows
+  1OSInstanceLinuxArch:
+    Description: >
+      amd64 and arm64 are selectable. You must ensure your selected AMI (or AMI lookup parameter) matches the selected architecture.
+    Type: String
+    Default: amd64
+    AllowedValues:
+      - amd64
+      - arm64      
   1OSPatchRunDate:
     Description: >
       Enter the deploy or update date - changing this is required to force a rolling replacement for patching.
@@ -260,19 +268,6 @@ Parameters:
       Set to 0 for a 100% spot cluster.
     Type: Number
     Default: 100
-  # 8DBGUtilizationLoadPercentInitialValue:
-  #   Description: >
-  #     WARNING: NOT READY, DO NOT USE. Everything is 1 minute granularity - so don't set this to cause scaling and forget it unless you want a massive AWS bill ;)
-  #     Test your scaling parameters with synthetic utlization loading.  Enabled by entering a numeric value between 20-95.
-  #     This will create an SSM parameter named {AWS::Stackname}-SyntheticUtilizationLoad with the initial value entered here.
-  #     The userdata script will then run a utilization stressing utility in a loop, checking the parameter every minute for
-  #     updated values.  The value updates the utilization consumption in all ASG members so you can observe whether your scaling
-  #     policy works.  Set to a non-numeric value to terminate the Synthetic Loading (cannot be reenabled without rebuilding stack).
-  #     AWS Resources are only created to support this functionality if a value is provided during stack deployment.
-  #     The utility for Windows has a challenge generating loads above 90 percent, if you have a better cli utility, I'm all ears.
-  #     For parameters above that range, setup your steps below 90 and test them and then once verified, update the numbers to the
-  #     higher values.
-  #   Type: String
   8DBGKeypairName:
     Description: Spins instances with a keypair to allow connection. It is easier and more secure to use SSM Session Manager.
     Type: String
@@ -288,24 +283,22 @@ Parameters:
     Description: >
       Get LATEST AMI Build by AWS as of Template run. Set to SSM parameter path. Only used if 1OSPeggedAMIID is set to 'latest'.
       PARAMETER STORE PATHS HAVE MANY MORE OPTIONS FOR WINDOWS AND QUITE A FEW FOR AMAZON LINUX
-      COMMAND TO FIND WINDOWS OPTIONS (You are NOT restricted to ones that have docker preinstalled): aws ssm get-parameters-by-path
-      --path '/aws/service/ami-windows-latest' --region us-east-1 | grep 'Server.*English.*Containers'
+      COMMAND TO FIND WINDOWS OPTIONS (You are NOT restricted to ones that have docker preinstalled): aws ssm get-parameters-by-path --path '/aws/service/ami-windows-latest' --region us-east-1 | grep 'Server.*English.*Containers'
       COMMON WINDOWS OPTIONS: /aws/service/ami-windows-latest/Windows_Server-2012-R2_RTM-English-64Bit-Base,
       /aws/service/ami-windows-latest/Windows_Server-2012-R2_RTM-English-64Bit-Core,/aws/service/ami-windows-latest/Windows_Server-2016-English-Core-ContainersLatest,
       /aws/service/ami-windows-latest/Windows_Server-2016-English-Full-ContainersLatest,/aws/service/ami-windows-latest/Windows_Server-2019-English-Core-ContainersLatest,
       /aws/service/ami-windows-latest/Windows_Server-2019-English-Full-ContainersLatest,/aws/service/ami-windows-latest/Windows_Server-1903-English-Core-ContainersLatest,
       /aws/service/ami-windows-latest/Windows_Server-1809-English-Core-ContainersLatest
       COMMON LINUX OPTIONS: /aws/service/ecs/optimized-ami/amazon-linux-2/recommended/image_id (with docker), /aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2 (no docker)
+      /aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-arm64-gp2 (ARM)
     Type: 'AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>'
     Default: '/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2'
-    #Reset above to: '/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2'
 Conditions:
   ReplaceEntireASG: !Equals [ !Ref 4ASGUpdateType, "ReplaceEntireASG" ]
   InstancePlatformLinux: !Equals [ !Ref 1OSInstanceOSPlatform, "Linux" ]
   UseLatestAMI: !Equals [ !Ref 1OSPeggedAMIID, "AlwaysUseLatest"]
   BuildInstanceRoleToUse: !Equals [ !Ref 9AWSSpecifiedIAMRoleNAME, "CreateOneForMe" ]
   ConfigureAutoscaling: !Equals [ !Ref 5ASGAutoScalingEnabled, "true" ]
-  #SetupSythenticUtilizationLoad: !Not [ !Equals [ !Ref 8DBGUtilizationLoadPercentInitialValue, "" ]]
   Provided5SPOTInstanceType1: !Not [ !Equals [ !Ref 5SPOTInstanceType1, "" ]]
   Provided5SPOTInstanceType2: !Not [ !Equals [ !Ref 5SPOTInstanceType2, "" ]]
   Provided5SPOTInstanceType3: !Not [ !Equals [ !Ref 5SPOTInstanceType3, "" ]]
@@ -397,7 +390,7 @@ Resources:
           Effect: Allow
           Sid: WhitelistedGet
 
-          ASGRebootRole:
+  ASGRebootRole:
     Type: AWS::IAM::Role
     Condition: BuildInstanceRoleToUse
     DependsOn:
@@ -439,7 +432,6 @@ Resources:
       ResourceSignal:
         Timeout: !If [InstancePlatformLinux,PT15M,PT1H]
         Count: !Ref 4ASGDesiredCapacity
-    # Decide which UpdatePolicy to uncomment to see this template work with either one.
     UpdatePolicy:
       AutoScalingRollingUpdate:
         MaxBatchSize: 2
@@ -682,6 +674,7 @@ Resources:
                   yum install -y https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-latest.amzn1.noarch.rpm
                   sudo ln -s /usr/local/lib/python2.7/site-packages/cfnbootstrap /usr/lib/python2.7/site-packages/cfnbootstrap
                 fi
+                OSInstanceLinuxArch="${1OSInstanceLinuxArch}"
                 GITLABRunnerS3CacheBucket="${3GITLABRunnerS3CacheBucket}"
                 if [ "${3GITLABRunnerS3CacheBucket}" == "CreateOneForMe" ]; then GITLABRunnerS3CacheBucket="${ASGBucket}"; fi
                 GITLABRunnerConcurrentJobs="${3GITLABRunnerConcurrentJobs}"
