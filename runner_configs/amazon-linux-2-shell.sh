@@ -88,7 +88,7 @@ if [ ! -z "$NAMEOFASG" ] && [ "$ASGSelfMonitorTerminationInterval" != "Disabled"
     if [[ "\$(aws autoscaling describe-auto-scaling-instances --instance-ids $MYINSTANCEID --region $AWS_REGION | jq --raw-output '.AutoScalingInstances[0] .LifecycleState')" == *"Terminating"* ]]; then
       logit "This instance ($MYINSTANCEID) is being terminated, perform cleanup..."
 
-      if [ ${COMPUTETYPE,,} != "spot" ]; then
+      if [ "${COMPUTETYPE,,}" != "spot" ]; then
         logit "Instance is not spot compute, draining running jobs..."
         $RunnerInstallRoot/gitlab-runner stop
       else
