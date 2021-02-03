@@ -147,6 +147,7 @@ aws cloudformation create-stack --stack-name "mynewrunner" --template-url https:
 | amazon-linux-2-docker-simple-scaling-ondemand.cfparameters.json | Two docker executors, scaling based on simple CPU metrics, no spot |
 | amazon-linux-2-docker-simple-scaling-spotonly.cfparameters.json | Two docker executors, scaling based on simple CPU metrix, only spot |
 | amazon-linux-2-docker-simple-scaling-spot-and-ondemand.cfparameters.json | Two docker executors, scaling based on simple CPU metrix, 50/50 mix of spot and ondemand |
+| amazon-linux-2-arm64-docker-simple-hot-ha.cfparameters.cfparameters.json | Two docker executor instances that will respawn if they terminate, no autoscaling, no spot instances, arm64 architecture |
 | windows1903-shell-simple-hot-ha.cfparameters.json            | Two docker executor instances that will respawn if they terminate, no autoscaling, no spot instances. |
 | windows1903-shell-simple-scaling-ondemand.cfparameters.json  | Two docker executors, scaling based on simple CPU metrics, no spot |
 | windows1903-shell-simple-scaling-spotonly.cfparameters.json  | Two docker executors, scaling based on simple CPU metrix, only spot |

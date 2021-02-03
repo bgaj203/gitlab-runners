@@ -11,6 +11,7 @@ $GITLABRunnerExecutor='shell'
 
 $RunnerCompleteTagList = $RunnerOSTags, "glexecutor-$GITLABRunnerExecutor", $GITLABRunnerTagList -join ','
 
+if (Test-Path variable:GITLABRunnerTagList) {$RunnerCompleteTagList = $RunnerCompleteTagList, "computetype-$($GITLABRunnerTagList.ToLower())" -join ','}
 if (Test-Path variable:COMPUTETYPE) {$RunnerCompleteTagList = $RunnerCompleteTagList, "computetype-$($COMPUTETYPE.ToLower())" -join ','}
 
 $MYIP="$(invoke-restmethod http://169.254.169.254/latest/meta-data/local-ipv4)"

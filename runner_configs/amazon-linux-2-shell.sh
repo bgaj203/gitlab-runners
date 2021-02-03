@@ -21,14 +21,15 @@ fi
 
 set -ex
 
-RunnerCompleteTagList="$RunnerOSTags,glexecutor-$GITLABRunnerExecutor,$GITLABRunnerTagList"
+RunnerCompleteTagList="$RunnerOSTags,glexecutor-$GITLABRunnerExecutor,${OSInstanceLinuxArch,,}"
 
-if [ -n ${COMPUTETYPE} ]; then RunnerCompleteTagList="$RunnerCompleteTagList, computetype-${COMPUTETYPE,,}"; fi
+if [ -n ${GITLABRunnerTagList} ]; then RunnerCompleteTagList="$RunnerCompleteTagList,${GITLABRunnerTagList,,}"; fi
+if [ -n ${COMPUTETYPE} ]; then RunnerCompleteTagList="$RunnerCompleteTagList,computetype-${COMPUTETYPE,,}"; fi
 
 # Installing and configuring Gitlab Runner
 if [ ! -d $RunnerInstallRoot ]; then mkdir -p $RunnerInstallRoot; fi
 
-curl https://gitlab-runner-downloads.s3.amazonaws.com/${GITLABRunnerVersion,,}/binaries/gitlab-runner-linux-amd64 --output $RunnerInstallRoot/gitlab-runner
+curl https://gitlab-runner-downloads.s3.amazonaws.com/${GITLABRunnerVersion,,}/binaries/gitlab-runner-linux-${OSInstanceLinuxArch} --output $RunnerInstallRoot/gitlab-runner
 chmod +x $RunnerInstallRoot/gitlab-runner
 if ! id -u "gitlab-runner" >/dev/null 2>&1; then
   useradd --comment 'GitLab Runner' --create-home gitlab-runner --shell /bin/bash
