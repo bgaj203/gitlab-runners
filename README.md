@@ -166,7 +166,25 @@ Essentially anything that is parameter can be changed and an update will be push
 
 Here is the [Testing and Troubleshooting Guide](./TESTING-TROUBLESHOOTING.md)
 
-#### 
+### Easy Button Quick Start Parameter Sets
+
+Even if you start with a fast start, because you can go back in and do a stack update, you can make your runner more sophisticated after initial deployment.
+
+The following approach enables:
+
+* Specifying your instance specific details
+* Without having to specify other items
+* Keeps your runner tokens more secure
+* You can override parameter file values on the command line
+
+1. Install aws cli and or use the container
+2. Setup your local credentials or use them on the command line (or however your security or IT department requires you to use them locally)
+3. Clone the repository locally and change to it's directory
+4. Before submitting, customize the following command with your values for "3GITLABRunnerInstanceURL" and "3GITLABRunnerRegTokenList"
+
+```
+aws cloudformation create-stack --stack-name "mynewrunner" --template-url https://s3.us-west-2.amazonaws.com/gl-public-templates/cfn/GitLabElasticScalingRunner.cf.yml --capabilities CAPABILITY_NAMED_IAM --parameters $(cat easy-button-parameter-sets/amazon-linux-2-docker-simple-hot-ha.cfparameters.json | jq -r '.[] | "ParameterKey=" + .ParameterKey + ",ParameterValue=" + .ParameterValue') ParameterKey="5SPOTInstanceType1",ParameterValue="m5.xlarge" ParameterKey="3GITLABRunnerInstanceURL",ParameterValue="https://gitlab.com"  ParameterKey="3GITLABRunnerRegTokenList",ParameterValue="your-list-of-comma-seperated-tokens"
+```
 
 ### Prebuilt Runner Configuration Scripts
 
