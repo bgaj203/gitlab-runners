@@ -77,16 +77,12 @@
     "ParameterValue": "60"
   },
   {
-    "ParameterKey": "Var",
-    "ParameterValue": ""
-  },
-  {
     "ParameterKey": "5SPOTOnDemandBaseCapacity",
-    "ParameterValue": "0"
+    "ParameterValue": "1"
   },
   {
     "ParameterKey": "5SPOTOnDemandPercentageAboveBaseCapacity",
-    "ParameterValue": "0"
+    "ParameterValue": "50"
   },
   {
     "ParameterKey": "8DBGKeypairName",
