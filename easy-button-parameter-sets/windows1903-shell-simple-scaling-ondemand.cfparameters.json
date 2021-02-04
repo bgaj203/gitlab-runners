@@ -9,6 +9,10 @@
     "ParameterValue": "Windows"
   },
   {
+    "ParameterKey": "1OSPatchScope",
+    "ParameterValue": "NoPatching"
+  },
+  {
     "ParameterKey": "9AWSRetrieveLatestAWSOSAmiIdFromSSM",
     "ParameterValue": "/aws/service/ami-windows-latest/Windows_Server-1903-English-Core-ContainersLatest"
   }, 

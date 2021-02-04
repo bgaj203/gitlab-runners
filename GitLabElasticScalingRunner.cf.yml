@@ -58,14 +58,14 @@ Parameters:
     Default: 2021-01-28
   1OSPatchScope:
     Description: >
-      What types of patches to apply. "NoPatching-OnlyForDebugging" - No patching will be done - this setting is for debugging only (patch dates will still be set)
+      What types of patches to apply. "NoPatching" - No patching will be done - this setting is for debugging only (patch dates will still be set)
       This can be changed on an update if you setup an ASG and realize you would like to keep it.
     Type: String
-    Default: SecurityOnly
+    Default: NoPatching
     AllowedValues:
       - All
       - SecurityOnly
-      - NoPatching-OnlyForDebugging
+      - NoPatching
   3INSTConfigurationScript:
     Description: >
       Allows additional script commands during startup. This is parameterized for testing new versions and to enable one
@@ -732,7 +732,7 @@ Resources:
                     logit "Started Patching."
                     yum --security update -y
                     logit "Completed Patching."
-                  elif [[ "${1OSPatchScope}" == "NoPatching-OnlyForDebugging" ]]; then
+                  elif [[ "${1OSPatchScope}" == "NoPatching" ]]; then
                     logit "No patching will be done - this setting is for debugging only (patch dates will still be set)"
                   fi
                   logit "ACTUAL_PATCH_DATE may be newer because this instance was autoscaled after the LAST_CF_PATCH_RUN"
@@ -974,7 +974,7 @@ Resources:
                   Switch ($1OSPatchScopeToUse) {
                     "SecurityOnly" { logit "Starting Patching."; Install-WindowsUpdate -MicrosoftUpdate -Category "Security Updates" -AcceptAll -Verbose; logit "Completed Patching." }
                     "All" { logit "Starting Patching."; Install-WindowsUpdate -MicrosoftUpdate -AcceptAll -Verbose; logit "Completed Patching." }
-                    "NoPatching-OnlyForDebugging" {logit -MsgType 'Warning' -ID 4 -Msg "No patching will be done - this setting is for debugging only (patch dates will still be set)" }
+                    "NoPatching" {logit -MsgType 'Warning' -ID 4 -Msg "No patching will be done - this setting is for debugging only (patch dates will still be set)" }
                   }
 
                   $LatestNGENBinary = $(Get-ChildItem $env:windir\microsoft.net\framework64\v*\ngen.exe | sort-object | select-object -last 1 | select-object -expand FullName)

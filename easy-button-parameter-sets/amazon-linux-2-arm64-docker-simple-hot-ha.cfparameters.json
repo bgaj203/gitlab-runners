@@ -13,6 +13,10 @@
     "ParameterValue": "arm64"
   },
   {
+    "ParameterKey": "1OSPatchScope",
+    "ParameterValue": "NoPatching"
+  },
+  {
     "ParameterKey": "9AWSRetrieveLatestAWSOSAmiIdFromSSM",
     "ParameterValue": "/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-arm64-gp2"
   }, 
