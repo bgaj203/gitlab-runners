@@ -96,7 +96,7 @@ if ( (aws autoscaling describe-auto-scaling-instances --instance-ids $MYINSTANCE
 
   cd $RunnerInstallRoot
 
-  if ( $($COMPUTETYPE.ToLower()) -ne "spot" ) {
+  if ( "$($COMPUTETYPE.ToLower())" -ne "spot" ) {
     logit "Instance is not spot compute, draining running jobs..."
     . $RunnerInstallRoot\gitlab-runner stop
   else
