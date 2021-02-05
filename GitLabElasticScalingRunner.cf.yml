@@ -849,6 +849,7 @@ Resources:
                   logit "Detected that a reboot is required, rebooting..."
                   logit "Resetting userdata semaphore..."
                   rm /var/lib/cloud/instances/*/sem/config_scripts_user
+                  rm /var/lib/cloud/instance/sem/config_scripts_user
                   touch $PATCHDONEFLAG
                   reboot
                   logit "Waiting for reboot to complete..."
@@ -1088,15 +1089,16 @@ Resources:
                       $state.State = 'Disabled'
                       $xml.Save($path)
                     }
-                    $path = 'C:\ProgramData\Amazon\Ec2-Windows\Launch\Config\LaunchConfig.json'
-                    if (Test-Path $path) {
-                      $ec2launchconfig = get-content $path | convertfrom-json
-                      if (!$($ec2launchconfig.handleUserData)) {
-                        logit "Reseting Ec2Launch userdata"
-                        $ec2launchconfig.handleUserData = $True
-                        $ec2launchconfig | convertto-json | set-content $path
-                      }
-                    }
+                    if (Test-Path C:\ProgramData\Amazon\EC2-Windows\Launch\Scripts\InitializeInstance.ps1 ) {. C:\ProgramData\Amazon\EC2-Windows\Launch\Scripts\InitializeInstance.ps1 –Schedule}
+                    #$path = 'C:\ProgramData\Amazon\Ec2-Windows\Launch\Config\LaunchConfig.json'
+                    #if (Test-Path $path) {
+                    #  $ec2launchconfig = get-content $path | convertfrom-json
+                    #  if (!$($ec2launchconfig.handleUserData)) {
+                    #    logit "Reseting Ec2Launch userdata"
+                    #    $ec2launchconfig.handleUserData = $True
+                    #    $ec2launchconfig | convertto-json | set-content $path
+                    #  }
+                    #}
                     shutdown.exe /r /t 10
                   } Else {
                     Write-Host "A reboot is not pending, no action taken."
