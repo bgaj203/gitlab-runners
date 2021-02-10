@@ -129,7 +129,8 @@ Start-Process msiexec.exe -Wait -ArgumentList "/i $env:public\amazon-cloudwatch-
 
 If (!(Test-Path $env:ProgramData\Amazon\AmazonCloudWatchAgent)) {New-Item $env:ProgramData\Amazon\AmazonCloudWatchAgent -ItemType Directory -Force}
 Write-host "Writing CloudWatch Agent configuration"
-set-content $env:ProgramData\Amazon\AmazonCloudWatchAgent\amazon-cloudwatch-agent.json -Value @'
+set-content 
+ -Value @'
 {
   "metrics": {
     "aggregation_dimensions" : [["AutoScalingGroupName"], ["InstanceId"], ["InstanceType"], ["InstanceId","InstanceType"]],
@@ -213,11 +214,7 @@ If (Test-Path $env:ProgramData\Amazon\AmazonCloudWatchAgent\amazon-cloudwatch-ag
 }
 
 Write-Host "Starting CloudWatch Agent"
-& "C:\Program Files\Amazon\AmazonCloudWatchAgent\amazon-cloudwatch-agent-ctl.ps1" -a fetch-config -m ec2 -s -c file:$env:ProgramData\Amazon\AmazonCloudWatchAgent\amazon-cloudwatch-agent.json
-
-Write-Host "Installing Git (via Chocolatey) for the shell runner..."
-[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12,[Net.SecurityProtocolType]::Tls11; 
-If (!(Test-Path env:chocolateyinstall)) {iwr https://chocolatey.org/install.ps1 -UseBasicParsing | iex} ; cinst -y git --no-progress
+. "C:\Program Files\Amazon\AmazonCloudWatchAgent\amazon-cloudwatch-agent-ctl.ps1" -a fetch-config -m ec2 -s -c file:$env:ProgramData\Amazon\AmazonCloudWatchAgent\amazon-cloudwatch-agent.json
 
 Write-Host "Restarting the Runner to update with new system path that contains the git directory"
 c:\gitlab-runner\gitlab-runner.exe stop

@@ -349,6 +349,12 @@ Resources:
           Action:
             - autoscaling:CompleteLifecycleAction
             - autoscaling:RecordLifecycleActionHeartbeat
+        #This permission allows Runner jobs to use the aws cli to take scaling actions for the ASG of the runner for predictive or specific scaling
+        - Sid: AllowRunnerJobsToDoPredictiveScaling
+          Resource: !Sub 'arn:${AWS::Partition}:autoscaling:${AWS::Region}:${AWS::AccountId}:autoScalingGroup:*:autoScalingGroupName/${AWS::StackName}*'
+          Effect: Allow
+          Action:
+            - autoscaling:UpdateAutoScalingGroup
 
   EC2SelfAccessPolicy:
     Type: AWS::IAM::ManagedPolicy
@@ -1045,8 +1051,8 @@ Resources:
                   logit "CUSTOM CONFIG: Retrieving custom instance configuration script from $INSTConfigurationScript"
                   if (!(Test-Path $DefaultLocalCachedConfigScript)) {
                       logit "Pulling and executing from `"$INSTConfigurationScript`""
-                      [Net.ServicePointManager]::SecurityProtocol = "tls12, tls11, tls"
-                      Invoke-RestMethod -OutFile $DefaultLocalCachedConfigScript -Uri $INSTConfigurationScript
+                      [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12,[Net.SecurityProtocolType]::Tls11,[Net.SecurityProtocolType]::Tls; 
+                      Invoke-RestMethod -UseBasicParsing -OutFile $DefaultLocalCachedConfigScript -Uri $INSTConfigurationScript
                     }
                 } elseif ( $INSTConfigurationScript -ilike "s3://*" ) {
                   logit "CUSTOM CONFIG: Retrieving custom instance configuration script from $INSTConfigurationScript"
