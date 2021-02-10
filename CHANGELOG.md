@@ -1,8 +1,9 @@
 # Changelog
 
 All notable changes to this project will be documented in this file.
-## [v1.4.0-alpha7] - 2021-02-03
-- spot terminations no longer attempt to drain jobs - there is no time for that - all jobs running on spot should be mutable
+## [v1.4.0-alpha7] - 2021-02-
+- spot terminations no longer attempt to drain jobs - there is no time for that - all jobs running on spot should be mutable (#1)
+- added asg permission autoscaling:UpdateAutoScalingGroup to enable runner and runner jobs to use the aws cli to take scaling actions for the ASG of the runner for predictive or specific scaling (#13)
 ## [v1.4.0-alpha6] - 2021-02-02
 - Support for arm64 architecture for Amazon Linux 2
 ## [v1.4.0-alpha5] - 2021-02-02
