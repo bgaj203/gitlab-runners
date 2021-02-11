@@ -210,5 +210,6 @@ Write-Host "Installing Git (via Chocolatey) for the shell runner..."
 If (!(Test-Path env:chocolateyinstall)) {iwr https://chocolatey.org/install.ps1 -UseBasicParsing | iex} ; cinst -y git --no-progress
 
 Write-Host "Restarting the Runner to update with new system path that contains the git directory"
-c:\gitlab-runner\gitlab-runner.exe stop
-c:\gitlab-runner\gitlab-runner.exe start
+cd $RunnerInstallRoot
+.\gitlab-runner.exe stop
+.\gitlab-runner.exe start
