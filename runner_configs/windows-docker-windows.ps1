@@ -98,11 +98,11 @@ if ( (aws autoscaling describe-auto-scaling-instances --instance-ids $MYINSTANCE
 
   if ( "$($COMPUTETYPE.ToLower())" -ne "spot" ) {
     logit "Instance is not spot compute, draining running jobs..."
-    . $RunnerInstallRoot\gitlab-runner stop
+    .\gitlab-runner stop
   else
     logit "Instance is spot compute, deregistering runner immediately without draining running jobs..."
   }
-  . $RunnerInstallRoot\gitlab-runner unregister --all-runners
+  .\gitlab-runner unregister --all-runners
 
   aws autoscaling complete-lifecycle-action --region $AWS_REGION --lifecycle-action-result CONTINUE --instance-id $MYINSTANCEID --lifecycle-hook-name instance-terminating --auto-scaling-group-name $NAMEOFASG
   logit "This instance ($MYINSTANCEID) is ready for termination"
@@ -217,5 +217,6 @@ Write-Host "Starting CloudWatch Agent"
 & "C:\Program Files\Amazon\AmazonCloudWatchAgent\amazon-cloudwatch-agent-ctl.ps1" -a fetch-config -m ec2 -s -c file:$env:ProgramData\Amazon\AmazonCloudWatchAgent\amazon-cloudwatch-agent.json
 
 Write-Host "Restarting the Runner to update with new system path that contains the git directory"
-c:\gitlab-runner\gitlab-runner.exe stop
-c:\gitlab-runner\gitlab-runner.exe start
+cd $RunnerInstallRoot
+.\gitlab-runner.exe stop
+.\gitlab-runner.exe start
