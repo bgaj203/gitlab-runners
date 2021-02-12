@@ -636,6 +636,8 @@ Resources:
           Ebs:
             VolumeType: 'gp2'
             VolumeSize: 30
+        Placement:
+          Tenancy: default
         UserData:
           !If
             - InstancePlatformLinux
@@ -1080,7 +1082,7 @@ Resources:
                     exit 9
                   }
                 }
-                # END OF CUSTOM INSTANCE CONFIGURATION CODE"
+                logit "Completed execution of custom configuration script, continuing..."
 
                 If (Test-PendingReboot)
                   {

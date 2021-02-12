@@ -9,8 +9,6 @@
 
 $GITLABRunnerExecutor='docker-windows'
 
-Write-Host "****ATTENTION: Windows Docker Executor support for this template is experimental."
-
 $RunnerCompleteTagList = $RunnerOSTags,"glexecutor-$GITLABRunnerExecutor" -join ','
 
 if (Test-Path variable:GITLABRunnerTagList) {$RunnerCompleteTagList = $RunnerCompleteTagList, "computetype-$($GITLABRunnerTagList.ToLower())" -join ','}
@@ -27,6 +25,8 @@ Function logit ($Msg, $MsgType='Information', $ID='1') {
   $applog.Source="$SourceName"
   $applog.WriteEntry("From: $SourcePathName : $Msg", $MsgType, $ID)
 }
+
+logit "****ATTENTION: Windows Docker Executor support for this template is experimental."
 
 logit "Installing runner"
 
@@ -123,12 +123,12 @@ if ( (aws autoscaling describe-auto-scaling-instances --instance-ids $MYINSTANCE
 
 popd
 
-write-host "Install CloudWatch Agent"
+logit "Install CloudWatch Agent"
 Invoke-WebRequest -UseBasicParsing -Uri https://s3.amazonaws.com/amazoncloudwatch-agent/windows/amd64/latest/amazon-cloudwatch-agent.msi -Outfile $env:public\amazon-cloudwatch-agent.msi
 Start-Process msiexec.exe -Wait -ArgumentList "/i $env:public\amazon-cloudwatch-agent.msi /l*v $env:Public\amazon-cloudwatch-agent-install.log /qn ALLUSERS=1" -ErrorAction Stop -ErrorVariable MSIError
 
 If (!(Test-Path $env:ProgramData\Amazon\AmazonCloudWatchAgent)) {New-Item $env:ProgramData\Amazon\AmazonCloudWatchAgent -ItemType Directory -Force}
-Write-host "Writing CloudWatch Agent configuration"
+logit "Writing CloudWatch Agent configuration"
 set-content 
  -Value @'
 {
@@ -206,12 +206,12 @@ set-content
 }
 '@
 
-Write-Host "Checking if $env:ProgramData\Amazon\AmazonCloudWatchAgent\amazon-cloudwatch-agent.json exists..."
+logit "Checking if $env:ProgramData\Amazon\AmazonCloudWatchAgent\amazon-cloudwatch-agent.json exists..."
 If (Test-Path $env:ProgramData\Amazon\AmazonCloudWatchAgent\amazon-cloudwatch-agent.json)
 {
-  Write-host "$env:ProgramData\Amazon\AmazonCloudWatchAgent\amazon-cloudwatch-agent.json EXISTS! Displaying contents..."
-  Write-host cat $env:ProgramData\Amazon\AmazonCloudWatchAgent\amazon-cloudwatch-agent.json
+  logit "$env:ProgramData\Amazon\AmazonCloudWatchAgent\amazon-cloudwatch-agent.json EXISTS! Displaying contents..."
+  logit cat $env:ProgramData\Amazon\AmazonCloudWatchAgent\amazon-cloudwatch-agent.json
 }
 
-Write-Host "Starting CloudWatch Agent"
+logit "Starting CloudWatch Agent"
 Start-Process powershell -wait -nologo -noninteractive -file "C:\Program Files\Amazon\AmazonCloudWatchAgent\amazon-cloudwatch-agent-ctl.ps1" -arguments "-a fetch-config -m ec2 -s -c file:$env:ProgramData\Amazon\AmazonCloudWatchAgent\amazon-cloudwatch-agent.json"
