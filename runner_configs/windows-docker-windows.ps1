@@ -129,8 +129,7 @@ Start-Process msiexec.exe -Wait -ArgumentList "/i $env:public\amazon-cloudwatch-
 
 If (!(Test-Path $env:ProgramData\Amazon\AmazonCloudWatchAgent)) {New-Item $env:ProgramData\Amazon\AmazonCloudWatchAgent -ItemType Directory -Force}
 logit "Writing CloudWatch Agent configuration"
-set-content 
- -Value @'
+set-content set-content -Path "$env:ProgramData\Amazon\AmazonCloudWatchAgent\amazon-cloudwatch-agent.json" -Value @'
 {
   "metrics": {
     "aggregation_dimensions" : [["AutoScalingGroupName"], ["InstanceId"], ["InstanceType"], ["InstanceId","InstanceType"]],
