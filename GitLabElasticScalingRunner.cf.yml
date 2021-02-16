@@ -731,18 +731,15 @@ Resources:
                 if [ -f $PATCHDONEFLAG ]; then
                   logit "Completed a post-patching reboot, skipping patching check..."
                 else
-                  logit "Lets patch - including the kernel if necessary..."
+                  logit "Processing Patching Scope: ${1OSPatchScope}."
                   if [[ "${1OSPatchScope}" == "All" ]]; then
-                    logit "Started Patching."
                     yum update -y
-                    logit "Completed Patching."
                   elif [[ "${1OSPatchScope}" == "SecurityOnly" ]]; then
-                    logit "Started Patching."
                     yum --security update -y
-                    logit "Completed Patching."
                   elif [[ "${1OSPatchScope}" == "NoPatching" ]]; then
                     logit "No patching will be done - this setting is for debugging only (patch dates will still be set)"
                   fi
+                  logit "Completed Patching Processing."
                   logit "ACTUAL_PATCH_DATE may be newer because this instance was autoscaled after the LAST_CF_PATCH_RUN"
                   logit "LAST_CF_PATCH_RUN: $LAST_CF_PATCH_RUN"
                   echo "export LAST_CF_PATCH_RUN=$LAST_CF_PATCH_RUN" >> /etc/profile.d/lastpatchingdata.sh
@@ -898,25 +895,25 @@ Resources:
 
                 If (![bool](get-process amazon-ssm-agent -ErrorAction SilentlyContinue)) {
                   logit "SSM Agent is not present - Installing SSM for Session Manager Access..."
-                  Invoke-WebRequest https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/windows_amd64/AmazonSSMAgentSetup.exe -OutFile $env:USERPROFILE\SSMAgent_latest.exe
-                  Start-Process	-FilePath $env:USERPROFILE\SSMAgent_latest.exe -ArgumentList "/S"
+                  Invoke-WebRequest https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/windows_amd64/AmazonSSMAgentSetup.exe -OutFile $env:PUBLIC\SSMAgent_latest.exe
+                  Start-Process	-FilePath $env:PUBLIC\SSMAgent_latest.exe -ArgumentList "/S"
                 }
-                If (!(Test-Path "C:\Program Files\Amazon\AWSCLI\bin\aws.exe")) {
+                If (!(Test-Path "C:\Program Files\Amazon\AWSCLIV2\bin\aws.exe")) {
                   logit "Installing AWS CLI to control lifecycle hook updates..."
-                  $AWSCLIURL="https://s3.amazonaws.com/aws-cli/AWSCLI64PY3.msi" #v1
-                  #$AWSCLIURL="https://awscli.amazonaws.com/AWSCLIV2.msi" #v2
-                  Invoke-WebRequest $AWSCLIURL -OutFile $env:USERPROFILE\AWSCLI.msi
-                  Start-Process	 -wait -nonewwindow -FilePath "msiexec.exe" -ArgumentList "/i $env:USERPROFILE\AWSCLI.msi /l*v $env:USERPROFILE\AWSCLI-install.log /qn"
-                  $env:PATH="$env:PATH;C:\Program Files\Amazon\AWSCLI\bin"
-                  #$env:PATH="$env:PATH;C:\Program Files\Amazon\AWSCLIV2"
+                  #$AWSCLIURL="https://s3.amazonaws.com/aws-cli/AWSCLI64PY3.msi" #v1
+                  $AWSCLIURL="https://awscli.amazonaws.com/AWSCLIV2.msi" #v2
+                  Invoke-WebRequest -UseBasicParsing -URI $AWSCLIURL -OutFile $env:PUBLIC\AWSCLI.msi
+                  Start-Process	 -wait -nonewwindow -FilePath "msiexec.exe" -ArgumentList "/i $env:PUBLIC\AWSCLI.msi /l*v $env:PUBLIC\AWSCLI-install.log /qn"
+                  #$env:PATH="$env:PATH;C:\Program Files\Amazon\AWSCLI\bin"
+                  $env:PATH="$env:PATH;C:\Program Files\Amazon\AWSCLIV2"
                   If (![bool](get-command aws.exe)) {
                     throw "AWS CLI did not install correctly"
                   }
                 }
                 If (![bool](get-command cfn-signal.exe)) {
                   logit "cfn-bootstrap is not present, installing it to control cloud formation completion..."
-                  Invoke-WebRequest https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-win64-latest.msi -OutFile $env:USERPROFILE\aws-cfn-bootstrap-win64-latest.msi
-                  Start-Process	 -wait -nonewwindow -FilePath "msiexec.exe" -ArgumentList "/i $env:USERPROFILE\aws-cfn-bootstrap-win64-latest.msi /l*v $env:USERPROFILE\aws-cfn-bootstrap-win64-latest.log /qn"
+                  Invoke-WebRequest https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-win64-latest.msi -OutFile $env:PUBLIC\aws-cfn-bootstrap-win64-latest.msi
+                  Start-Process	 -wait -nonewwindow -FilePath "msiexec.exe" -ArgumentList "/i $env:PUBLIC\aws-cfn-bootstrap-win64-latest.msi /l*v $env:PUBLIC\aws-cfn-bootstrap-win64-latest.log /qn"
                 }
                 Function Test-PendingReboot
                 {
@@ -950,7 +947,7 @@ Resources:
                 $MYINSTANCEID="$(invoke-restmethod http://169.254.169.254/latest/meta-data/instance-id)"
                 $NAMEOFASG=$(aws ec2 describe-tags --region $AWS_REGION --filters Name=resource-id,Values=$MYINSTANCEID Name=key,Values=aws:autoscaling:groupName | convertfrom-json).tags.value
                 $NAMEOFSTACK="${AWS::StackName}"
-                $PATCHDONEFLAG="$env:USERPROFILE/patchingrebootwasdone.flg"
+                $PATCHDONEFLAG="$env:PUBLIC/patchingrebootwasdone.flg"
                 $1OSPatchScopeToUse="${1OSPatchScope}"
                 logit "Processing userdata script on instance: $MYINSTANCEID"
                 logit "Operating in Region: $AWS_REGION, launched from ASG: $NAMEOFASG"
