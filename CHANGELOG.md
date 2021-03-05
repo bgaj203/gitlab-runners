@@ -1,6 +1,10 @@
 # Changelog
 
 All notable changes to this project will be documented in this file.
+
+## [v1.4.1-alpha6] - 2021-03-05
+- Easy Button Parent CF Templates for one button click - compatible with QuickStarts and AWS Service Catalog
+- Renamed parameters from SPOTInstanceType to ASGInstanceType to avoid confusion for non-spot and mixed instances implementations
 ## [v1.4.0-alpha6] - 2021-02-02
 - Support for arm64 architecture for Amazon Linux 2
 ## [v1.4.0-alpha5] - 2021-02-02
