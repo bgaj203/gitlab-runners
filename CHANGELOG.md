@@ -2,6 +2,9 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v1.4.1-alpha7] - 2021-03-06
+- spot terminations no longer attempt to drain jobs - there is no time for that - all jobs running on spot should be mutable (#1)
+- added asg permission autoscaling:UpdateAutoScalingGroup to enable runner and runner jobs to use the aws cli to take scaling actions for the ASG of the runner for predictive or specific scaling (#13)
 ## [v1.4.1-alpha6] - 2021-03-05
 - Easy Button Parent CF Templates for one button click - compatible with QuickStarts and AWS Service Catalog
 - Renamed parameters from SPOTInstanceType to ASGInstanceType to avoid confusion for non-spot and mixed instances implementations
