@@ -38,7 +38,7 @@ Resources:
       Parameters:
         1OSPeggedAMIID: AlwaysUseLatest
         1OSInstanceOSPlatform: Linux
-        1OSPatchScope: NoPatching-OnlyForDebugging
+        1OSPatchScope: NoPatching
         3GITLABRunnerInstanceURL: !Ref 3GITLABRunnerInstanceURL
         3GITLABRunnerRegTokenList: !Ref 3GITLABRunnerRegTokenList
         3INSTConfigurationScript: https://gitlab.com/guided-explorations/aws/gitlab-runner-autoscaling-aws-asg/-/raw/master/runner_configs/amazon-linux-2-docker.sh
