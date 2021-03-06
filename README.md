@@ -10,25 +10,9 @@
 
 **Vending Machine** is a metaphor for self-service - also known by the handles Service Management Automation (SMA), Service Catalog - it enables developers to build their own Infrastructure by picking it from a menu or being super simple to deploy.
 
-### Lots of Features Built In (TL;DR)
+### Many Strategic Features Built In (TL;DR)
 
-The list of built-in features - things you don't have to engineer your - is so long most folks do a TL;DR and so they are now covered in [FEATURES.md](./FEATURES.md)
-### Walk Through Video
-
-This video does not cover everything in this readme - both need to be reviewed to be productive with this code.
-
-[GitLab Runner Vending Machine for AWS: HA and/or Autoscaling on AWS with Spot](https://youtu.be/llbSTVEeY28)
-
-### Only Need HA Runners or Self-Service?  You're In The Right Place
-
-This template still has a lot of benefits when not used for autoscaling, some of them are:
-
-- Self-Service Vending (SMA) of Runners by Developers.
-- Runners are built with IaC, rather than hand crafted.
-- Automatic Hot (2 hosts) or Warm (1 host that respawns) High Availability.
-- Automatic availability scheduling (runner is off during off hours).
-- Use of Spot Compute.
-
+The list of built-in features - things you don't have to engineer your - is so long most folks do a TL;DR and so they are now covered in [FEATURES.md](./FEATURES.md) The feature categories are: **Scaled Runner Management Built-In, Runner Cost Management Built-In, Runner Configuration Best Practices, Security, High Availability, Elastic Scaling, AWS Features and Best Practices,Extensibility, Reusability and Troubleshooting, and Supported Combinations of Operating Systems, Runner Executors and Hardware Architectures.**
 ### Easy Buttons
 
 Even if you start with an easy button, you can go back in and do a stack update, you can make your runner more sophisticated after initial deployment.
@@ -40,24 +24,23 @@ You will need your GitLab Instance URL and one or more Runner Registration Token
 **Note:** Runner Registration tokens are in the CI/CD settings of every group and every project on a GitLab instance. They are also available the Instance level for self-managed instances.  When you register a runner at the group or instance level, it is available to all projects in the downbound group heirarchy.
 
 **Note:** The region will automatically be us-east-1, change to your desired region before submitting.
-
 ### Easy Buttons Provided
 
 **Note:** The easy button code in this project is easy to reuse as a pattern to create your own easy button setups for the CloudFormation Console UI or the CLI.
 
 | Easy Button                                                  | Name                                                         | Description                                                  |
 | ------------------------------------------------------------ | ------------------------------------------------------------ | ------------------------------------------------------------ |
-| [![Arch_AWS-CloudFormation_16](./Arch_AWS-CloudFormation_32.png)](https://us-west-2.console.aws.amazon.com/cloudformation/home?region=us-west-2#/stacks/create/review?templateURL=https://gl-public-templates.s3.amazonaws.com/cfn/v1.4.0-alpha6/easybutton-amazon-linux-2-docker-simple-hot-ha.cf.yml&stackName=linux-docker-hot-ha) | Amazon Linux 2 Docker Simple Hot HA                          | Two docker executor instances that will respawn if they terminate, no autoscaling, no spot instances. |
-| [![Arch_AWS-CloudFormation_16](./Arch_AWS-CloudFormation_32.png)](https://us-west-2.console.aws.amazon.com/cloudformation/home?region=us-west-2#/stacks/create/review?templateURL=https://gl-public-templates.s3.amazonaws.com/cfn/v1.4.0-alpha6/easybutton-amazon-linux-2-docker-simple-scaling-ondemand.cf.yml&stackName=linux-docker-scaling-nospot) | Amazon Linux 2 Docker Simple Scaling Ondemand Instances      | Two docker executors, scaling based on simple CPU metrics, no spot. |
-| [![Arch_AWS-CloudFormation_16](./Arch_AWS-CloudFormation_32.png)](https://us-west-2.console.aws.amazon.com/cloudformation/home?region=us-west-2#/stacks/create/review?templateURL=https://gl-public-templates.s3.amazonaws.com/cfn/v1.4.0-alpha6/easybutton-amazon-linux-2-docker-simple-scaling-spotonly.cf.yml&stackName=linux-docker-scaling-spotonly) | Amazon Linux 2 Docker Simple Scaling Spot Instances          | Two docker executors, scaling based on simple CPU metrics, only spot<br />**Note:** Actual scaling parameters used in this MVP are just to show how to configure scaling - they are untested with Runner workloads - your can help by contributing your tested scaling parameters in an issue. |
-| [![Arch_AWS-CloudFormation_16](./Arch_AWS-CloudFormation_32.png)](https://us-west-2.console.aws.amazon.com/cloudformation/home?region=us-west-2#/stacks/create/review?templateURL=https://gl-public-templates.s3.amazonaws.com/cfn/v1.4.0-alpha6/easybutton-amazon-linux-2-docker-simple-scaling-spot-and-ondemand.cf.yml&stackName=linux-docker-scaling-both) | Amazon Linux 2 Docker Simple Scaling Spot and Ondemand Instances (Mixed Instances) | Two docker executors, scaling based on simple CPU metrix, 50/50 mix of spot and ondemand.<br />**Note:** Actual scaling parameters used in this MVP are just to show how to configure scaling - they are untested with Runner workloads - your can help by contributing your tested scaling parameters in an issue. |
-| [![Arch_AWS-CloudFormation_16](./Arch_AWS-CloudFormation_32.png)](https://us-west-2.console.aws.amazon.com/cloudformation/home?region=us-west-2#/stacks/create/review?templateURL=https://gl-public-templates.s3.amazonaws.com/cfn/v1.4.0-alpha6/easybutton-amazon-linux-2-arm64-docker-simple-hot-ha.cf.yml&stackName=linuxarm-docker-hot-ha) | Amazon Linux 2 Docker Simple Hot HA Using **ARM**            | Two docker executor instances that will respawn if they terminate, no autoscaling, no spot instances, **arm64 architecture**. |
-| [![Arch_AWS-CloudFormation_16](./Arch_AWS-CloudFormation_32.png)](https://us-west-2.console.aws.amazon.com/cloudformation/home?region=us-west-2#/stacks/create/review?templateURL=https://gl-public-templates.s3.amazonaws.com/cfn/v1.4.0-alpha6/easybutton-windows1903-shell-simple-hot-ha.cf.yml&stackName=win1903-shell-hot-ha) | Windows 1903 Shell Simple Hot HA                             | Two docker executor instances that will respawn if they terminate, no autoscaling, no spot instances. |
-| [![Arch_AWS-CloudFormation_16](./Arch_AWS-CloudFormation_32.png)](https://us-west-2.console.aws.amazon.com/cloudformation/home?region=us-west-2#/stacks/create/review?templateURL=https://gl-public-templates.s3.amazonaws.com/cfn/v1.4.0-alpha6/easybutton-windows1903-shell-simple-scaling-ondemand.cf.yml&stackName=win1903-shell-scaling-nospot) | Windows 1903 Shell Simple Scaling Ondemand Instances         | Two docker executors, scaling based on simple CPU metrics, no spot.<br />**Note:** Actual scaling parameters used in this MVP are just to show how to configure scaling - they are untested with Runner workloads - your can help by contributing your tested scaling parameters in an issue. |
-| [![Arch_AWS-CloudFormation_16](./Arch_AWS-CloudFormation_32.png)](https://us-west-2.console.aws.amazon.com/cloudformation/home?region=us-west-2#/stacks/create/review?templateURL=https://gl-public-templates.s3.amazonaws.com/cfn/v1.4.0-alpha6/easybutton-windows1903-shell-simple-scaling-spotonly.cf.yml&stackName=win1903-shell-scaling-spotonly) | Windows 1903 Shell Simple Scaling Spot Instances             | Two docker executors, scaling based on simple CPU metrics, only spot.<br />**Note:** Actual scaling parameters used in this MVP are just to show how to configure scaling - they are untested with Runner workloads - your can help by contributing your tested scaling parameters in an issue. |
-| [![Arch_AWS-CloudFormation_16](./Arch_AWS-CloudFormation_32.png)](https://us-west-2.console.aws.amazon.com/cloudformation/home?region=us-west-2#/stacks/create/review?templateURL=https://gl-public-templates.s3.amazonaws.com/cfn/v1.4.0-alpha6/easybutton-windows1903-shell-simple-scaling-spot-and-ondemand.cf.yml&stackName=win1903-shell-scaling-both) | Windows 1903 Shell Simple Scaling Spot and Ondemand Instances (Mixed Instances) | Two docker executors, scaling based on simple CPU metrics, 50/50 mix of spot and ondemand.<br />**Note:** Actual scaling parameters used in this MVP are just to show how to configure scaling - they are untested with Runner workloads - your can help by contributing your tested scaling parameters in an issue. |
+| [![Arch_AWS-CloudFormation_16](./images/Arch_AWS-CloudFormation_32.png)](https://us-west-2.console.aws.amazon.com/cloudformation/home?region=us-west-2#/stacks/create/review?templateURL=https://gl-public-templates.s3.amazonaws.com/cfn/v1.4.1-alpha7/easybutton-amazon-linux-2-docker-simple-hot-ha.cf.yml&stackName=linux-docker-hot-ha) | Amazon Linux 2 Docker Simple Hot HA                          | Two docker executor instances that will respawn if they terminate, no autoscaling, no spot instances. |
+| [![Arch_AWS-CloudFormation_16](./images/Arch_AWS-CloudFormation_32.png)](https://us-west-2.console.aws.amazon.com/cloudformation/home?region=us-west-2#/stacks/create/review?templateURL=https://gl-public-templates.s3.amazonaws.com/cfn/v1.4.1-alpha7/easybutton-amazon-linux-2-docker-simple-scaling-ondemand.cf.yml&stackName=linux-docker-scaling-nospot) | Amazon Linux 2 Docker Simple Scaling Ondemand Instances      | Two docker executors, scaling based on simple CPU metrics, no spot. |
+| [![Arch_AWS-CloudFormation_16](./images/Arch_AWS-CloudFormation_32.png)](https://us-west-2.console.aws.amazon.com/cloudformation/home?region=us-west-2#/stacks/create/review?templateURL=https://gl-public-templates.s3.amazonaws.com/cfn/v1.4.1-alpha7/easybutton-amazon-linux-2-docker-simple-scaling-spotonly.cf.yml&stackName=linux-docker-scaling-spotonly) | Amazon Linux 2 Docker Simple Scaling Spot Instances          | Two docker executors, scaling based on simple CPU metrics, only spot<br />**Note:** Actual scaling parameters used in this MVP are just to show how to configure scaling - they are untested with Runner workloads - your can help by contributing your tested scaling parameters in an issue. |
+| [![Arch_AWS-CloudFormation_16](./images/Arch_AWS-CloudFormation_32.png)](https://us-west-2.console.aws.amazon.com/cloudformation/home?region=us-west-2#/stacks/create/review?templateURL=https://gl-public-templates.s3.amazonaws.com/cfn/v1.4.1-alpha7/easybutton-amazon-linux-2-docker-simple-scaling-spot-and-ondemand.cf.yml&stackName=linux-docker-scaling-both) | Amazon Linux 2 Docker Simple Scaling Spot and Ondemand Instances (Mixed Instances) | Two docker executors, scaling based on simple CPU metrix, 50/50 mix of spot and ondemand.<br />**Note:** Actual scaling parameters used in this MVP are just to show how to configure scaling - they are untested with Runner workloads - your can help by contributing your tested scaling parameters in an issue. |
+| [![Arch_AWS-CloudFormation_16](./images/Arch_AWS-CloudFormation_32.png)](https://us-west-2.console.aws.amazon.com/cloudformation/home?region=us-west-2#/stacks/create/review?templateURL=https://gl-public-templates.s3.amazonaws.com/cfn/v1.4.1-alpha7/easybutton-amazon-linux-2-arm64-docker-simple-hot-ha.cf.yml&stackName=linuxarm-docker-hot-ha) | Amazon Linux 2 Docker Simple Hot HA Using **ARM**            | Two docker executor instances that will respawn if they terminate, no autoscaling, no spot instances, **arm64 architecture**. |
+| [![Arch_AWS-CloudFormation_16](./images/Arch_AWS-CloudFormation_32.png)](https://us-west-2.console.aws.amazon.com/cloudformation/home?region=us-west-2#/stacks/create/review?templateURL=https://gl-public-templates.s3.amazonaws.com/cfn/v1.4.1-alpha7/easybutton-windows1903-shell-simple-hot-ha.cf.yml&stackName=win1903-shell-hot-ha) | Windows 1903 Shell Simple Hot HA                             | Two docker executor instances that will respawn if they terminate, no autoscaling, no spot instances. |
+| [![Arch_AWS-CloudFormation_16](./images/Arch_AWS-CloudFormation_32.png)](https://us-west-2.console.aws.amazon.com/cloudformation/home?region=us-west-2#/stacks/create/review?templateURL=https://gl-public-templates.s3.amazonaws.com/cfn/v1.4.1-alpha7/easybutton-windows1903-shell-simple-scaling-ondemand.cf.yml&stackName=win1903-shell-scaling-nospot) | Windows 1903 Shell Simple Scaling Ondemand Instances         | Two docker executors, scaling based on simple CPU metrics, no spot.<br />**Note:** Actual scaling parameters used in this MVP are just to show how to configure scaling - they are untested with Runner workloads - your can help by contributing your tested scaling parameters in an issue. |
+| [![Arch_AWS-CloudFormation_16](./images/Arch_AWS-CloudFormation_32.png)](https://us-west-2.console.aws.amazon.com/cloudformation/home?region=us-west-2#/stacks/create/review?templateURL=https://gl-public-templates.s3.amazonaws.com/cfn/v1.4.1-alpha7/easybutton-windows1903-shell-simple-scaling-spotonly.cf.yml&stackName=win1903-shell-scaling-spotonly) | Windows 1903 Shell Simple Scaling Spot Instances             | Two docker executors, scaling based on simple CPU metrics, only spot.<br />**Note:** Actual scaling parameters used in this MVP are just to show how to configure scaling - they are untested with Runner workloads - your can help by contributing your tested scaling parameters in an issue. |
+| [![Arch_AWS-CloudFormation_16](./images/Arch_AWS-CloudFormation_32.png)](https://us-west-2.console.aws.amazon.com/cloudformation/home?region=us-west-2#/stacks/create/review?templateURL=https://gl-public-templates.s3.amazonaws.com/cfn/v1.4.1-alpha7/easybutton-windows1903-shell-simple-scaling-spot-and-ondemand.cf.yml&stackName=win1903-shell-scaling-both) | Windows 1903 Shell Simple Scaling Spot and Ondemand Instances (Mixed Instances) | Two docker executors, scaling based on simple CPU metrics, 50/50 mix of spot and ondemand.<br />**Note:** Actual scaling parameters used in this MVP are just to show how to configure scaling - they are untested with Runner workloads - your can help by contributing your tested scaling parameters in an issue. |
 
-**Not An Easy Button Person?** If easy buttons aren't your thing, click here to load the full template in CloudFormation - the help text in the parameters gives a lot of information - but you may also need to consult this documentation: [![Arch_AWS-CloudFormation_16](./Arch_AWS-CloudFormation_16.png)](https://us-west-2.console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/create/review?templateURL=https://gl-public-templates.s3.amazonaws.com/cfn/v1.4.0-alpha6/GitLabElasticScalingRunner.cf.yml&stackName=GitLabElasticScalingRunner-AllParameters)
+**Not An Easy Button Person?** If easy buttons aren't your thing, click here to load the full template in CloudFormation - the help text in the parameters gives a lot of information - but you may also need to consult this documentation: [![Arch_AWS-CloudFormation_16](./images/Arch_AWS-CloudFormation_16.png)](https://us-west-2.console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/create/review?templateURL=https://gl-public-templates.s3.amazonaws.com/cfn/v1.4.1-alpha7/GitLabElasticScalingRunner.cf.yml&stackName=GitLabElasticScalingRunner-AllParameters) (Recommended: add the tags Product=GitLab, Function=GitLabRunner)
 
 ### Easy Buttons In the CLI
 
@@ -68,16 +51,32 @@ Note that you can override parameter file values on the command line - which is 
 1. Install aws cli and or use the container
 2. Setup your local credentials or use them on the command line (or however your security or IT department requires you to use them locally)
 3. Clone the repository locally and change to it's directory
-4. Examine the subdirectory easy-button-parameter-sets to find the parameter set name you want to use (should be ones to correlate to each of the above easy button setups) and select it and substitute the name for `amazon-linux-2-docker-simple-hot-ha.cfparameters.json` in the below.
+4. Examine the subdirectory easy_button/params to find the parameter set name you want to use (should be ones to correlate to each of the above easy button setups) and select it and substitute the name for `amazon-linux-2-docker-simple-hot-ha.cfparameters.json` in the below.
 5. Before submitting, customize the following command with your values for "3GITLABRunnerInstanceURL" and "3GITLABRunnerRegTokenList"
 
 ```
 aws cloudformation create-stack --stack-name "mynewrunner" --template-url https://s3.us-west-2.amazonaws.com/gl-public-templates/cfn/GitLabElasticScalingRunner.cf.yml --capabilities CAPABILITY_NAMED_IAM --parameters $(cat easy-button-parameter-sets/amazon-linux-2-docker-simple-hot-ha.cfparameters.json | jq -r '.[] | "ParameterKey=" + .ParameterKey + ",ParameterValue=" + .ParameterValue') ParameterKey="5ASGInstanceType1",ParameterValue="m5.xlarge" ParameterKey="3GITLABRunnerInstanceURL",ParameterValue="https://gitlab.com"  ParameterKey="3GITLABRunnerRegTokenList",ParameterValue="your-list-of-comma-seperated-tokens"
 ```
 
+### Walk Through Video of Full Template
+
+This video does not cover everything in this readme - both need to be reviewed to be productive with this code.
+
+[GitLab Runner Vending Machine for AWS: HA and/or Autoscaling on AWS with Spot](https://youtu.be/llbSTVEeY28)
+
 ### AWS Service Catalog and QuickStarts
 
 The easy button parent cloudformation templates and the underlying full template are compatible with AWS Service Catalog.
+
+### Don't Need Scaling Or Just One Runner?  You're In The Right Place
+
+This template still has a lot of benefits when not used for autoscaling, some of them are:
+
+- Self-Service Vending (SMA) of Runners by Developers.
+- Runners are built with IaC, rather than hand crafted.
+- Automatic Hot (2 hosts) or Warm (1 host that respawns) High Availability.
+- Automatic availability scheduling (runner is off during off hours).
+- Use of Spot Compute.
 
 ### The Runner Part
 
@@ -192,10 +191,10 @@ windows-docker-helloworld:
 
 Successful status from the above:
 
-![job-success.png](./job-success.png)
+![job-success.png](./images/job-success.png)
 
 ### Example GitLab Runners Display
 
 Shows all four types registered.
 
-![Runner Panel](./runner-panel.png)
+![Runner Panel](./images/runner-panel.png)

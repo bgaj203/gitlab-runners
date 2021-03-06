@@ -1,8 +1,0 @@
-
-logit "SAMPLE CUSTOM INSTANCE CONFIGURATION SCRIPT FROM HTTP/S SOURCE"
-logit From http/s source: This custom instance configuration script is dynamically retrieved and run in the context of the Userdata during instance scaling."
-logit "Since it's code can affect already deployed production instance, change control is very important."
-logit "It is important that your code in this file is idempotent as it will be run multiple times on the same instance when there is a reboot."
-logit "Idempotent code is smart enough to skip execution if what it is supposed to do is already done. (e.g. install something/configure something)"
-logit "There are many examples of idempotent code in the main Userdata script of this template."
-logit "This Custom Instance Configuration Script is complete."
