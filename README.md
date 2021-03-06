@@ -187,25 +187,6 @@ The following approach enables:
 aws cloudformation create-stack --stack-name "mynewrunner" --template-url https://gl-public-templates.s3-us-west-2.amazonaws.com/cfn/GitLabElasticScalingRunner.cf.yml --capabilities CAPABILITY_NAMED_IAM --parameters $(cat easy-button-parameter-sets/amazon-linux-2-docker-simple-hot-ha.cfparameters.json | jq -r '.[] | "ParameterKey=" + .ParameterKey + ",ParameterValue=" + .ParameterValue') ParameterKey="3GITLABRunnerInstanceURL",ParameterValue="https://gitlab.com"  ParameterKey="3GITLABRunnerRegTokenList",ParameterValue="your-list-of-comma-seperated-tokens"
 ```
 
-<<<<<<< HEAD
-=======
-#### Easy Buttons Provided
-
-| Name                                                         | Description                                                  |
-| ------------------------------------------------------------ | ------------------------------------------------------------ |
-| amazon-linux-2-docker-simple-hot-ha.cfparameters.json        | Two docker executor instances that will respawn if they terminate, no autoscaling, no spot instances. |
-| amazon-linux-2-docker-simple-scaling-ondemand.cfparameters.json | Two docker executors, scaling based on simple CPU metrics, no spot |
-| amazon-linux-2-docker-simple-scaling-spotonly.cfparameters.json | Two docker executors, scaling based on simple CPU metrics, only spot |
-| amazon-linux-2-docker-simple-scaling-spot-and-ondemand.cfparameters.json | Two docker executors, scaling based on simple CPU metrics, 50/50 mix of spot and ondemand |
-| amazon-linux-2-arm64-docker-simple-hot-ha.cfparameters.json | Two docker executor instances that will respawn if they terminate, no autoscaling, no spot instances, arm64 architecture |
-| windows1903-shell-simple-hot-ha.cfparameters.json            | Two docker executor instances that will respawn if they terminate, no autoscaling, no spot instances. |
-| windows1903-shell-simple-scaling-ondemand.cfparameters.json  | Two docker executors, scaling based on simple CPU metrics, no spot |
-| windows1903-shell-simple-scaling-spotonly.cfparameters.json  | Two docker executors, scaling based on simple CPU metrics, only spot |
-| windows1903-shell-simple-scaling-spot-and-ondemand.cfparameters.json | Two docker executors, scaling based on simple CPU metrics, 50/50 mix of spot and ondemand |
-
-
-
->>>>>>> 77b8f0173042c64e1a946cc0d913335298a2a43c
 ### Prebuilt Runner Configuration Scripts
 
 The follow Runner configuration scripts are provided with the template.
