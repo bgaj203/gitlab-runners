@@ -1,17 +1,17 @@
 # Changelog
 
 All notable changes to this project will be documented in this file.
-
 ## [v1.4.1-alpha7] - 2021-03-06
 - spot terminations no longer attempt to drain jobs - there is no time for that - all jobs running on spot should be mutable (#1)
 - added asg permission autoscaling:UpdateAutoScalingGroup to enable runner and runner jobs to use the aws cli to take scaling actions for the ASG of the runner for predictive or specific scaling (#13)
+- known problem: Windows machines are not completing autoscaling.
 ## [v1.4.1-alpha6] - 2021-03-05
 - Easy Button Parent CF Templates for one button click - compatible with QuickStarts and AWS Service Catalog
 - added CF custom resource for lowercase to ensure bucketname is always lowercase
 - Renamed parameters from SPOTInstanceType to ASGInstanceType to avoid confusion for non-spot and mixed instances implementations
 - Renamed 1OSPatchRunDate to 1OSLastManagedUpdate
 - Simplification of README.md by breaking out FEATURES.md
-## [v1.4.0-alpha6] - 2021-02-02
+## [v1.4.1-alpha7] - 2021-02-02
 - Support for arm64 architecture for Amazon Linux 2
 ## [v1.4.0-alpha5] - 2021-02-02
 
@@ -21,7 +21,7 @@ All notable changes to this project will be documented in this file.
 - Enable a list of runner registration tokens for Linx (#2)
 - Add "NoEcho" to parameter for runner token
 - Semicolon delimiting of runner token list to prevent CF parameter problems
-- Easy Button Paramter Set Examples (#11)
+- Easy Button Parameter Set Examples (#11)
   
 ## [v1.4.0-alpha4] - 2021-01-28
 

@@ -6,7 +6,7 @@
 
 [[_TOC_]]
 
-# Scaled Runner Management Built-In
+## Scaled Runner Management Built-In
 
 - Upgrading, Downgrading, Scaling by updating CloudFormation Stack. (e.g. Changing Instance Type, GitLab Runner Version, Scaling parameters)
 - Latest AMI and/or OS Patching by updating CloudFormation Stack.
@@ -40,25 +40,26 @@
 - Warm HA of single instances via ASG respawning (downtime during respawn).
 - Hot HA by using two instances.
 
-## Scaling
+## Elastic Scaling
 
 - CPU or Memory metric.
 - Stepped Scaling for faster response under steep workload increases.
 - Many metrics beyond CPU and Memory are collected to CloudWatch to for visibility into Network, Disk IO or other bottlenecks - for specialty workloads and instance type tuning.
 
-## Operating Systems, Runner Executors and Hardware Architectures Supported
+## Supported Combinations of Operating Systems, Runner Executors and Hardware Architectures
 
 - Operating Systems: Windows, Linux
 - Runner Executors: Docker, Shell
 - Hardware Architectures: x86_64, ARM64 (Linux Only)
 - Any combination of the above.
 
-## AWS ASG Features and Best Practices
+## AWS Features and Best Practices
 
 - Defaults to Amazon Linux 2 for better density, integration and optimization (including docker optimizations).
 - ASG Launching Life Cycle Hooks to enable patching and reboots for kernel patching.
 - ASG Termination Monitoring and Life Cycle Hooks to enable runner deregistration and job draining (if not a spot instance).
 - Mixed Instances Policy support.
+- These templates can be loaded into AWS Service Catalog to be a part of your internal self-service cloud automation.
 
 ## Extensibility, Reusability and Troubleshooting
 
