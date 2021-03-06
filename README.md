@@ -41,6 +41,8 @@ You will need your GitLab Instance URL and one or more Runner Registration Token
 
 **Note:** The region will automatically be us-east-1, change to your desired region before submitting.
 
+**Note:** The region will automatically be us-east-1, change to your desired region before submitting.
+
 ### Easy Buttons Provided
 
 **Note:** The easy button code in this project is easy to reuse as a pattern to create your own easy button setups for the CloudFormation Console UI or the CLI.
