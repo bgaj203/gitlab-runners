@@ -10,25 +10,9 @@
 
 **Vending Machine** is a metaphor for self-service - also known by the handles Service Management Automation (SMA), Service Catalog - it enables developers to build their own Infrastructure by picking it from a menu or being super simple to deploy.
 
-### Lots of Features Built In (TL;DR)
+### Many Strategic Features Built In (TL;DR)
 
-The list of built-in features - things you don't have to engineer your - is so long most folks do a TL;DR and so they are now covered in [FEATURES.md](./FEATURES.md)
-### Walk Through Video
-
-This video does not cover everything in this readme - both need to be reviewed to be productive with this code.
-
-[GitLab Runner Vending Machine for AWS: HA and/or Autoscaling on AWS with Spot](https://youtu.be/llbSTVEeY28)
-
-### Only Need HA Runners or Self-Service?  You're In The Right Place
-
-This template still has a lot of benefits when not used for autoscaling, some of them are:
-
-- Self-Service Vending (SMA) of Runners by Developers.
-- Runners are built with IaC, rather than hand crafted.
-- Automatic Hot (2 hosts) or Warm (1 host that respawns) High Availability.
-- Automatic availability scheduling (runner is off during off hours).
-- Use of Spot Compute.
-
+The list of built-in features - things you don't have to engineer your - is so long most folks do a TL;DR and so they are now covered in [FEATURES.md](./FEATURES.md) The feature categories are: **Scaled Runner Management Built-In, Runner Cost Management Built-In, Runner Configuration Best Practices, Security, High Availability, Elastic Scaling, AWS Features and Best Practices,Extensibility, Reusability and Troubleshooting, and Supported Combinations of Operating Systems, Runner Executors and Hardware Architectures.**
 ### Easy Buttons
 
 Even if you start with an easy button, you can go back in and do a stack update, you can make your runner more sophisticated after initial deployment.
@@ -74,9 +58,25 @@ Note that you can override parameter file values on the command line - which is 
 aws cloudformation create-stack --stack-name "mynewrunner" --template-url https://s3.us-west-2.amazonaws.com/gl-public-templates/cfn/GitLabElasticScalingRunner.cf.yml --capabilities CAPABILITY_NAMED_IAM --parameters $(cat easy-button-parameter-sets/amazon-linux-2-docker-simple-hot-ha.cfparameters.json | jq -r '.[] | "ParameterKey=" + .ParameterKey + ",ParameterValue=" + .ParameterValue') ParameterKey="5ASGInstanceType1",ParameterValue="m5.xlarge" ParameterKey="3GITLABRunnerInstanceURL",ParameterValue="https://gitlab.com"  ParameterKey="3GITLABRunnerRegTokenList",ParameterValue="your-list-of-comma-seperated-tokens"
 ```
 
+### Walk Through Video of Full Template
+
+This video does not cover everything in this readme - both need to be reviewed to be productive with this code.
+
+[GitLab Runner Vending Machine for AWS: HA and/or Autoscaling on AWS with Spot](https://youtu.be/llbSTVEeY28)
+
 ### AWS Service Catalog and QuickStarts
 
 The easy button parent cloudformation templates and the underlying full template are compatible with AWS Service Catalog.
+
+### Don't Need Scaling Or Just One Runner?  You're In The Right Place
+
+This template still has a lot of benefits when not used for autoscaling, some of them are:
+
+- Self-Service Vending (SMA) of Runners by Developers.
+- Runners are built with IaC, rather than hand crafted.
+- Automatic Hot (2 hosts) or Warm (1 host that respawns) High Availability.
+- Automatic availability scheduling (runner is off during off hours).
+- Use of Spot Compute.
 
 ### The Runner Part
 
