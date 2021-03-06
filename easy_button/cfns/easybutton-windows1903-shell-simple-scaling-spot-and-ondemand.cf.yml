@@ -31,7 +31,7 @@ Resources:
   RnrASG:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: https://gl-public-templates.s3.amazonaws.com/cfn/v1.4.0-alpha6/GitLabElasticScalingRunner.cf.yml
+      TemplateURL: https://gl-public-templates.s3.amazonaws.com/cfn/v1.4.1-alpha7/GitLabElasticScalingRunner.cf.yml
       Parameters:
         1OSPeggedAMIID: AlwaysUseLatest
         1OSInstanceOSPlatform: Windows

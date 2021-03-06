@@ -1,9 +1,7 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Description: >
-  Amazon Linux 2 Docker Simple Scaling Spot and Ondemand Instances (Mixed Instances). 
-  Two docker executors, scaling based on simple CPU metrix, 50/50 mix of spot and ondemand.
-  **Note:** Actual scaling parameters used in this MVP are just to show how to configure scaling - 
-  they are untested with Runner workloads - your can help by contributing your tested scaling parameters in an issue.
+  Amazon Linux 2 Docker Simple Scaling Ondemand Instances. 
+  Two docker executors, scaling based on simple CPU metrics, no spot.
 Parameters:
   3GITLABRunnerInstanceURL:
     Description: >
@@ -31,7 +29,7 @@ Resources:
   RnrASG:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: https://gl-public-templates.s3.amazonaws.com/cfn/v1.4.0-alpha6/GitLabElasticScalingRunner.cf.yml
+      TemplateURL: https://gl-public-templates.s3.amazonaws.com/cfn/v1.4.1-alpha7/GitLabElasticScalingRunner.cf.yml
       Parameters:
         1OSPeggedAMIID: AlwaysUseLatest
         1OSInstanceOSPlatform: Linux
@@ -49,10 +47,12 @@ Resources:
         5ASGAutoScalingSetScaleInUtilizationThreshold: 40
         5ASGAutoScalingSetScaleInUtilizationThresholdSeconds: 60
         5SPOTOnDemandBaseCapacity: 1
-        5SPOTOnDemandPercentageAboveBaseCapacity: 50
         5ASGInstanceType1: !Ref 5ASGInstanceType1
         5ASGInstanceType2: ""
         5ASGInstanceType3: ""
         5ASGInstanceType4: ""
+        5SPOTOnDemandPercentageAboveBaseCapacity: 100
         8DBGKeypairName: ""
         9AWSRetrieveLatestAWSOSAmiIdFromSSM: /aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2
+
+
