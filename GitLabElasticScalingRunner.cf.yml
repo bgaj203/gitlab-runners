@@ -48,7 +48,7 @@ Parameters:
     AllowedValues:
       - amd64
       - arm64      
-  1OSPatchRunDate:
+  1OSLastManagedUpdate:
     Description: >
       Enter the deploy or update date - changing this is required to force a rolling replacement for patching.
       It has a secondary purpose as a convenient way to document the patch date as an environment variable and an EC2 tag.
@@ -215,7 +215,7 @@ Parameters:
       How many seconds does the threshold have to be in alarm to trigger scale down? Requires 5ASGAutoScalingEnabled=true.
     Type: Number
     Default: 0
-  5SPOTInstanceType1:
+  5ASGInstanceType1:
     Description: >
       ATTENTION: DISABLING SPOT *instance usage* is achieved by setting 5SPOTOnDemandPercentageAboveBaseCapacity to 100.
       At least one instancetype is required, use at least 2 to demonstrate spot. You do not have to keep your instance
@@ -225,19 +225,19 @@ Parameters:
     Default: "m5.large"
     AllowedPattern: ^[A-Za-z0-9.]+$
     ConstraintDescription: At least two instancetypes are required, use at least 2 to demonstrate spot.
-  5SPOTInstanceType2:
+  5ASGInstanceType2:
     Description: >
       At least one instancetype is required, use at least 2 to demonstrate spot. You do not have to keep your instance
       sizes small because the lowest price will always be choosen and is likely cheaper than small on demand instances.
       More information: https://docs.aws.amazon.com/autoscaling/ec2/APIReference/API_InstancesDistribution.html
     Type: String
-  5SPOTInstanceType3:
+  5ASGInstanceType3:
     Description: >
       At least one instancetype is required, use at least 2 to demonstrate spot. You do not have to keep your instance
       sizes small because the lowest price will always be choosen and is likely cheaper than small on demand instances.
       More information: https://docs.aws.amazon.com/autoscaling/ec2/APIReference/API_InstancesDistribution.html
     Type: String
-  5SPOTInstanceType4:
+  5ASGInstanceType4:
     Description: >
       At least one instancetype is required, use at least 2 to demonstrate spot. You do not have to keep your instance
       sizes small because the lowest price will always be choosen and is likely cheaper than small on demand instances.
@@ -299,10 +299,10 @@ Conditions:
   UseLatestAMI: !Equals [ !Ref 1OSPeggedAMIID, "AlwaysUseLatest"]
   BuildInstanceRoleToUse: !Equals [ !Ref 9AWSSpecifiedIAMRoleNAME, "CreateOneForMe" ]
   ConfigureAutoscaling: !Equals [ !Ref 5ASGAutoScalingEnabled, "true" ]
-  Provided5SPOTInstanceType1: !Not [ !Equals [ !Ref 5SPOTInstanceType1, "" ]]
-  Provided5SPOTInstanceType2: !Not [ !Equals [ !Ref 5SPOTInstanceType2, "" ]]
-  Provided5SPOTInstanceType3: !Not [ !Equals [ !Ref 5SPOTInstanceType3, "" ]]
-  Provided5SPOTInstanceType4: !Not [ !Equals [ !Ref 5SPOTInstanceType4, "" ]]
+  Provided5ASGInstanceType1: !Not [ !Equals [ !Ref 5ASGInstanceType1, "" ]]
+  Provided5ASGInstanceType2: !Not [ !Equals [ !Ref 5ASGInstanceType2, "" ]]
+  Provided5ASGInstanceType3: !Not [ !Equals [ !Ref 5ASGInstanceType3, "" ]]
+  Provided5ASGInstanceType4: !Not [ !Equals [ !Ref 5ASGInstanceType4, "" ]]
   UseKeypair: !Not [ !Equals [ !Ref 8DBGKeypairName, "" ]]
   EnableSelfTerminationMonitoring: !Not [ !Equals [ !Ref 5ASGSelfMonitorTerminationInterval, "Disabled" ]]
   CreateS3BucketAndPermissions: !Equals [ !Ref 3GITLABRunnerS3CacheBucket, "CreateOneForMe" ]
@@ -472,20 +472,20 @@ Resources:
             Version: !GetAtt ASGLaunchTemplate.LatestVersionNumber
           Overrides:
             - !If
-              - Provided5SPOTInstanceType1
-              - InstanceType: !Ref 5SPOTInstanceType1
+              - Provided5ASGInstanceType1
+              - InstanceType: !Ref 5ASGInstanceType1
               - !Ref "AWS::NoValue"
             - !If
-              - Provided5SPOTInstanceType2
-              - InstanceType: !Ref 5SPOTInstanceType2
+              - Provided5ASGInstanceType2
+              - InstanceType: !Ref 5ASGInstanceType2
               - !Ref "AWS::NoValue"
             - !If
-              - Provided5SPOTInstanceType3
-              - InstanceType: !Ref 5SPOTInstanceType3
+              - Provided5ASGInstanceType3
+              - InstanceType: !Ref 5ASGInstanceType3
               - !Ref "AWS::NoValue"
             - !If
-              - Provided5SPOTInstanceType4
-              - InstanceType: !Ref 5SPOTInstanceType4
+              - Provided5ASGInstanceType4
+              - InstanceType: !Ref 5ASGInstanceType4
               - !Ref "AWS::NoValue"
         InstancesDistribution:
           SpotAllocationStrategy: !Ref 5SPOTSpotAllocationStrategy
@@ -509,7 +509,7 @@ Resources:
         Value: !Ref AWS::StackName
         PropagateAtLaunch: true
       - Key: LAST_CF_PATCH_RUN
-        Value: !Ref 1OSPatchRunDate
+        Value: !Ref 1OSLastManagedUpdate
         PropagateAtLaunch: true
 
   ScheduledActionDailyStart:
@@ -702,7 +702,7 @@ Resources:
 
                 AWS_REGION="$(curl -s 169.254.169.254/latest/meta-data/placement/availability-zone | sed 's/.$//')"
 
-                LAST_CF_PATCH_RUN="${1OSPatchRunDate}" #Forces change for patching rolling replacement and documents last CF triggered patching
+                LAST_CF_PATCH_RUN="${1OSLastManagedUpdate}" #Forces change for patching rolling replacement and documents last CF triggered patching
                 ACTUAL_PATCH_DATE=$(date +%Y-%m-%d)
                 MYINSTANCEID="$(curl http://169.254.169.254/latest/meta-data/instance-id)"
 
@@ -942,7 +942,7 @@ Resources:
 
                 $AWS_REGION="$($(invoke-restmethod 169.254.169.254/latest/meta-data/placement/availability-zone) -replace '.$')"
 
-                $LAST_CF_PATCH_RUN="${1OSPatchRunDate}" #Forces change for patching rolling replacement and documents last CF triggered patching
+                $LAST_CF_PATCH_RUN="${1OSLastManagedUpdate}" #Forces change for patching rolling replacement and documents last CF triggered patching
                 $ACTUAL_PATCH_DATE="$(date -format 'yyyy-MM-dd')"
                 $MYINSTANCEID="$(invoke-restmethod http://169.254.169.254/latest/meta-data/instance-id)"
                 $NAMEOFASG=$(aws ec2 describe-tags --region $AWS_REGION --filters Name=resource-id,Values=$MYINSTANCEID Name=key,Values=aws:autoscaling:groupName | convertfrom-json).tags.value
