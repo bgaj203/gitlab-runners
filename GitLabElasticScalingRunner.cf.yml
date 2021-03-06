@@ -3,12 +3,6 @@ AWSTemplateFormatVersion: '2010-09-09'
 Description: >
   Creates a GitLab Runner ASG.
 Parameters:
-  1AAAAATTENTIONDoesStackNameOnlyHaveLowerCaseCharacters:
-    Description: "ARE ALL CHARACTERS IN YOUR STACK NAME LOWER CASE?"
-    Type: String
-    Default: "Yes All Characters In The Stack Name Are Lower Case."
-    AllowedValues: [ "Yes All Characters In The Stack Name Are Lower Case." ]
-    ConstraintDescription: "This must be set to 'Yes All Characters In The Stack Name Are Lower Case.'"
   1AAAATemplateVersion:
     Description: "Version of this template."
     Type: String
@@ -106,7 +100,7 @@ Parameters:
     Description: >
       A bucket to which all instances will be given read and write permissions for a shared S3 Cache.
       Values: "none" - do not create bucket or permissions.
-      "CreateOneForMe" - create a new, ASG unique bucket and permissions. Uses the stack name, which then must be all lowercase for the bucket to create properly.
+      "CreateOneForMe" - create a new, ASG unique bucket and permissions.
       "SpecificName" - presumed to be a preexisting bucket to which read / write permissions are already present. Generally used
       with a customer override IAM Instance Profile Role.
     Type: String
