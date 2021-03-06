@@ -6,15 +6,15 @@
   },
   {
     "ParameterKey": "1OSInstanceOSPlatform",
-    "ParameterValue": "Linux"
+    "ParameterValue": "Windows"
   },
   {
     "ParameterKey": "9AWSRetrieveLatestAWSOSAmiIdFromSSM",
-    "ParameterValue": "/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2"
+    "ParameterValue": "/aws/service/ami-windows-latest/Windows_Server-1903-English-Core-ContainersLatest"
   }, 
   {
     "ParameterKey": "3INSTConfigurationScript",
-    "ParameterValue": "https://gitlab.com/guided-explorations/aws/gitlab-runner-autoscaling-aws-asg/-/raw/master/runner_configs/amazon-linux-2-docker.sh"
+    "ParameterValue": "https://gitlab.com/guided-explorations/aws/gitlab-runner-autoscaling-aws-asg/-/raw/master/runner_configs/windows-shell.ps1"
   },
   {
     "ParameterKey": "4ASGDesiredCapacity",
@@ -77,16 +77,12 @@
     "ParameterValue": "60"
   },
   {
-    "ParameterKey": "Var",
-    "ParameterValue": ""
-  },
-  {
     "ParameterKey": "5SPOTOnDemandBaseCapacity",
-    "ParameterValue": "0"
+    "ParameterValue": "1"
   },
   {
     "ParameterKey": "5SPOTOnDemandPercentageAboveBaseCapacity",
-    "ParameterValue": "0"
+    "ParameterValue": "50"
   },
   {
     "ParameterKey": "8DBGKeypairName",

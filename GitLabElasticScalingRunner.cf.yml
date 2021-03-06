@@ -48,9 +48,9 @@ Parameters:
     AllowedValues:
       - amd64
       - arm64      
-  1OSPatchRunDate:
+  1OSLastManagedUpdate:
     Description: >
-      Enter the deploy or update date - changing this is required to force a rolling replacement for patching.
+      Enter update date - changing this is required to force a rolling replacement for patching.
       It has a secondary purpose as a convenient way to document the patch date as an environment variable and an EC2 tag.
       It is just a string that you could set to any value and has no role in selecting patches or anything else - but it
       does need to change from it's previous setting in order for the update to be forced.
@@ -420,9 +420,9 @@ Resources:
     Type: AWS::S3::Bucket
     Condition: CreateS3BucketAndPermissions
     Properties:
-      BucketName: !Sub "${AWS::StackName}-asgbucket"
+      BucketName: !GetAtt S3BucketNameLower.OutputString
       VersioningConfiguration:
-        Status: Enabled
+        Status: Suspended
 
   InstanceASG:
     Type: AWS::AutoScaling::AutoScalingGroup
@@ -503,7 +503,7 @@ Resources:
         Value: !Ref AWS::StackName
         PropagateAtLaunch: true
       - Key: LAST_CF_PATCH_RUN
-        Value: !Ref 1OSPatchRunDate
+        Value: !Ref 1OSLastManagedUpdate
         PropagateAtLaunch: true
 
   ScheduledActionDailyStart:
@@ -694,7 +694,7 @@ Resources:
 
                 AWS_REGION="$(curl -s 169.254.169.254/latest/meta-data/placement/availability-zone | sed 's/.$//')"
 
-                LAST_CF_PATCH_RUN="${1OSPatchRunDate}" #Forces change for patching rolling replacement and documents last CF triggered patching
+                LAST_CF_PATCH_RUN="${1OSLastManagedUpdate}" #Forces change for patching rolling replacement and documents last CF triggered patching
                 ACTUAL_PATCH_DATE=$(date +%Y-%m-%d)
                 MYINSTANCEID="$(curl http://169.254.169.254/latest/meta-data/instance-id)"
 
@@ -936,7 +936,7 @@ Resources:
 
                 $AWS_REGION="$($(invoke-restmethod 169.254.169.254/latest/meta-data/placement/availability-zone) -replace '.$')"
 
-                $LAST_CF_PATCH_RUN="${1OSPatchRunDate}" #Forces change for patching rolling replacement and documents last CF triggered patching
+                $LAST_CF_PATCH_RUN="${1OSLastManagedUpdate}" #Forces change for patching rolling replacement and documents last CF triggered patching
                 $ACTUAL_PATCH_DATE="$(date -format 'yyyy-MM-dd')"
                 $MYINSTANCEID="$(invoke-restmethod http://169.254.169.254/latest/meta-data/instance-id)"
                 $NAMEOFASG=$(aws ec2 describe-tags --region $AWS_REGION --filters Name=resource-id,Values=$MYINSTANCEID Name=key,Values=aws:autoscaling:groupName | convertfrom-json).tags.value
@@ -1113,3 +1113,52 @@ Resources:
                   cf-success
                 }
                 </powershell>
+
+  # Custom resource to transform input to lowercase.                                             
+  LowerCaseLambda:
+    Type: 'AWS::Lambda::Function'
+    Properties:
+      Description: Returns the lowercase version of a string
+      MemorySize: 256
+      Runtime: python3.8
+      Handler: index.lambda_handler
+      Role: !GetAtt LowerCaseLambdaRole.Arn
+      Timeout: 30
+      Code:
+        ZipFile: |
+          import cfnresponse
+
+          def lambda_handler(event, context):                                                    
+              output = event['ResourceProperties'].get('InputString', '').lower()                
+              responseData = {'OutputString': output}                                            
+              cfnresponse.send(event, context, cfnresponse.SUCCESS, responseData)                
+
+  LowerCaseLambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              Service:
+                - "lambda.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+      Policies:
+        - PolicyName: "lambda-write-logs"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: "Allow"
+                Action:
+                  - "logs:CreateLogGroup"
+                  - "logs:CreateLogStream"
+                  - "logs:PutLogEvents"
+                Resource: "arn:aws:logs:*:*"
+
+  S3BucketNameLower:
+    Type: Custom::Lowercase
+    Properties:
+      ServiceToken: !GetAtt LowerCaseLambda.Arn
+      InputString: !Sub "${AWS::StackName}-asgbucket"

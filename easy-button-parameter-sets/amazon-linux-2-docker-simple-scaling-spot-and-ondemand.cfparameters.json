@@ -25,10 +25,6 @@
     "ParameterValue": "false"
   }, 
   {
-    "ParameterKey": "5SPOTOnDemandPercentageAboveBaseCapacity",
-    "ParameterValue": "100"
-  },
-  {
     "ParameterKey": "3GITLABRunnerTagList",
     "ParameterValue": ""
   },
@@ -75,10 +71,6 @@
   {
     "ParameterKey": "5ASGAutoScalingSetScaleInUtilizationThresholdSeconds",
     "ParameterValue": "60"
-  },
-  {
-    "ParameterKey": "Var",
-    "ParameterValue": ""
   },
   {
     "ParameterKey": "5SPOTOnDemandBaseCapacity",
