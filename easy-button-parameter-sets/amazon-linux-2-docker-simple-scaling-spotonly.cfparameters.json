@@ -25,27 +25,23 @@
     "ParameterValue": "false"
   }, 
   {
-    "ParameterKey": "5SPOTOnDemandPercentageAboveBaseCapacity",
-    "ParameterValue": "100"
-  },
-  {
     "ParameterKey": "3GITLABRunnerTagList",
     "ParameterValue": ""
   },
   {
-    "ParameterKey": "5SPOTInstanceType1",
+    "ParameterKey": "5ASGInstanceType1",
     "ParameterValue": "m5.large"
   },
   {
-    "ParameterKey": "5SPOTInstanceType2",
+    "ParameterKey": "5ASGInstanceType2",
     "ParameterValue": ""
   },
   {
-    "ParameterKey": "5SPOTInstanceType3",
+    "ParameterKey": "5ASGInstanceType3",
     "ParameterValue": ""
   },
   {
-    "ParameterKey": "5SPOTInstanceType4",
+    "ParameterKey": "5ASGInstanceType4",
     "ParameterValue": ""
   },
   {
@@ -75,10 +71,6 @@
   {
     "ParameterKey": "5ASGAutoScalingSetScaleInUtilizationThresholdSeconds",
     "ParameterValue": "60"
-  },
-  {
-    "ParameterKey": "Var",
-    "ParameterValue": ""
   },
   {
     "ParameterKey": "5SPOTOnDemandBaseCapacity",
