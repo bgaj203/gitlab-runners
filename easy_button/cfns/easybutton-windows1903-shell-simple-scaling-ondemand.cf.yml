@@ -32,7 +32,12 @@ Resources:
     Type: AWS::CloudFormation::Stack
     Properties:
       TemplateURL: https://gl-public-templates.s3.amazonaws.com/cfn/v1.4.1-alpha7/GitLabElasticScalingRunner.cf.yml
-      Parameters:
+      Tags:
+        - Key: Product
+          Value: GitLab
+        - Key: Function
+          Value: GitLabRunner
+       Parameters:
         1OSPeggedAMIID: AlwaysUseLatest
         1OSInstanceOSPlatform: Windows
         1OSPatchScope: NoPatching-OnlyForDebugging
