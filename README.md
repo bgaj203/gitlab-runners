@@ -6,6 +6,8 @@
 
 [[_TOC_]]
 
+[See what's Changed Over Time in the CHANGELOG.md](./CHANGELOG.md)
+
 ### Vending Machine?
 
 **Vending Machine** is a metaphor for self-service - also known by the handles Service Management Automation (SMA), Service Catalog - it enables developers to build their own Infrastructure by picking it from a menu or being super simple to deploy.
@@ -13,6 +15,7 @@
 ### Many Strategic Features Built In (TL;DR)
 
 The list of built-in features - things you don't have to engineer your - is so long most folks do a TL;DR and so they are now covered in [FEATURES.md](./FEATURES.md) The feature categories are: **Scaled Runner Management Built-In, Runner Cost Management Built-In, Runner Configuration Best Practices, Security, High Availability, Elastic Scaling, AWS Features and Best Practices,Extensibility, Reusability and Troubleshooting, and Supported Combinations of Operating Systems, Runner Executors and Hardware Architectures.**
+
 ### Easy Buttons
 
 Even if you start with an easy button, you can go back in and do a stack update, you can make your runner more sophisticated after initial deployment.
@@ -24,6 +27,7 @@ You will need your GitLab Instance URL and one or more Runner Registration Token
 **Note:** Runner Registration tokens are in the CI/CD settings of every group and every project on a GitLab instance. They are also available the Instance level for self-managed instances.  When you register a runner at the group or instance level, it is available to all projects in the downbound group heirarchy.
 
 **Note:** The region will automatically be us-east-1, change to your desired region before submitting.
+
 ### Easy Buttons Provided
 
 **Note:** The easy button code in this project is easy to reuse as a pattern to create your own easy button setups for the CloudFormation Console UI or the CLI.
