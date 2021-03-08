@@ -18,6 +18,8 @@ The list of built-in features - things you don't have to engineer your - is so l
 
 ### Easy Buttons
 
+[Walkthrough Video of the Easy Button Capability](https://youtu.be/2dXw8Dx6ENw)
+
 Even if you start with an easy button, you can go back in and do a stack update, you can make your runner more sophisticated after initial deployment.
 
 Clicking the icon in the Easy Button column below will launch the specific example in the CloudFormation Console.
