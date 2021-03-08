@@ -25,7 +25,7 @@
 
 - GitLab Runner tagging for compute type (Spot/On Demand), OS, archtecture (if not x86_64), executor type - so that individual jobs can select on these attributes.  
 - Runner tags enable pipeline engineers to ensure only mutable jobs run on spot runners.
-- Shared  Runner Cache automatically configured to use S3.
+- Shared Runner Cache per-asg is automatically configured and uses S3 object storage. Can override bucket name to share cache across multiple ASGs if it makes sense to do so.
 - Runner deregistration and draining (for non-spot) during scale-in to prevent many dead tokens in GitLab.
 
 ## Security
@@ -63,6 +63,7 @@
 
 ## Extensibility, Reusability and Troubleshooting
 
+- Easy button CloudFormation templates and parameter sets are easily used as a pattern for anyone to add their most common or desired patterns.
 - Modular, overridable runner configuration scripts.
 - SSM Agent installed for gaining terminal access.
 
