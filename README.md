@@ -26,7 +26,9 @@ You will need your GitLab Instance URL and one or more Runner Registration Token
 
 **Note:** Runner Registration tokens are in the CI/CD settings of every group and every project on a GitLab instance. They are also available the Instance level for self-managed instances.  When you register a runner at the group or instance level, it is available to all projects in the downbound group heirarchy.
 
-**Note:** The region will automatically be us-east-1, change to your desired region before submitting.
+**Note:** The region will automatically be us-east-1, change to your desired region right after the template loads.
+
+**Note:** Easy buttons currently deploy only to the default VPC of an AWS region - which, if unaltered, can generally reach GitLab.com.  For self-hosted GitLab, the default VPC will need to be able to reach your GitLab instance, including, but not limited to appropriate DNS configuration, network routing and firewall configuration. An issue is open to adapt this template to be able to specify an existing VPC to deploy into, you can follow it here: [Enable Specifying VPC and Subnet](https://gitlab.com/guided-explorations/aws/gitlab-runner-autoscaling-aws-asg/-/issues/17)
 
 ### Easy Buttons Provided
 
