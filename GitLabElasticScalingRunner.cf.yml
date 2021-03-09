@@ -6,8 +6,8 @@ Parameters:
   1AAAATemplateVersion:
     Description: "Version of this template."
     Type: String
-    Default: "v1.4.1-alpha7"
-    AllowedValues: [ "v1.4.1-alpha7" ]
+    Default: "v1.4.1-alpha8"
+    AllowedValues: [ "v1.4.1-alpha8" ]
     ConstraintDescription: "1AAAATemplateVersion is the template version number and cannot be changed at runtime."
   1AAASourceProject:
     Description: >
@@ -160,6 +160,9 @@ Parameters:
       Not used if 4ASGScheduledStartupCron = Disabled.
     Type: Number
     Default: 1
+  4ASGSubnetIds:
+    Description: Select one or more Subnets from the SAME VPC to deploy the runner into. Leave blank for all subnets in the default VPC.
+    Type: List<AWS::EC2::Subnet::Id>
   5ASGAutoScalingEnabled:
     Description: >
       Setting to false still allows for High Availability - either HOT/Warm HA with 1 instance or HOT/HOT HA for 2 or more instances.
@@ -304,6 +307,7 @@ Conditions:
   CreateStopSchedule: !Not [ !Equals [ !Ref 4ASGScheduledShutdownCron, "Disabled" ]]
   UseCPUUtilizationMetric: !Equals [ !Ref 5ASGAutoScalingMetricTypeToMonitor, "CPU" ]
   MemoryUtilizationMetric: !Equals [ !Ref 5ASGAutoScalingMetricTypeToMonitor, "Memory" ]
+  #UseSpecifiedSubnets: !Not [ !Equals [ !Ref 4ASGSubnetIds, "" ]] #Lists are not strings
 
 Rules:
   WindowsPlatformShouldNotUseDefaultSSMParameter:
@@ -450,14 +454,13 @@ Resources:
         WillReplace: !If [ReplaceEntireASG,true,false]
     Properties:
       HealthCheckGracePeriod: 3
-      AvailabilityZones:
-        Fn::GetAZs:
-          Ref: AWS::Region
       MinSize: '1'
       MaxSize: !Ref 5ASGAutoScalingMaxSize
       DesiredCapacity: !Ref 4ASGDesiredCapacity
-      #Demonstrates an 1) **Optional dependency** on an ELB which can be sourced from either
-      # 2) **A parent stack**, or 3) **overridden by a parameter** in this stack
+      VPCZoneIdentifier: !If [DoNotUseSpecifiedSubnets,"AWS::NoValue",!Ref 4ASGSubnetIds]
+      AvailabilityZones:
+        Fn::GetAZs:
+          Ref: AWS::Region
       MixedInstancesPolicy:
         LaunchTemplate:
           LaunchTemplateSpecification:
