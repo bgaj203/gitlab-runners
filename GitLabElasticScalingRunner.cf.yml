@@ -6,8 +6,8 @@ Parameters:
   1AAAATemplateVersion:
     Description: "Version of this template."
     Type: String
-    Default: "v1.4.1-alpha7"
-    AllowedValues: [ "v1.4.1-alpha7" ]
+    Default: "v1.4.2-alpha7"
+    AllowedValues: [ "v1.4.2-alpha7" ]
     ConstraintDescription: "1AAAATemplateVersion is the template version number and cannot be changed at runtime."
   1AAASourceProject:
     Description: >

@@ -2,7 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
-## [v1.4.1-alpha7] - 2021-03-06
+
+## [v1.4.2-alpha7] - 2021-03-09
+- added easy button for linux docker single instance warm HA with scheduling ability
+
+## [v1.-alpha7] - 2021-03-06
 - spot terminations no longer attempt to drain jobs - there is no time for that - all jobs running on spot should be mutable (#1)
 - added asg permission autoscaling:UpdateAutoScalingGroup to enable runner and runner jobs to use the aws cli to take scaling actions for the ASG of the runner for predictive or specific scaling (#13)
 - known problem: Windows machines are not completing autoscaling.
