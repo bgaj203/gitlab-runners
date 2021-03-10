@@ -160,6 +160,20 @@ Parameters:
       Not used if 4ASGScheduledStartupCron = Disabled.
     Type: Number
     Default: 1
+  4ASGSpecifyVPCandSubnets:
+    Description: >
+      Indicate you will be specifying the VPC and Subnet. If set to false, the default VPC and subnets will be used.  If setting to true, be sure
+      the VPC and Subnets are setup in such a way that your runners can reach your desired GitLab instance URL on port 443. You will also need to 
+      set the values for 4ASGVPCId and 4ASGSubnetIds.
+    Type: String
+    Default: false
+    AllowedValues:
+      - true
+      - false
+  #4ASGVPCId:
+  #  Description: >
+  #    Pick an existing VPC in this region of this account.
+  #  Type: AWS::EC2::VPC::Id
   4ASGSubnetIds:
     Description: Select one or more Subnets from the SAME VPC to deploy the runner into. Leave blank for all subnets in the default VPC.
     Type: List<AWS::EC2::Subnet::Id>
@@ -307,7 +321,7 @@ Conditions:
   CreateStopSchedule: !Not [ !Equals [ !Ref 4ASGScheduledShutdownCron, "Disabled" ]]
   UseCPUUtilizationMetric: !Equals [ !Ref 5ASGAutoScalingMetricTypeToMonitor, "CPU" ]
   MemoryUtilizationMetric: !Equals [ !Ref 5ASGAutoScalingMetricTypeToMonitor, "Memory" ]
-  #UseSpecifiedSubnets: !Not [ !Equals [ !Ref 4ASGSubnetIds, "" ]] #Lists are not strings
+  UseSpecifiedSubnets: !Equals [ !Ref 4ASGSpecifyVPCandSubnets, "true" ] #Lists are not strings
 
 Rules:
   WindowsPlatformShouldNotUseDefaultSSMParameter:
@@ -315,6 +329,16 @@ Rules:
     Assertions:
       - Assert: !Not [ !Equals [ !Ref 9AWSRetrieveLatestAWSOSAmiIdFromSSM, "/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2" ]]
         AssertDescription: "You have indicated the Windows platform in the parameter 1OSInstanceOSPlatform, but left the default Linux SSM Parameter path in 9AWSRetrieveLatestAWSOSAmiIdFromSSM"
+
+  SubnetsInVPC:
+    Assertions:
+      - Assert:
+          'Fn::EachMemberIn':
+            - 'Fn::ValueOfAll':
+                - 'AWS::EC2::Subnet::Id'
+                - VpcId
+            - 'Fn::RefAll': 'AWS::EC2::VPC::Id'
+        AssertDescription: All subnets must exist in the VPC"
 
 Resources:
   #IAM Policies for Instance Profile:
@@ -457,10 +481,12 @@ Resources:
       MinSize: '1'
       MaxSize: !Ref 5ASGAutoScalingMaxSize
       DesiredCapacity: !Ref 4ASGDesiredCapacity
-      VPCZoneIdentifier: !If [DoNotUseSpecifiedSubnets,"AWS::NoValue",!Ref 4ASGSubnetIds]
-      AvailabilityZones:
-        Fn::GetAZs:
-          Ref: AWS::Region
+      VPCZoneIdentifier: !If [ UseSpecifiedSubnets,!Join [ ',', !Ref 4ASGSubnetIds ],"AWS::NoValue" ]
+      AvailabilityZones: !If 
+        - UseSpecifiedSubnets
+        - !Ref AWS::NoValue
+        - - Fn::GetAZs:
+              Ref: AWS::Region
       MixedInstancesPolicy:
         LaunchTemplate:
           LaunchTemplateSpecification:
