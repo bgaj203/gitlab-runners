@@ -27,7 +27,7 @@
 - Runner tags enable pipeline engineers to ensure only mutable jobs run on spot runners.
 - Shared Runner Cache per-asg is automatically configured and uses S3 object storage. Can override bucket name to share cache across multiple ASGs if it makes sense to do so.
 - Runner deregistration and draining (for non-spot) during scale-in to prevent many dead tokens in GitLab.
-- Runners are tagged when any AWS scaling schedule is in use - this helps teams under
+- Runners are tagged when any AWS scaling schedule is in use - this helps everyone understand why a specific runner might go offline at certain times.
 
 ## Security
 
@@ -61,6 +61,8 @@
 - ASG Termination Monitoring and Life Cycle Hooks to enable runner deregistration and job draining (if not a spot instance).
 - Mixed Instances Policy support.
 - These templates can be loaded into AWS Service Catalog to be a part of your internal self-service cloud automation.
+- Stackname is used in all created resources so that all related resources can be quickly identified as related.
+- 
 
 ## Extensibility, Reusability and Troubleshooting
 
