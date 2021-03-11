@@ -125,7 +125,7 @@ Parameters:
       For testing, a desired capacity of 4 is a good number for testing rolling updates.
       For testing all other functionality 1 is sufficient to observe how the userdata code processes to accomplish the yum update and reboot before the lifecycle hook.
     Type: Number
-    Default: 2
+    Default: 1
   4ASGUpdateType:
     Description: (Only Applies To Updates) Whether ASG Update Should Do a Rolling Update or an ASG Replacement.
     Type: String
@@ -170,13 +170,22 @@ Parameters:
     AllowedValues:
       - true
       - false
-  #4ASGVPCId:
-  #  Description: >
-  #    Pick an existing VPC in this region of this account.
-  #  Type: AWS::EC2::VPC::Id
   4ASGSubnetIds:
-    Description: Select one or more Subnets from the SAME VPC to deploy the runner into. Leave blank for all subnets in the default VPC.
-    Type: List<AWS::EC2::Subnet::Id>
+    Description: >
+      UseDefaultSubnetsInDefaultVPC = Most automatic.  Assumes default VPC is present and default configured, including a subnet for every AZ in the region.
+      Comma separated list of one or more Subnets from the SAME VPC to deploy the runner into. Leave blank for all subnets in the default VPC.
+      You can lookup subnet ids in the VPC console in the region and account you are deploying to: https://us-west-2.console.aws.amazon.com/vpc/home?subnets:&region=us-west-2#subnets:
+      Be sure all selected subnets are in the same VPC.
+      # Note this parameter does not use Type: List<AWS::EC2::Subnet::Id> because then there is no way to simply use the default VPC.
+    Type: String
+    Default: UseDefaultSubnetsInDefaultVPC
+  4ASGAvailabilityZones:
+    Description: >
+      UseDefaultSubnetsInDefaultVPC = Most automatic.  Assumes default VPC is present and default configured, including a subnet for every AZ in the region.
+      Comma separated list of availability zones that exactly match the list of subnets choosen.  
+      Subnet ids to AZ mapping exists in the VPC console in the region and account you are deploying to: https://us-west-2.console.aws.amazon.com/vpc/home?subnets:&region=us-west-2#subnets:
+    Type: String
+    Default: UseDefaultSubnetsInDefaultVPC    
   5ASGAutoScalingEnabled:
     Description: >
       Setting to false still allows for High Availability - either HOT/Warm HA with 1 instance or HOT/HOT HA for 2 or more instances.
@@ -322,6 +331,7 @@ Conditions:
   UseCPUUtilizationMetric: !Equals [ !Ref 5ASGAutoScalingMetricTypeToMonitor, "CPU" ]
   MemoryUtilizationMetric: !Equals [ !Ref 5ASGAutoScalingMetricTypeToMonitor, "Memory" ]
   UseSpecifiedSubnets: !Equals [ !Ref 4ASGSpecifyVPCandSubnets, "true" ] #Lists are not strings
+  UseSpecifiedSubnets2: !Not [ !Equals [ !Ref 4ASGSubnetIds, "UseDefaultSubnetsInDefaultVPC"]]
 
 Rules:
   WindowsPlatformShouldNotUseDefaultSSMParameter:
@@ -329,16 +339,15 @@ Rules:
     Assertions:
       - Assert: !Not [ !Equals [ !Ref 9AWSRetrieveLatestAWSOSAmiIdFromSSM, "/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2" ]]
         AssertDescription: "You have indicated the Windows platform in the parameter 1OSInstanceOSPlatform, but left the default Linux SSM Parameter path in 9AWSRetrieveLatestAWSOSAmiIdFromSSM"
-
-  SubnetsInVPC:
-    Assertions:
-      - Assert:
-          'Fn::EachMemberIn':
-            - 'Fn::ValueOfAll':
-                - 'AWS::EC2::Subnet::Id'
-                - VpcId
-            - 'Fn::RefAll': 'AWS::EC2::VPC::Id'
-        AssertDescription: All subnets must exist in the VPC"
+  # SubnetsInVPC:
+  #   Assertions:
+  #     - Assert:
+  #         'Fn::EachMemberIn':
+  #           - 'Fn::ValueOfAll':
+  #               - 'AWS::EC2::Subnet::Id'
+  #               - VpcId
+  #           - 'Fn::RefAll': 'AWS::EC2::VPC::Id'
+  #       AssertDescription: All subnets must exist in the VPC"
 
 Resources:
   #IAM Policies for Instance Profile:
@@ -481,12 +490,9 @@ Resources:
       MinSize: '1'
       MaxSize: !Ref 5ASGAutoScalingMaxSize
       DesiredCapacity: !Ref 4ASGDesiredCapacity
-      VPCZoneIdentifier: !If [ UseSpecifiedSubnets,!Join [ ',', !Ref 4ASGSubnetIds ],"AWS::NoValue" ]
-      AvailabilityZones: !If 
-        - UseSpecifiedSubnets
-        - !Ref AWS::NoValue
-        - - Fn::GetAZs:
-              Ref: AWS::Region
+      VPCZoneIdentifier: !If [ UseSpecifiedSubnets2,!Split [',', !Ref 4ASGSubnetIds],!GetAtt DefaultVPCSubnetIds.OutputString ]
+      #!GetAtt DefaultVPCSubnetIds.OutputString
+      AvailabilityZones: !If [ UseSpecifiedSubnets2, !Split [',', !Ref 4ASGAvailabilityZones] ,!GetAZs ]
       MixedInstancesPolicy:
         LaunchTemplate:
           LaunchTemplateSpecification:
@@ -1145,25 +1151,127 @@ Resources:
                 </powershell>
 
   # Custom resource to transform input to lowercase.                                             
-  LowerCaseLambda:
+  LowerCasePlusRandomLambda:
     Type: 'AWS::Lambda::Function'
     Properties:
       Description: Returns the lowercase version of a string
       MemorySize: 256
       Runtime: python3.8
-      Handler: index.lambda_handler
-      Role: !GetAtt LowerCaseLambdaRole.Arn
+      Handler: index.handler
+      Role: !GetAtt CFCustomResourceLambdaRole.Arn
       Timeout: 30
       Code:
         ZipFile: |
           import cfnresponse
+          import random
+          import string
+          import logging
+          import signal
 
-          def lambda_handler(event, context):                                                    
-              output = event['ResourceProperties'].get('InputString', '').lower()                
-              responseData = {'OutputString': output}                                            
-              cfnresponse.send(event, context, cfnresponse.SUCCESS, responseData)                
+          LOGGER = logging.getLogger()
+          LOGGER.setLevel(logging.INFO)
 
-  LowerCaseLambdaRole:
+          def handler(event, context):
+              # Setup alarm for remaining runtime minus a second
+              signal.alarm((int(context.get_remaining_time_in_millis() / 1000)) - 1)
+              try:
+                  LOGGER.info('REQUEST RECEIVED:\n %s', event)
+                  LOGGER.info('REQUEST RECEIVED:\n %s', context)
+                  if event['RequestType'] == 'Create':
+                      LOGGER.info('CREATE!')
+                      randstring = ''.join(random.SystemRandom().choice(string.ascii_lowercase + string.digits) for _ in range(5))                                                   
+                      output = event['ResourceProperties'].get('InputString', '').lower() + '-' + randstring               
+                      responseData = {'OutputString': output}                                            
+                      cfnresponse.send(event, context, cfnresponse.SUCCESS, responseData)
+                  elif event['RequestType'] == 'Delete':
+                      LOGGER.info('DELETE!')
+                      cfnresponse.send(event, context, "SUCCESS",
+                                    {"Message": "Resource deletion successful!"})                                       
+              except: #pylint: disable=W0702
+                  LOGGER.info('FAILED!')
+                  cfnresponse.send(event, context, "FAILED", {
+                      "Message": "Exception during processing"})
+
+          def timeout_handler(_signal, _frame):
+              '''Handle SIGALRM'''
+              raise Exception('Time exceeded')
+
+          signal.signal(signal.SIGALRM, timeout_handler)               
+
+
+  DefaultVPCSubnetIdsLambda:
+    Type: 'AWS::Lambda::Function'
+    Properties:
+      Description: Returns the lowercase version of a string
+      MemorySize: 256
+      Runtime: python3.8
+      Handler: index.handler
+      Role: !GetAtt CFCustomResourceLambdaRole.Arn
+      Timeout: 60
+      Code:
+        ZipFile: |
+          import logging
+          import signal
+          import cfnresponse
+          import boto3
+
+          LOGGER = logging.getLogger()
+          LOGGER.setLevel(logging.INFO)
+
+          def handler(event, context):
+              # Setup alarm for remaining runtime minus a second
+              signal.alarm((int(context.get_remaining_time_in_millis() / 1000)) - 1)
+              try:
+                  LOGGER.info('REQUEST RECEIVED:\n %s', event)
+                  LOGGER.info('REQUEST RECEIVED:\n %s', context)
+                  if event['RequestType'] == 'Create':
+                      LOGGER.info('CREATE!')
+                      request_properties = event.get('ResourceProperties', None)
+                      region = request_properties['Region']
+                      client = boto3.client(region, 'ec2')
+                      #client = boto3.resource('ec2', region_name=region)
+
+                      params = {
+                          'Filters': [
+                              {
+                                  'Name': 'state',
+                                  'Values': ['available'],
+                              },
+                              {
+                                  'Name': 'isDefault',
+                                  'Values': ['false'],
+                              }
+                          ]
+                      }
+                      vpcs = client.describe_vpcs(**params)
+                      if vpcs:
+                          LOGGER.info('Got a VPC')
+                          for vpc in vpcs['Vpcs']:
+                            LOGGER.info('Checking VPC')
+                            subnet_ids = client.describe_subnets(vpc['VpcId'])
+
+                      # response = client.describe_vpcs()
+                      # for vpc in response['Vpcs']:
+                      #     if vpc['IsDefault'] == True:
+                      #         subnet_ids = client.describe_subnets(vpc['VpcId'])
+                      responseData = {'OutputString': subnet_ids}
+                      cfnresponse.send(event, context, cfnresponse.SUCCESS, responseData)                                  
+                  elif event['RequestType'] == 'Delete':
+                      LOGGER.info('DELETE!')
+                      cfnresponse.send(event, context, "SUCCESS",
+                                    {"Message": "Resource deletion successful!"})
+              except: #pylint: disable=W0702
+                  LOGGER.info('FAILED!')
+                  cfnresponse.send(event, context, "FAILED", {
+                      "Message": "Exception during processing"})
+
+          def timeout_handler(_signal, _frame):
+              '''Handle SIGALRM'''
+              raise Exception('Time exceeded')
+
+          signal.signal(signal.SIGALRM, timeout_handler)
+
+  CFCustomResourceLambdaRole:
     Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument:
@@ -1190,5 +1298,10 @@ Resources:
   S3BucketNameLower:
     Type: Custom::Lowercase
     Properties:
-      ServiceToken: !GetAtt LowerCaseLambda.Arn
+      ServiceToken: !GetAtt LowerCasePlusRandomLambda.Arn
       InputString: !Sub "${AWS::StackName}"
+
+  DefaultVPCSubnetIds:
+    Type: Custom::DefaultVPCSubnetIds
+    Properties:
+      ServiceToken: !GetAtt DefaultVPCSubnetIdsLambda.Arn
