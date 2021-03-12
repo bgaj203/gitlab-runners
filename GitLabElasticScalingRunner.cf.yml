@@ -1150,7 +1150,7 @@ Resources:
                 }
                 </powershell>
 
-  # Custom resource to transform input to lowercase.                                             
+  # Custom resource to transform input to lowercase.
   LowerCasePlusRandomLambda:
     Type: 'AWS::Lambda::Function'
     Properties:
@@ -1179,14 +1179,14 @@ Resources:
                   LOGGER.info('REQUEST RECEIVED:\n %s', context)
                   if event['RequestType'] == 'Create':
                       LOGGER.info('CREATE!')
-                      randstring = ''.join(random.SystemRandom().choice(string.ascii_lowercase + string.digits) for _ in range(5))                                                   
-                      output = event['ResourceProperties'].get('InputString', '').lower() + '-' + randstring               
-                      responseData = {'OutputString': output}                                            
+                      randstring = ''.join(random.SystemRandom().choice(string.ascii_lowercase + string.digits) for _ in range(5))
+                      output = event['ResourceProperties'].get('InputString', '').lower() + '-' + randstring
+                      responseData = {'OutputString': output}
                       cfnresponse.send(event, context, cfnresponse.SUCCESS, responseData)
                   elif event['RequestType'] == 'Delete':
                       LOGGER.info('DELETE!')
                       cfnresponse.send(event, context, "SUCCESS",
-                                    {"Message": "Resource deletion successful!"})                                       
+                                    {"Message": "Resource deletion successful!"})
               except: #pylint: disable=W0702
                   LOGGER.info('FAILED!')
                   cfnresponse.send(event, context, "FAILED", {
@@ -1211,6 +1211,7 @@ Resources:
       Code:
         ZipFile: |
           import logging
+          import traceback
           import signal
           import cfnresponse
           import boto3
@@ -1227,9 +1228,8 @@ Resources:
                   if event['RequestType'] == 'Create':
                       LOGGER.info('CREATE!')
                       request_properties = event.get('ResourceProperties', None)
-                      region = request_properties['Region']
-                      client = boto3.client(region, 'ec2')
-                      #client = boto3.resource('ec2', region_name=region)
+                      client = boto3.client('ec2')
+                      #client = boto3.resource('ec2’, region_name=region)
 
                       params = {
                           'Filters': [
@@ -1239,17 +1239,18 @@ Resources:
                               },
                               {
                                   'Name': 'isDefault',
-                                  'Values': ['false'],
+                                  'Values': ['true'],
                               }
                           ]
                       }
                       vpcs = client.describe_vpcs(**params)
+                      LOGGER.info('VPC Data: %s', vpcs)
                       if vpcs:
                           LOGGER.info('Got a VPC')
                           for vpc in vpcs['Vpcs']:
-                            LOGGER.info('Checking VPC')
-                            subnet_ids = client.describe_subnets(vpc['VpcId'])
-
+                              LOGGER.info('Checking VPC')
+                              subnet_ids = client.describe_subnets(Filters=[{'Name': 'vpc-id','Values': [vpc['VpcId']]}])
+                      LOGGER.info('subnet_ids are: %s', subnet_ids)
                       # response = client.describe_vpcs()
                       # for vpc in response['Vpcs']:
                       #     if vpc['IsDefault'] == True:
@@ -1260,10 +1261,12 @@ Resources:
                       LOGGER.info('DELETE!')
                       cfnresponse.send(event, context, "SUCCESS",
                                     {"Message": "Resource deletion successful!"})
-              except: #pylint: disable=W0702
-                  LOGGER.info('FAILED!')
+              
+              except Exception as err:
+                  LOGGER.info('ERROR: %s', str(err))
+                  LOGGER.info('TRACEBACK %s', traceback.print_tb(err.__traceback__))
                   cfnresponse.send(event, context, "FAILED", {
-                      "Message": "Exception during processing"})
+                      "Message": "Exception during processing: "})
 
           def timeout_handler(_signal, _frame):
               '''Handle SIGALRM'''
@@ -1294,6 +1297,15 @@ Resources:
                   - "logs:CreateLogStream"
                   - "logs:PutLogEvents"
                 Resource: "arn:aws:logs:*:*"
+        - PolicyName: "describe-vpcs-and-subnets"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: "Allow"
+                Action:
+                  - "ec2:DescribeVpcs"
+                  - "ec2:DescribeSubnets"
+                Resource: "*"
 
   S3BucketNameLower:
     Type: Custom::Lowercase
