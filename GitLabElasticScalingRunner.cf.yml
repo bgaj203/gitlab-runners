@@ -160,16 +160,13 @@ Parameters:
       Not used if 4ASGScheduledStartupCron = Disabled.
     Type: Number
     Default: 1
-  4ASGSpecifyVPCandSubnets:
+  4ASGSpecifyVPC:
     Description: >
       Indicate you will be specifying the VPC and Subnet. If set to false, the default VPC and subnets will be used.  If setting to true, be sure
       the VPC and Subnets are setup in such a way that your runners can reach your desired GitLab instance URL on port 443. You will also need to 
       set the values for 4ASGVPCId and 4ASGSubnetIds.
     Type: String
-    Default: false
-    AllowedValues:
-      - true
-      - false
+    Default: DefaultVPC
   4ASGSubnetIds:
     Description: >
       UseDefaultSubnetsInDefaultVPC = Most automatic.  Assumes default VPC is present and default configured, including a subnet for every AZ in the region.
@@ -330,8 +327,6 @@ Conditions:
   CreateStopSchedule: !Not [ !Equals [ !Ref 4ASGScheduledShutdownCron, "Disabled" ]]
   UseCPUUtilizationMetric: !Equals [ !Ref 5ASGAutoScalingMetricTypeToMonitor, "CPU" ]
   MemoryUtilizationMetric: !Equals [ !Ref 5ASGAutoScalingMetricTypeToMonitor, "Memory" ]
-  UseSpecifiedSubnets: !Equals [ !Ref 4ASGSpecifyVPCandSubnets, "true" ] #Lists are not strings
-  UseSpecifiedSubnets2: !Not [ !Equals [ !Ref 4ASGSubnetIds, "UseDefaultSubnetsInDefaultVPC"]]
 
 Rules:
   WindowsPlatformShouldNotUseDefaultSSMParameter:
@@ -490,9 +485,9 @@ Resources:
       MinSize: '1'
       MaxSize: !Ref 5ASGAutoScalingMaxSize
       DesiredCapacity: !Ref 4ASGDesiredCapacity
-      VPCZoneIdentifier: !If [ UseSpecifiedSubnets2,!Split [',', !Ref 4ASGSubnetIds],!GetAtt DefaultVPCSubnetIds.OutputString ]
-      #!GetAtt DefaultVPCSubnetIds.OutputString
-      AvailabilityZones: !If [ UseSpecifiedSubnets2, !Split [',', !Ref 4ASGAvailabilityZones] ,!GetAZs ]
+      AvailabilityZones: !Split [",", !GetAtt LookupVPCInfo.orderedzoneidlist ]
+      VPCZoneIdentifier: !Split [",", !GetAtt LookupVPCInfo.orderedsubnetidlist ]
+      #Fn::GetAtt:[LookupVPCInfo, orderedzoneidlist]
       MixedInstancesPolicy:
         LaunchTemplate:
           LaunchTemplateSpecification:
@@ -1198,8 +1193,10 @@ Resources:
 
           signal.signal(signal.SIGALRM, timeout_handler)               
 
-
-  DefaultVPCSubnetIdsLambda:
+  #Arguments: Vpc-id or "DefaultVPC"
+  #Returns: vpc-id, number of subnets and ordered list of subnetids and az ids.  
+  # The index of these two return lists are correlated if it is desirable to choose less than the whole list.
+  VPCInfoLambda:
     Type: 'AWS::Lambda::Function'
     Properties:
       Description: Returns the lowercase version of a string
@@ -1207,7 +1204,7 @@ Resources:
       Runtime: python3.8
       Handler: index.handler
       Role: !GetAtt CFCustomResourceLambdaRole.Arn
-      Timeout: 60
+      Timeout: 240
       Code:
         ZipFile: |
           import logging
@@ -1225,42 +1222,50 @@ Resources:
               try:
                   LOGGER.info('REQUEST RECEIVED:\n %s', event)
                   LOGGER.info('REQUEST RECEIVED:\n %s', context)
-                  if event['RequestType'] == 'Create':
-                      LOGGER.info('CREATE!')
-                      request_properties = event.get('ResourceProperties', None)
-                      client = boto3.client('ec2')
-                      #client = boto3.resource('ec2’, region_name=region)
-
-                      params = {
-                          'Filters': [
-                              {
-                                  'Name': 'state',
-                                  'Values': ['available'],
-                              },
-                              {
-                                  'Name': 'isDefault',
-                                  'Values': ['true'],
-                              }
-                          ]
-                      }
-                      vpcs = client.describe_vpcs(**params)
-                      LOGGER.info('VPC Data: %s', vpcs)
-                      if vpcs:
-                          LOGGER.info('Got a VPC')
-                          for vpc in vpcs['Vpcs']:
-                              LOGGER.info('Checking VPC')
-                              subnet_ids = client.describe_subnets(Filters=[{'Name': 'vpc-id','Values': [vpc['VpcId']]}])
-                      LOGGER.info('subnet_ids are: %s', subnet_ids)
-                      # response = client.describe_vpcs()
-                      # for vpc in response['Vpcs']:
-                      #     if vpc['IsDefault'] == True:
-                      #         subnet_ids = client.describe_subnets(vpc['VpcId'])
-                      responseData = {'OutputString': subnet_ids}
-                      cfnresponse.send(event, context, cfnresponse.SUCCESS, responseData)                                  
-                  elif event['RequestType'] == 'Delete':
+                  if event['RequestType'] == 'Delete':
                       LOGGER.info('DELETE!')
                       cfnresponse.send(event, context, "SUCCESS",
                                     {"Message": "Resource deletion successful!"})
+                  elif event['RequestType'] == 'Create':
+                      LOGGER.info('CREATE!')
+                      request_properties = event.get('ResourceProperties', None)
+
+                      VpcToGet = event['ResourceProperties'].get('VpcToGet', '')
+                      ec2 = boto3.resource('ec2')
+                      VpcCheckedList = []
+                      TargetVPC = None
+                      vpclist = ec2.vpcs.all()
+                      for vpc in vpclist:
+                          VpcCheckedList.append(vpc.id)
+                          if VpcToGet == "DefaultVPC" and vpc.is_default == True:
+                              TargetVPC=vpc
+                          elif vpc.vpc_id == VpcToGet:
+                              TargetVPC=vpc
+
+                      if TargetVPC:
+                        VPCOutput = TargetVPC.id
+                        subidlist = []
+                        zoneidlist = []
+                        subnets = list(TargetVPC.subnets.all())
+                        for subnet in subnets:
+                          subidlist.append(subnet.id)
+                          zoneidlist.append(subnet.availability_zone)
+                        subidOutput = ",".join(subidlist)
+                        #zoneidOutput = ",".join(map('"{0}"'.format, zoneidlist))
+                        #zoneidOutput = "["+ (",".join('"{0}"'.format(x) for x in zoneidlist)) + "]"
+                        zoneidOutput = zoneidlist
+                        if not subnets:
+                          subidOutput = "There is no subnet in VPC VPCOutput"
+                          zoneidOutput = subidOutput
+
+                      LOGGER.info('subnet ids are: %s', subidOutput)
+                      LOGGER.info('zone ids are: %s', ",".join(zoneidOutput))
+                      responseData = {}
+                      responseData['VPC_id'] = VPCOutput
+                      responseData['orderedsubnetidlist'] = subidOutput
+                      responseData['orderedzoneidlist'] = zoneidOutput
+                      responseData['SubnetCount'] = len(subidlist)
+                      cfnresponse.send(event, context, cfnresponse.SUCCESS, responseData)                                  
               
               except Exception as err:
                   LOGGER.info('ERROR: %s', str(err))
@@ -1313,7 +1318,8 @@ Resources:
       ServiceToken: !GetAtt LowerCasePlusRandomLambda.Arn
       InputString: !Sub "${AWS::StackName}"
 
-  DefaultVPCSubnetIds:
-    Type: Custom::DefaultVPCSubnetIds
+  LookupVPCInfo:
+    Type: Custom::VPCInfo
     Properties:
-      ServiceToken: !GetAtt DefaultVPCSubnetIdsLambda.Arn
+      ServiceToken: !GetAtt VPCInfoLambda.Arn
+      VpcToGet: !Ref 4ASGSpecifyVPC
