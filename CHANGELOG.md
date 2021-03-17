@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 ## [v1.4.1-alpha8] - 2021-03-17
 
-- Enable specifying VPC with a new parameter (4ASGSpecifyVPC).  Defaults to DefaultVPC as before.  ASG configures for all available subnets in the VPC.
+- Enable specifying VPC with a new parameter (4ASGSpecifyVPC).  Defaults to DefaultVPC and functions identically to last version when VPC is not specified.  ASG configures for all available subnets in the VPC.
 - Enable specifying VPC was implemented using a best practice CloudFormation Custom Resource python lambda function.
 ## [v1.4.1-alpha7] - 2021-03-06
 
