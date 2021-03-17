@@ -14,7 +14,7 @@
   },
   {
     "ParameterKey": "9AWSRetrieveLatestAWSOSAmiIdFromSSM",
-    "ParameterValue": "/aws/service/ami-windows-latest/Windows_Server-1903-English-Core-ContainersLatest"
+    "ParameterValue": "/aws/service/ami-windows-latest/Windows_Server-2019-English-Full-ContainersLatest"
   }, 
   {
     "ParameterKey": "3INSTConfigurationScript",
@@ -82,11 +82,11 @@
   },
   {
     "ParameterKey": "5SPOTOnDemandBaseCapacity",
-    "ParameterValue": "0"
+    "ParameterValue": "1"
   },
   {
     "ParameterKey": "5SPOTOnDemandPercentageAboveBaseCapacity",
-    "ParameterValue": "0"
+    "ParameterValue": "50"
   },
   {
     "ParameterKey": "8DBGKeypairName",

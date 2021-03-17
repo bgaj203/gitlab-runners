@@ -1,7 +1,7 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Description: >
-  Windows 1903 Shell Simple Scaling Spot Instances. 
-  Two docker executors, scaling based on simple CPU metrics, only spot.
+  Windows 1903 Shell Simple Scaling Spot and Ondemand Instances (Mixed Instances). 
+  Two docker executors, scaling based on simple CPU metrics, 50/50 mix of spot and ondemand.
   **Note:** Actual scaling parameters used in this MVP are just to show how to configure scaling - 
   they are untested with Runner workloads - your can help by contributing your tested scaling parameters in an issue.
 Parameters:
@@ -34,7 +34,7 @@ Parameters:
       Specify the instance type to be used.  Do not use bursty instance types like t2 or t3.
     Type: String
     Default: "m5.large"
-    AllowedPattern: ^[A-Za-z0-9.]+$
+    AllowedPattern: ^[A-Za-z0-9.]+$      
 Resources:
   RnrASG:
     Type: AWS::CloudFormation::Stack
@@ -62,11 +62,11 @@ Resources:
         5ASGAutoScalingSetScaleOutUtilizationThresholdSeconds: 60
         5ASGAutoScalingSetScaleInUtilizationThreshold: 40
         5ASGAutoScalingSetScaleInUtilizationThresholdSeconds: 60
-        5SPOTOnDemandBaseCapacity: 0
-        5SPOTOnDemandPercentageAboveBaseCapacity: 0
+        5SPOTOnDemandBaseCapacity: 1
+        5SPOTOnDemandPercentageAboveBaseCapacity: 50
         5ASGInstanceType1: !Ref 5ASGInstanceType1
         5ASGInstanceType2: ""
         5ASGInstanceType3: ""
         5ASGInstanceType4: ""
         8DBGKeypairName: ""
-        9AWSRetrieveLatestAWSOSAmiIdFromSSM: /aws/service/ami-windows-latest/Windows_Server-1903-English-Core-ContainersLatest
+        9AWSRetrieveLatestAWSOSAmiIdFromSSM: /aws/service/ami-windows-latest/Windows_Server-2019-English-Full-ContainersLatest

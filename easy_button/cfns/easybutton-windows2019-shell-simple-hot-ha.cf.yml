@@ -60,4 +60,4 @@ Resources:
         5ASGInstanceType4: ""
         5SPOTOnDemandPercentageAboveBaseCapacity: 100
         8DBGKeypairName: ""
-        9AWSRetrieveLatestAWSOSAmiIdFromSSM: /aws/service/ami-windows-latest/Windows_Server-1903-English-Core-ContainersLatest
+        9AWSRetrieveLatestAWSOSAmiIdFromSSM: /aws/service/ami-windows-latest/Windows_Server-2019-English-Full-ContainersLatest

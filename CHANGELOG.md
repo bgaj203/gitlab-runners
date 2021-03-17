@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 ## [v1.4.3-alpha8] - 2021-03-17
 
 - Add TCP connect preflight tests for endpoints needed for successful installation and configuration of the runner.
+- Use Windows 2019 instead of 1903
 ## [v1.4.2-alpha8] - 2021-03-17
 
 - Enable specifying VPC with a new parameter (4ASGSpecifyVPC).  Defaults to DefaultVPC and functions identically to last version when VPC is not specified.  ASG configures for all available subnets in the VPC.
