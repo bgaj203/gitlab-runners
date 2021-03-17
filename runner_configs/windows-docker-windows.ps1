@@ -28,6 +28,29 @@ Function logit ($Msg, $MsgType='Information', $ID='1') {
 
 logit "****ATTENTION: Windows Docker Executor support for this template is experimental."
 
+logit "Preflight checks for required endpoints..."
+$UrlPortPairList="$GITLABRunnerInstanceURL=443 gitlab-runner-downloads.s3.amazonaws.com=443"
+$FailureCount=0 ; $ConnectTimeoutMS = '3000'
+foreach ($UrlPortPair in $UrlPortPairList.split(' '))
+{
+  $array=$UrlPortPair.split('='); $url=$array[0]; $port=$array[1]
+  logit "TCP Test of $url on $port"
+  $ErrorActionPreference = 'SilentlyContinue'
+  $conntest = (new-object net.sockets.tcpclient).BeginConnect($url,$port,$null,$null)
+  $conntestwait = $conntest.AsyncWaitHandle.WaitOne($ConnectTimeoutMS,$False)
+  if (!$conntestwait)
+  { logit "  Connection to $url on port $port failed"
+    $conntest.close()
+    $FailureCount++
+  }
+  else
+  { logit "  Connection to $url on port $port succeeded" }
+}
+If ($FailureCount -gt 0)
+{ logit "$failurecount tcp connect tests failed. Please check all networking configuration for problems."
+  Exit $FailureCount
+}
+
 logit "Installing runner"
 
 if (!(Test-Path $RunnerInstallRoot)) {New-Item -ItemType Directory -Path $RunnerInstallRoot}

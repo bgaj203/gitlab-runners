@@ -10,7 +10,27 @@ function logit() {
   LOGSTRING="$(date +"%_b %e %H:%M:%S") $(hostname) USERDATA_SCRIPT: $1"
   #For CloudFormation, if you already collect /var/log/cloud-init-output.log or /var/log/messsages (non amazon linux), then you could mute the next logging line
   echo "$LOGSTRING" >> /var/log/messages
-}                     
+}
+
+logit "Preflight checks for required endpoints..."
+urlportpairlist="$GITLABRunnerInstanceURL=443 gitlab-runner-downloads.s3.amazonaws.com=443"
+failurecount=0
+for urlportpair in $urlportpairlist; do
+  set -- $(echo $urlportpair | tr '=' ' ') ; url=$1 ; port=$2
+  logit "TCP Test of $url on $port"
+  timeout 3 bash -c "cat < /dev/null > /dev/tcp/$url/$port"
+  if [ "$?" -ne 0 ]; then
+    logit "  Connection to $url on port $port failed"
+    ((failurecount++))
+  else
+    logit "  Connection to $url on port $port succeeded"
+  fi
+done
+
+if [ $failurecount -gt 0 ]; then
+ logit "$failurecount tcp connect tests failed. Please check all networking configuration for problems."
+ exit $failurecount
+fi
 
 #Detect package manager
 if [[ -n "$(command -v yum)" ]] ; then
