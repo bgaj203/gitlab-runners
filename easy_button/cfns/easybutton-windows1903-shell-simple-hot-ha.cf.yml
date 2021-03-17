@@ -43,7 +43,7 @@ Resources:
           Value: GitLab
         - Key: Function
           Value: GitLabRunner
-       Parameters:
+      Parameters:
         1OSPeggedAMIID: AlwaysUseLatest
         1OSInstanceOSPlatform: Windows
         1OSPatchScope: NoPatching
