@@ -19,6 +19,14 @@ Parameters:
       The runner will automatically have tags for the operating system platform, whether compute is spot or ondemand and the executor type.
       Ec2 tags will also include the runner name and the gitlab instance url. Except for Linux Docker, other runner types will require tags to be specified in jobs.
     Type: String
+  4ASGSpecifyVPC:
+    Description: >
+      DefaultVPC - finds the VPC and configures all of its subnets for you. Otherwise type in the VPC id of a VPC in the same region where you run the template. 
+      All subnets and azs of the chosen vpc will be used.
+      The VPC and chosen subnets must be setup in a way that allows the runner instances to resolve the DNS name and connect
+      to port 443 on the GitLab instance URL you provide.
+    Type: String
+    Default: DefaultVPC
   5ASGInstanceType1:
     Description: >
       Specify the instance type to be used.  Do not use bursty instance types like t2 or t3.

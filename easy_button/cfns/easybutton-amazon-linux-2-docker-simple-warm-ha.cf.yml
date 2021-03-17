@@ -39,6 +39,14 @@ Parameters:
       "0 5 * * *" = Start 5am UTC everyday.
     Type: String
     Default: Disabled    
+  4ASGSpecifyVPC:
+    Description: >
+      DefaultVPC - finds the VPC and configures all of its subnets for you. Otherwise type in the VPC id of a VPC in the same region where you run the template. 
+      All subnets and azs of the chosen vpc will be used.
+      The VPC and chosen subnets must be setup in a way that allows the runner instances to resolve the DNS name and connect
+      to port 443 on the GitLab instance URL you provide.
+    Type: String
+    Default: DefaultVPC
   5ASGInstanceType1:
     Description: >
       Specify the instance type to be used.  Do not use bursty instance types like t2 or t3.
