@@ -52,6 +52,7 @@ Resources:
         3INSTConfigurationScript: https://gitlab.com/guided-explorations/aws/gitlab-runner-autoscaling-aws-asg/-/raw/master/runner_configs/amazon-linux-2-docker.sh
         3GITLABRunnerTagList: !Ref 3GITLABRunnerTagList
         4ASGDesiredCapacity: 2
+        4ASGSpecifyVPC: !Ref 4ASGSpecifyVPC
         5ASGAutoScalingEnabled: true
         5ASGAutoScalingMaxSize: 10
         5ASGAutoScalingMetricTypeToMonitor: CPU

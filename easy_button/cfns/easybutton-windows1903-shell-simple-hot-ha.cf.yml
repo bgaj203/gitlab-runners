@@ -52,6 +52,7 @@ Resources:
         3INSTConfigurationScript: https://gitlab.com/guided-explorations/aws/gitlab-runner-autoscaling-aws-asg/-/raw/master/runner_configs/windows-shell.ps1
         3GITLABRunnerTagList: !Ref 3GITLABRunnerTagList
         4ASGDesiredCapacity: 2
+        4ASGSpecifyVPC: !Ref 4ASGSpecifyVPC
         5ASGAutoScalingEnabled: false
         5ASGInstanceType1: !Ref 5ASGInstanceType1
         5ASGInstanceType2: ""
