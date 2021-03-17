@@ -2,16 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+    ## [v1.4.1-alpha8] - 2021-03-17
 
+- Enable specifying VPC with a new parameter (4ASGSpecifyVPC).  Defaults to DefaultVPC and functions identically to last version when VPC is not specified.  ASG configures for all available subnets in the VPC.
+- Enable specifying VPC was implemented using a best practice CloudFormation Custom Resource python lambda function.
+- LowerCase Custom function also adds 5 random alphanumeric characters
 ## [v1.4.2-alpha7] - 2021-03-09
 - added easy button for linux docker single instance warm HA with scheduling ability
+## [v1.4.1-alpha7] - 2021-03-06
 
-## [v1.-alpha7] - 2021-03-06
 - spot terminations no longer attempt to drain jobs - there is no time for that - all jobs running on spot should be mutable (#1)
 - added asg permission autoscaling:UpdateAutoScalingGroup to enable runner and runner jobs to use the aws cli to take scaling actions for the ASG of the runner for predictive or specific scaling (#13)
 - known problem: Windows machines are not completing autoscaling.
 
 ## [v1.4.1-alpha6] - 2021-03-05
+
 - Easy Button Parent CF Templates for one button click - compatible with QuickStarts and AWS Service Catalog
 - added CF custom resource for lowercase to ensure bucketname is always lowercase
 - Renamed parameters from SPOTInstanceType to ASGInstanceType to avoid confusion for non-spot and mixed instances implementations
@@ -19,8 +24,8 @@ All notable changes to this project will be documented in this file.
 - Simplification of README.md by breaking out FEATURES.md
 
 ## [v1.4.0-alpha6] - 2021-02-02
-- Support for arm64 architecture for Amazon Linux 2
 
+- Support for arm64 architecture for Amazon Linux 2
 ## [v1.4.0-alpha5] - 2021-02-02
 
 - Automatically configures a Shared S3 Cache (#8)

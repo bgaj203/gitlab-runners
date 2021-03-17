@@ -62,7 +62,6 @@
 - Mixed Instances Policy support.
 - These templates can be loaded into AWS Service Catalog to be a part of your internal self-service cloud automation.
 - Stackname is used in all created resources so that all related resources can be quickly identified as related.
-- 
 
 ## Extensibility, Reusability and Troubleshooting
 

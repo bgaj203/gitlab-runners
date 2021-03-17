@@ -6,8 +6,8 @@ Parameters:
   1AAAATemplateVersion:
     Description: "Version of this template."
     Type: String
-    Default: "v1.4.2-alpha7"
-    AllowedValues: [ "v1.4.2-alpha7" ]
+    Default: "v1.4.1-alpha8"
+    AllowedValues: [ "v1.4.1-alpha8" ]
     ConstraintDescription: "1AAAATemplateVersion is the template version number and cannot be changed at runtime."
   1AAASourceProject:
     Description: >
@@ -125,7 +125,7 @@ Parameters:
       For testing, a desired capacity of 4 is a good number for testing rolling updates.
       For testing all other functionality 1 is sufficient to observe how the userdata code processes to accomplish the yum update and reboot before the lifecycle hook.
     Type: Number
-    Default: 2
+    Default: 1
   4ASGUpdateType:
     Description: (Only Applies To Updates) Whether ASG Update Should Do a Rolling Update or an ASG Replacement.
     Type: String
@@ -160,6 +160,15 @@ Parameters:
       Not used if 4ASGScheduledStartupCron = Disabled.
     Type: Number
     Default: 1
+  4ASGSpecifyVPC:
+    Description: >
+      DefaultVPC - finds the VPC and configures all of its subnets for you. Otherwise type in the VPC id of a VPC in the same region where you run the template. 
+      All subnets and azs of the chosen vpc will be used.
+      The VPC and chosen subnets must be setup in a way that allows the runner instances to resolve the DNS name and connect
+      to port 443 on the GitLab instance URL you provide.
+    Type: String
+    Default: DefaultVPC
+    #While it is tempting to make the above parameter of type "AWS::EC2::VPC::Id" this prevents automatic discovery and usage of the DefaultVPC.
   5ASGAutoScalingEnabled:
     Description: >
       Setting to false still allows for High Availability - either HOT/Warm HA with 1 instance or HOT/HOT HA for 2 or more instances.
@@ -450,14 +459,11 @@ Resources:
         WillReplace: !If [ReplaceEntireASG,true,false]
     Properties:
       HealthCheckGracePeriod: 3
-      AvailabilityZones:
-        Fn::GetAZs:
-          Ref: AWS::Region
       MinSize: '1'
       MaxSize: !Ref 5ASGAutoScalingMaxSize
       DesiredCapacity: !Ref 4ASGDesiredCapacity
-      #Demonstrates an 1) **Optional dependency** on an ELB which can be sourced from either
-      # 2) **A parent stack**, or 3) **overridden by a parameter** in this stack
+      AvailabilityZones: !Split [",",!GetAtt LookupVPCInfo.OrderedZoneIdList]
+      VPCZoneIdentifier: !Split [",",!GetAtt LookupVPCInfo.OrderedSubnetIdList]
       MixedInstancesPolicy:
         LaunchTemplate:
           LaunchTemplateSpecification:
@@ -1115,26 +1121,143 @@ Resources:
                 }
                 </powershell>
 
-  # Custom resource to transform input to lowercase.                                             
-  LowerCaseLambda:
+  # Custom resource to transform input to lowercase.
+  LowerCasePlusRandomLambda:
     Type: 'AWS::Lambda::Function'
     Properties:
       Description: Returns the lowercase version of a string
       MemorySize: 256
       Runtime: python3.8
-      Handler: index.lambda_handler
-      Role: !GetAtt LowerCaseLambdaRole.Arn
+      Handler: index.handler
+      Role: !GetAtt CFCustomResourceLambdaRole.Arn
       Timeout: 30
       Code:
         ZipFile: |
           import cfnresponse
+          import random
+          import string
+          import logging
+          import signal
 
-          def lambda_handler(event, context):                                                    
-              output = event['ResourceProperties'].get('InputString', '').lower()                
-              responseData = {'OutputString': output}                                            
-              cfnresponse.send(event, context, cfnresponse.SUCCESS, responseData)                
+          LOGGER = logging.getLogger()
+          LOGGER.setLevel(logging.INFO)
 
-  LowerCaseLambdaRole:
+          def handler(event, context):
+              # Setup alarm for remaining runtime minus a second
+              signal.alarm((int(context.get_remaining_time_in_millis() / 1000)) - 1)
+              try:
+                  LOGGER.info('REQUEST RECEIVED:\n %s', event)
+                  LOGGER.info('REQUEST RECEIVED:\n %s', context)
+                  if event['RequestType'] == 'Create':
+                      LOGGER.info('CREATE!')
+                      randstring = ''.join(random.SystemRandom().choice(string.ascii_lowercase + string.digits) for _ in range(5))
+                      output = event['ResourceProperties'].get('InputString', '').lower() + '-' + randstring
+                      responseData = {'OutputString': output}
+                      cfnresponse.send(event, context, cfnresponse.SUCCESS, responseData)
+                  elif event['RequestType'] == 'Delete':
+                      LOGGER.info('DELETE!')
+                      cfnresponse.send(event, context, "SUCCESS",
+                                    {"Message": "Resource deletion successful!"})
+              except: #pylint: disable=W0702
+                  LOGGER.info('FAILED!')
+                  cfnresponse.send(event, context, "FAILED", {
+                      "Message": "Exception during processing"})
+
+          def timeout_handler(_signal, _frame):
+              '''Handle SIGALRM'''
+              raise Exception('Time exceeded')
+
+          signal.signal(signal.SIGALRM, timeout_handler)               
+
+  #Arguments: Vpc-id or "DefaultVPC"
+  #Returns: vpc-id, number of subnets and ordered list of subnetids and az ids.  
+  # The index of these two return lists are correlated if it is desirable to choose less than the whole list.
+  VPCInfoLambda:
+    Type: 'AWS::Lambda::Function'
+    Properties:
+      Description: Returns the lowercase version of a string
+      MemorySize: 256
+      Runtime: python3.8
+      Handler: index.handler
+      Role: !GetAtt CFCustomResourceLambdaRole.Arn
+      Timeout: 240
+      Code:
+        ZipFile: |
+          import logging
+          import traceback
+          import signal
+          import cfnresponse
+          import boto3
+
+          LOGGER = logging.getLogger()
+          LOGGER.setLevel(logging.INFO)
+
+          def handler(event, context):
+              # Setup alarm for remaining runtime minus a second
+              signal.alarm((int(context.get_remaining_time_in_millis() / 1000)) - 1)
+              try:
+                  LOGGER.info('REQUEST RECEIVED:\n %s', event)
+                  LOGGER.info('REQUEST RECEIVED:\n %s', context)
+                  if event['RequestType'] == 'Delete':
+                      LOGGER.info('DELETE!')
+                      cfnresponse.send(event, context, "SUCCESS", {
+                           "Message": "Resource deletion successful!"})
+                      return
+                  elif event['RequestType'] == 'Create':
+                      LOGGER.info('CREATE!')
+                      request_properties = event.get('ResourceProperties', None)
+
+                      VpcToGet = event['ResourceProperties'].get('VpcToGet', '')
+                      ec2 = boto3.resource('ec2')
+                      VpcCheckedList = []
+                      TargetVPC = None
+                      vpclist = ec2.vpcs.all()
+                      for vpc in vpclist:
+                          VpcCheckedList.append(vpc.id)
+                          if VpcToGet == "DefaultVPC" and vpc.is_default == True:
+                              TargetVPC=vpc
+                          elif vpc.vpc_id == VpcToGet:
+                              TargetVPC=vpc
+
+                      if TargetVPC == None:
+                        raise Exception(f'VPC {VpcToGet} was not found among the ones in this account and region, VPC which are: {", ".join(VpcCheckedList)}')
+                      else:
+                        VPCOutput = TargetVPC.id
+                        subidlist = []
+                        zoneidlist = []
+                        subnets = list(TargetVPC.subnets.all())
+                        for subnet in subnets:
+                          subidlist.append(subnet.id)
+                          zoneidlist.append(subnet.availability_zone)
+                        subidOutput = ",".join(subidlist)
+                        zoneidOutput = ",".join(zoneidlist)
+                        if not subnets:
+                          raise Exception(f'There are no subnets in VPC: {VpcToGet}')
+                        LOGGER.info('subnet ids are: %s', subidOutput)
+                        LOGGER.info('zone ids are: %s', zoneidOutput)
+
+                      responseData = {}
+                      responseData['VPC_id'] = VPCOutput
+                      responseData['OrderedSubnetIdList'] = subidOutput
+                      responseData['OrderedZoneIdList'] = zoneidOutput
+                      responseData['SubnetCount'] = len(subidlist)
+                      cfnresponse.send(event, context, cfnresponse.SUCCESS, responseData)                                  
+              
+              except Exception as err:
+                  AccountRegionInfo=f'Occured in Account {context.invoked_function_arn.split(":")[4]} in region {context.invoked_function_arn.split(":")[3]}'
+                  FinalMsg=str(err) + ' ' + AccountRegionInfo
+                  LOGGER.info('ERROR: %s', FinalMsg)
+                  LOGGER.info('TRACEBACK %s', traceback.print_tb(err.__traceback__))
+                  cfnresponse.send(event, context, "FAILED", {
+                      "Message": "{FinalMsg}"})
+
+          def timeout_handler(_signal, _frame):
+              '''Handle SIGALRM'''
+              raise Exception('Time exceeded')
+
+          signal.signal(signal.SIGALRM, timeout_handler)
+
+  CFCustomResourceLambdaRole:
     Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument:
@@ -1157,9 +1280,24 @@ Resources:
                   - "logs:CreateLogStream"
                   - "logs:PutLogEvents"
                 Resource: "arn:aws:logs:*:*"
+        - PolicyName: "describe-vpcs-and-subnets"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: "Allow"
+                Action:
+                  - "ec2:DescribeVpcs"
+                  - "ec2:DescribeSubnets"
+                Resource: "*"
 
   S3BucketNameLower:
     Type: Custom::Lowercase
     Properties:
-      ServiceToken: !GetAtt LowerCaseLambda.Arn
+      ServiceToken: !GetAtt LowerCasePlusRandomLambda.Arn
       InputString: !Sub "${AWS::StackName}"
+
+  LookupVPCInfo:
+    Type: Custom::VPCInfo
+    Properties:
+      ServiceToken: !GetAtt VPCInfoLambda.Arn
+      VpcToGet: !Ref 4ASGSpecifyVPC
