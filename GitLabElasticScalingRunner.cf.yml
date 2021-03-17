@@ -74,10 +74,10 @@ Parameters:
       The instance must have a network route and permission to any remote locations.
       The code you write must be idempotent so that it does the correct thing when run again after a patching reboot.
       Runner examples provided in this project are: amazon-linux-2-shell.sh, amazon-linux-2-docker.sh, windows-shell.ps1 and windows-docker-windows.ps1 at
-      git raw url: https://gitlab.com/guided-explorations/aws/gitlab-runner-autoscaling-aws-asg/-/raw/master/runner_configs/
+      git raw url: https://gitlab.com/guided-explorations/aws/gitlab-runner-autoscaling-aws-asg/-/raw/v1.4.3-alpha8/runner_configs/
     Type: String
-    Default: https://gitlab.com/guided-explorations/aws/gitlab-runner-autoscaling-aws-asg/-/raw/master/runner_configs/amazon-linux-2-docker.sh
-    #Reset above to: https://gitlab.com/guided-explorations/aws/gitlab-runner-autoscaling-aws-asg/-/raw/master/runner_configs/amazon-linux-2-docker.sh
+    Default: https://gitlab.com/guided-explorations/aws/gitlab-runner-autoscaling-aws-asg/-/raw/v1.4.3-alpha8/runner_configs/amazon-linux-2-docker.sh
+    #Reset above to: https://gitlab.com/guided-explorations/aws/gitlab-runner-autoscaling-aws-asg/-/raw/v1.4.3-alpha8/runner_configs/amazon-linux-2-docker.sh
   3GITLABRunnerConcurrentJobs:
     Description: >
       How many desired concurrent jobs can this runner take at a time.
