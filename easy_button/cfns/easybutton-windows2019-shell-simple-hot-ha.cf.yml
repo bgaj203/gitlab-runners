@@ -1,6 +1,6 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Description: >
-  Windows 1903 Shell Simple Hot HA. 
+  Windows 2019 Shell Simple Hot HA. 
   Two docker executor instances that will respawn if they terminate, no autoscaling, no spot instances.
 Parameters:
   3GITLABRunnerInstanceURL:

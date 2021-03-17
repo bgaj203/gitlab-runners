@@ -1,6 +1,6 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Description: >
-  Windows 1903 Shell Simple Scaling Spot and Ondemand Instances (Mixed Instances). 
+  Windows 2019 Shell Simple Scaling Spot and Ondemand Instances (Mixed Instances). 
   Two docker executors, scaling based on simple CPU metrics, 50/50 mix of spot and ondemand.
   **Note:** Actual scaling parameters used in this MVP are just to show how to configure scaling - 
   they are untested with Runner workloads - your can help by contributing your tested scaling parameters in an issue.
