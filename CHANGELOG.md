@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 
 - Enable specifying VPC with a new parameter (4ASGSpecifyVPC).  Defaults to DefaultVPC and functions identically to last version when VPC is not specified.  ASG configures for all available subnets in the VPC.
 - Enable specifying VPC was implemented using a best practice CloudFormation Custom Resource python lambda function.
+- LowerCase Custom function also adds 5 random alphanumeric characters
 ## [v1.4.1-alpha7] - 2021-03-06
 
 - spot terminations no longer attempt to drain jobs - there is no time for that - all jobs running on spot should be mutable (#1)

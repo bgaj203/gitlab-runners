@@ -320,15 +320,6 @@ Rules:
     Assertions:
       - Assert: !Not [ !Equals [ !Ref 9AWSRetrieveLatestAWSOSAmiIdFromSSM, "/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2" ]]
         AssertDescription: "You have indicated the Windows platform in the parameter 1OSInstanceOSPlatform, but left the default Linux SSM Parameter path in 9AWSRetrieveLatestAWSOSAmiIdFromSSM"
-  # SubnetsInVPC:
-  #   Assertions:
-  #     - Assert:
-  #         'Fn::EachMemberIn':
-  #           - 'Fn::ValueOfAll':
-  #               - 'AWS::EC2::Subnet::Id'
-  #               - VpcId
-  #           - 'Fn::RefAll': 'AWS::EC2::VPC::Id'
-  #       AssertDescription: All subnets must exist in the VPC"
 
 Resources:
   #IAM Policies for Instance Profile:
