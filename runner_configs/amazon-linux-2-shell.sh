@@ -29,6 +29,7 @@ done
 
 if [ $failurecount -gt 0 ]; then
  logit "$failurecount tcp connect tests failed. Please check all networking configuration for problems."
+  if [ -f /opt/aws/bin/cfn-signal ]; then /opt/aws/bin/cfn-signal --success false --stack ${AWS::StackName} --resource InstanceASG --region $AWS_REGION --reason "Cant connect to GitLab or other endpoints"
  exit $failurecount
 fi
 

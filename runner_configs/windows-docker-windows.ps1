@@ -48,6 +48,7 @@ foreach ($UrlPortPair in $UrlPortPairList.split(' '))
 }
 If ($FailureCount -gt 0)
 { logit "$failurecount tcp connect tests failed. Please check all networking configuration for problems."
+  cfn-signal --success false --stack ${AWS::StackName} --resource InstanceASG --region $AWS_REGION --reason "Cant connect to GitLab or other endpoints"
   Exit $FailureCount
 }
 
