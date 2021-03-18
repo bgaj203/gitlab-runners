@@ -905,13 +905,14 @@ Resources:
                   Invoke-WebRequest -UseBasicParsing -URI $AWSCLIURL -OutFile $env:PUBLIC\AWSCLI.msi
                   do {
                     $CycleMins = 1
-                    $msiExecProcess = Start-Process	 -wait -nonewwindow -FilePath "msiexec.exe" -ArgumentList "/i $env:PUBLIC\AWSCLI.msi /l*v $env:PUBLIC\AWSCLI-install.log /qn"
-                    If ($msiExecProcess.ExitCode -eq 1618) {
+                    $msiExit = (Start-Process	 -wait -nonewwindow -FilePath "msiexec.exe" -ArgumentList "/i $env:PUBLIC\AWSCLI.msi /l*v $env:PUBLIC\AWSCLI-install.log /qn").ExitCode
+                    logit "MSI Exit: $msiExit"
+                    If ($msiExit -eq "1618") {
                       logit "Got 1618 - MSIEXEC is processing another package - waiting $CycleMins Minute before trying again..."
                       Start-Sleep -Seconds ($CycleMins * 60)
                       $RetryMins += $CycleMins
                     }
-                  } while (($msiExecProcess.ExitCode -eq 1618) -and ($RetryMins -lt 5))
+                  } until (($msiExit -ne "1618") -or ($RetryMins -gt 5))
                   
                   #$env:PATH="$env:PATH;C:\Program Files\Amazon\AWSCLI\bin"
                   $env:PATH="$env:PATH;C:\Program Files\Amazon\AWSCLIV2"
@@ -1299,14 +1300,16 @@ Resources:
                   - "ec2:DescribeSubnets"
                 Resource: "*"
 
+  LookupVPCInfo:
+    Type: Custom::VPCInfo
+    Properties:
+      ServiceToken: !GetAtt VPCInfoLambda.Arn
+      VpcToGet: !Ref 4ASGSpecifyVPC
+
   S3BucketNameLower:
     Type: Custom::Lowercase
     Properties:
       ServiceToken: !GetAtt LowerCasePlusRandomLambda.Arn
       InputString: !Sub "${AWS::StackName}"
 
-  LookupVPCInfo:
-    Type: Custom::VPCInfo
-    Properties:
-      ServiceToken: !GetAtt VPCInfoLambda.Arn
-      VpcToGet: !Ref 4ASGSpecifyVPC
+
