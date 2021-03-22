@@ -2,14 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v1.4.24-alpha9] - 2021-03-22
+
+- Enable a much better form based experience without oddly named parameters using AWS::CloudFormation::Interface (#23)
 ## [v1.4.2-alpha8] - 2021-03-17
 
 - Enable specifying VPC with a new parameter (4ASGSpecifyVPC).  Defaults to DefaultVPC and functions identically to last version when VPC is not specified.  ASG configures for all available subnets in the VPC.
 - Enable specifying VPC was implemented using a best practice CloudFormation Custom Resource python lambda function.
 - LowerCase Custom function also adds 5 random alphanumeric characters
 - Default branch is now 'main'
+
 ## [v1.4.2-alpha7] - 2021-03-09
 - added easy button for linux docker single instance warm HA with scheduling ability
+
 ## [v1.4.1-alpha7] - 2021-03-06
 
 - spot terminations no longer attempt to drain jobs - there is no time for that - all jobs running on spot should be mutable (#1)
