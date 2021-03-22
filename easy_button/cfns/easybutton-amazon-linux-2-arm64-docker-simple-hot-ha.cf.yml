@@ -35,7 +35,7 @@ Metadata:
           - 3GITLABRunnerS3CacheBucket
       - 
         Label: 
-          default: "Scaling Group / Cluster Size, HA Type, VPC Location, Security and Scheduling"
+          default: "Scaling Group / Cluster Size, HA Type, Instance Type, VPC Location, Security and Scheduling"
         Parameters: 
           - 4ASGDesiredCapacity
           - 3GITLABRunnerConcurrentJobs
@@ -46,6 +46,10 @@ Metadata:
           - 4ASGScheduledShutdownCron
           - 4ASGScheduledStartupDesiredInstances
           - 4ASGScheduledStartupCron
+          - 5ASGInstanceType1
+          - 5ASGInstanceType2
+          - 5ASGInstanceType3
+          - 5ASGInstanceType4
           - 8DBGKeypairName
       - 
         Label: 
@@ -58,10 +62,6 @@ Metadata:
           - 5ASGAutoScalingSetScaleInUtilizationThresholdSeconds
           - 5ASGAutoScalingSetScaleOutUtilizationThreshold
           - 5ASGAutoScalingSetScaleOutUtilizationThresholdSeconds
-          - 5ASGInstanceType1
-          - 5ASGInstanceType2
-          - 5ASGInstanceType3
-          - 5ASGInstanceType4
           - 5ASGSelfMonitorTerminationInterval
       - 
         Label: 
