@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [v1.4.24-alpha9] - 2021-03-22
+## [v1.4.3-alpha9] - 2021-03-22
 
 - Enable a much better form based experience without oddly named parameters using AWS::CloudFormation::Interface (#23)
 ## [v1.4.2-alpha8] - 2021-03-17
