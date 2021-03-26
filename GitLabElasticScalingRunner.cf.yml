@@ -1435,7 +1435,7 @@ Resources:
               - Effect: "Allow"
                 Action:
                   - "logs:CreateLogGroup"
-                  - "logs:CreateLogStream"
+                  - "logs:CreateLogStream"  
                   - "logs:PutLogEvents"
                 Resource: "arn:aws:logs:*:*"
         - PolicyName: "describe-vpcs-and-subnets"
@@ -1448,14 +1448,14 @@ Resources:
                   - "ec2:DescribeSubnets"
                 Resource: "*"
 
-  S3BucketNameLower:
-    Type: Custom::Lowercase
-    Properties:
-      ServiceToken: !GetAtt LowerCasePlusRandomLambda.Arn
-      InputString: !Sub "${AWS::StackName}"
-
   LookupVPCInfo:
     Type: Custom::VPCInfo
     Properties:
       ServiceToken: !GetAtt VPCInfoLambda.Arn
       VpcToGet: !Ref 4ASGSpecifyVPC
+
+  S3BucketNameLower:
+    Type: Custom::Lowercase
+    Properties:
+      ServiceToken: !GetAtt LowerCasePlusRandomLambda.Arn
+      InputString: !Sub "${AWS::StackName}"
