@@ -2,19 +2,29 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v1.4.5-alpha10] - 2021-04-19
+
+- Simplification of number of easy buttons provided.  Consolidated all manual scaling options and scheduling on per-platform and per-spot basis. Users pick 1, 2, or more instances to control Warm HA, Hot HA or Manual Scaled Fleet. Instance count can be tuned via ASG parameter edits after deployment.
+- Add preflight end-to-end connection tests for endpoints needed for successful installation and configuration of the runner. Fail immediately if there is a possible network problem between the runner network context and the GitLab instance network context. Should cover VPC config, VPC gateway configs, security group configs, NACLs, routing tables, firewalls for both the runner network location and the target GitLab Instance network location.
+- Use Windows 2019 instead of 1903.
+- Retry installations for AWS CLI for MSI error 1618 (MSI is processing another package).
+- Reboot behavior changed to support just one reboot while in launching lifecycle hook - to simplify idempotency checks in spin up automation.
+- Fix for Windows spot draining code.
+- Fail immediately if instance configuration script has non-zero exit.
+- Fixed "known problem: Windows machines are not completing autoscaling." noted in release v1.4.1-alpha7.
 ## [v1.4.3-alpha9] - 2021-03-22
 
 - Enable a much better form based experience without oddly named parameters using AWS::CloudFormation::Interface (#23)
+
 ## [v1.4.2-alpha8] - 2021-03-17
 
 - Enable specifying VPC with a new parameter (4ASGSpecifyVPC).  Defaults to DefaultVPC and functions identically to last version when VPC is not specified.  ASG configures for all available subnets in the VPC.
 - Enable specifying VPC was implemented using a best practice CloudFormation Custom Resource python lambda function.
 - LowerCase Custom function also adds 5 random alphanumeric characters
 - Default branch is now 'main'
-
 ## [v1.4.2-alpha7] - 2021-03-09
-- added easy button for linux docker single instance warm HA with scheduling ability
 
+- added easy button for linux docker single instance warm HA with scheduling ability
 ## [v1.4.1-alpha7] - 2021-03-06
 
 - spot terminations no longer attempt to drain jobs - there is no time for that - all jobs running on spot should be mutable (#1)

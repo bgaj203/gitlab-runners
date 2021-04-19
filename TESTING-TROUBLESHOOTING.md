@@ -133,4 +133,4 @@ There is a project with a runner stressing utility here: https://gitlab.com/gitl
   * start: `systemctl start amazon-cloudwatch-agent`
   * stop: `systemctl stop amazon-cloudwatch-agent`
 * Tail operational Log: `cat C:\ProgramData\Amazon\AmazonCloudWatchAgent\Logs\amazon-cloudwatch-agent.log`
-* Configuraiton validation log: `cat C:\ProgramData\Amazon\AmazonCloudWatchAgent\Logs\configuration-validation.log`
+* Configuration validation log: `cat C:\ProgramData\Amazon\AmazonCloudWatchAgent\Logs\configuration-validation.log`

@@ -12,6 +12,27 @@ function logit() {
   echo "$LOGSTRING" >> /var/log/messages
 }                     
 
+logit "Preflight checks for required endpoints..."
+urlportpairlist="$(echo $GITLABRunnerInstanceURL | cut -d'/' -f3 | cut -d':' -f1)=443 gitlab-runner-downloads.s3.amazonaws.com=443"
+failurecount=0
+for urlportpair in $urlportpairlist; do
+  set -- $(echo $urlportpair | tr '=' ' ') ; url=$1 ; port=$2
+  logit "TCP Test of $url on $port"
+  timeout 3 bash -c "cat < /dev/null > /dev/tcp/$url/$port"
+  if [ "$?" -ne 0 ]; then
+    logit "  Connection to $url on port $port failed"
+    ((failurecount++))
+  else
+    logit "  Connection to $url on port $port succeeded"
+  fi
+done
+
+if [ $failurecount -gt 0 ]; then
+ logit "$failurecount tcp connect tests failed. Please check all networking configuration for problems."
+  if [ -f /opt/aws/bin/cfn-signal ]; then /opt/aws/bin/cfn-signal --success false --stack ${AWS::StackName} --resource InstanceASG --region $AWS_REGION --reason "Cant connect to GitLab or other endpoints"
+ exit $failurecount
+fi
+
 #Detect package manager
 if [[ -n "$(command -v yum)" ]] ; then
   PKGMGR='yum'
