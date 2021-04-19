@@ -28,6 +28,30 @@ Function logit ($Msg, $MsgType='Information', $ID='1') {
 
 logit "****ATTENTION: Windows Docker Executor support for this template is experimental."
 
+logit "Preflight checks for required endpoints..."
+$UrlPortPairList="$(([system.uri]$GITLABRunnerInstanceURL).DnsSafeHost)=443 gitlab-runner-downloads.s3.amazonaws.com=443"
+$FailureCount=0 ; $ConnectTimeoutMS = '3000'
+foreach ($UrlPortPair in $UrlPortPairList.split(' '))
+{
+  $array=$UrlPortPair.split('='); $url=$array[0]; $port=$array[1]
+  logit "TCP Test of $url on $port"
+  $ErrorActionPreference = 'SilentlyContinue'
+  $conntest = (new-object net.sockets.tcpclient).BeginConnect($url,$port,$null,$null)
+  $conntestwait = $conntest.AsyncWaitHandle.WaitOne($ConnectTimeoutMS,$False)
+  if (!$conntestwait)
+  { logit "  Connection to $url on port $port failed"
+    $conntest.close()
+    $FailureCount++
+  }
+  else
+  { logit "  Connection to $url on port $port succeeded" }
+}
+If ($FailureCount -gt 0)
+{ logit "$failurecount tcp connect tests failed. Please check all networking configuration for problems."
+  cfn-signal --success false --stack ${AWS::StackName} --resource InstanceASG --region $AWS_REGION --reason "Cant connect to GitLab or other endpoints"
+  Exit $FailureCount
+}
+
 logit "Installing runner"
 
 if (!(Test-Path $RunnerInstallRoot)) {New-Item -ItemType Directory -Path $RunnerInstallRoot}
@@ -99,7 +123,7 @@ if ( (aws autoscaling describe-auto-scaling-instances --instance-ids $MYINSTANCE
   if ( "$($COMPUTETYPE.ToLower())" -ne "spot" ) {
     logit "Instance is not spot compute, draining running jobs..."
     .\gitlab-runner stop
-  else
+  } else {
     logit "Instance is spot compute, deregistering runner immediately without draining running jobs..."
   }
   .\gitlab-runner unregister --all-runners

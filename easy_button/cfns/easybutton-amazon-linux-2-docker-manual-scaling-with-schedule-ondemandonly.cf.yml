@@ -1,9 +1,9 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Description: >
-  Amazon Linux 2 Docker Simple Scaling Spot Instances. 
-  Two docker executors, scaling based on simple CPU metrics, only spot
-  **Note:** Actual scaling parameters used in this MVP are just to show how to configure scaling - 
-  they are untested with Runner workloads - your can help by contributing your tested scaling parameters in an issue.
+  Amazon Linux 2 Docker HA with manual scaling with scheduling of uptime (non-spot).
+  Desired capacity of 1 enables WARM HA through ASG Respawn.
+  Desired capacity of 2 enables HOT/HOT HA since loss of a node does not make the service unavailable.
+  Desired capacity of 3 or more enables HOT/HOT HA and manual scaling of runner fleet.
 Metadata: 
   AWS::CloudFormation::Interface: 
     ParameterGroups: 
@@ -179,6 +179,35 @@ Parameters:
       The runner will automatically have tags for the operating system platform, whether compute is spot or ondemand and the executor type.
       Ec2 tags will also include the runner name and the gitlab instance url. Except for Linux Docker, other runner types will require tags to be specified in jobs.
     Type: String
+  4ASGDesiredCapacity:
+    Description: >
+      This template uses ASGs for HA - even if you choose not to autoscale.
+      Desired capacity of 1 enables WARM HA through ASG Respawn.
+      Desired capacity of 2 enables HOT/HOT HA since loss of a node does not require respawn for recovery, but the application must support more than one instance of this server/service role.
+      Desired capacity of 3 or more enables HOT/HOT HA and manual scaling of runner fleet.
+      Manual scaling can be altered by editing the AutoScaling Group directly.
+    Type: Number
+    Default: 1
+  4ASGScheduledShutdownCron:
+    Description: >
+      Cron format when ASG should scale to 0 for Min and Desired. to completely stop all instances. This is UTC, so adjust for your timezone.
+      You can set only a stop hour if something else is starting the ASG on demand, but this action will also scale it to the new parameters
+      regardless of the current settings due to autoscaling. You can manually edit this template to add more schedules.
+      For syntax guidelines see: https://docs.aws.amazon.com/AmazonCloudWatch/latest/events/ScheduledEvents.html#CronExpressions
+      "0 19 * * MON-FRI" = Stop 7pm UTC, Monday-Friday. (Off during the UTC weekend)
+      "0 20 * * *" = Stop 8pm UTC everyday.
+    Type: String
+    Default: Disabled
+  4ASGScheduledStartupCron:
+    Description: >
+      Cron format when ASG should scale to 1 minimum to start ASG, autoscaling will take over after start. This is UTC, so adjust for your timezone.
+      You can set only a start hour if something else is stopping the ASG on demand, but this action will also scale it to the new parameters
+      regardless of the current settings due to autoscaling. You can manually edit this template to add more schedules.
+      For syntax guidelines see: https://docs.aws.amazon.com/AmazonCloudWatch/latest/events/ScheduledEvents.html#CronExpressions
+      "0 7 * * MON-FRI" = Start 7am UTC, Monday-Friday.
+      "0 5 * * *" = Start 5am UTC everyday.
+    Type: String
+    Default: Disabled    
   4ASGSpecifyVPC:
     Description: >
       DefaultVPC - finds the VPC and configures all of its subnets for you. Otherwise type in the VPC id of a VPC in the same region where you run the template. 
@@ -192,7 +221,7 @@ Parameters:
       Specify the instance type to be used.  Do not use bursty instance types like t2 or t3.
     Type: String
     Default: "m5.large"
-    AllowedPattern: ^[A-Za-z0-9.]+$      
+    AllowedPattern: ^[A-Za-z0-9.]+$
 Resources:
   RnrASG:
     Type: AWS::CloudFormation::Stack
@@ -211,20 +240,15 @@ Resources:
         3GITLABRunnerRegTokenList: !Ref 3GITLABRunnerRegTokenList
         3INSTConfigurationScript: https://gitlab.com/guided-explorations/aws/gitlab-runner-autoscaling-aws-asg/-/raw/main/runner_configs/amazon-linux-2-docker.sh
         3GITLABRunnerTagList: !Ref 3GITLABRunnerTagList
-        4ASGDesiredCapacity: 2
+        4ASGDesiredCapacity: !Ref 4ASGDesiredCapacity
+        4ASGScheduledShutdownCron: !Ref 4ASGScheduledShutdownCron
+        4ASGScheduledStartupCron: !Ref 4ASGScheduledStartupCron
         4ASGSpecifyVPC: !Ref 4ASGSpecifyVPC
-        5ASGAutoScalingEnabled: true
-        5ASGAutoScalingMaxSize: 10
-        5ASGAutoScalingMetricTypeToMonitor: CPU
-        5ASGAutoScalingSetScaleOutUtilizationThreshold: 70
-        5ASGAutoScalingSetScaleOutUtilizationThresholdSeconds: 60
-        5ASGAutoScalingSetScaleInUtilizationThreshold: 40
-        5ASGAutoScalingSetScaleInUtilizationThresholdSeconds: 60
-        5SPOTOnDemandBaseCapacity: 0
-        5SPOTOnDemandPercentageAboveBaseCapacity: 0
+        5ASGAutoScalingEnabled: false
         5ASGInstanceType1: !Ref 5ASGInstanceType1
         5ASGInstanceType2: ""
         5ASGInstanceType3: ""
         5ASGInstanceType4: ""
+        5SPOTOnDemandPercentageAboveBaseCapacity: 100
         8DBGKeypairName: ""
         9AWSRetrieveLatestAWSOSAmiIdFromSSM: /aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2
