@@ -340,7 +340,7 @@ Parameters:
     Description: >
       Maximum number of instances the ASG can contain.
     Type: Number
-    Default: 10
+    Default: 100
   5ASGSelfMonitorTerminationInterval:
     Description: >
       How often in minutes should the instance check if it is being asked to terminate so it can run a clean up script.

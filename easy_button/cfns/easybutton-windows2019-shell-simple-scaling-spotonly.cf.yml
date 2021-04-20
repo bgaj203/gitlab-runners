@@ -214,7 +214,6 @@ Resources:
         4ASGDesiredCapacity: 2
         4ASGSpecifyVPC: !Ref 4ASGSpecifyVPC
         5ASGAutoScalingEnabled: true
-        5ASGAutoScalingMaxSize: 10
         5ASGAutoScalingMetricTypeToMonitor: CPU
         5ASGAutoScalingSetScaleOutUtilizationThreshold: 70
         5ASGAutoScalingSetScaleOutUtilizationThresholdSeconds: 60
