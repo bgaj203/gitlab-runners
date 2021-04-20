@@ -197,7 +197,7 @@ Resources:
   RnrASG:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: https://gl-public-templates.s3.amazonaws.com/cfn/v1.4.5-alpha10/GitLabElasticScalingRunner.cf.yml
+      TemplateURL: https://gl-public-templates.s3.amazonaws.com/cfn/v1.4.6-alpha11/GitLabElasticScalingRunner.cf.yml
       Tags:
         - Key: Product
           Value: GitLab

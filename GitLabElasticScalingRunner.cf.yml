@@ -164,8 +164,8 @@ Parameters:
   1AAAATemplateVersion:
     Description: "Version of this template. Read only."
     Type: String
-    Default: "v1.4.5-alpha10"
-    AllowedValues: [ "v1.4.5-alpha10" ]
+    Default: "v1.4.6-alpha11"
+    AllowedValues: [ "v1.4.6-alpha11" ]
     ConstraintDescription: "1AAAATemplateVersion is the template version number and cannot be changed at runtime."
   1AAASourceProject:
     Description: >
@@ -788,6 +788,9 @@ Resources:
             - BuildInstanceRoleToUse
             -   Arn: !GetAtt ASGInstanceProfile.Arn
             -   Arn: !Sub "arn:aws:iam::${AWS::AccountId}:instance-profile/${9AWSSpecifiedIAMRoleNAME}"
+        NetworkInterfaces:
+        - DeviceIndex: 0
+          AssociatePublicIpAddress: false
         BlockDeviceMappings:
         - DeviceName: "/dev/xvda"
           Ebs:
