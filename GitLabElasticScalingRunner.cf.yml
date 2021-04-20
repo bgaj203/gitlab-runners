@@ -788,9 +788,6 @@ Resources:
             - BuildInstanceRoleToUse
             -   Arn: !GetAtt ASGInstanceProfile.Arn
             -   Arn: !Sub "arn:aws:iam::${AWS::AccountId}:instance-profile/${9AWSSpecifiedIAMRoleNAME}"
-        NetworkInterfaces:
-        - DeviceIndex: 0
-          AssociatePublicIpAddress: false
         BlockDeviceMappings:
         - DeviceName: "/dev/xvda"
           Ebs:
