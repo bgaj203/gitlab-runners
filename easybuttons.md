@@ -1,7 +1,8 @@
 # GitLab HA Scaling Runner Vending Machine for AWS
 
 **Note:** The easy button code in this project is easy to reuse as a pattern to create your own easy button setups for the CloudFormation Console UI or the CLI.
-**Note:** that you can deploy as many of these as you wish as many times as you wish to build runner clusters with the appropriate attributes.
+**Note:** That you can deploy as many of these as you wish as many times as you wish to build runner clusters with the appropriate attributes.
+**Note:** The automation that underlies the Easy Buttons complies with Amazon Well Architected and is capable of being used directly or as a template starting point for creating very advanced Runner ASGs.  Learn more here: https://gitlab.com/guided-explorations/aws/gitlab-runner-autoscaling-aws-asg
 
 | Easy Buttons                                                 | Name                                                         | Description                                                  |
 | ------------------------------------------------------------ | ------------------------------------------------------------ | ------------------------------------------------------------ |
