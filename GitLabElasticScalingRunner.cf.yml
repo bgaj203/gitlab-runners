@@ -116,6 +116,10 @@ Metadata:
         default: "The number of instances that should be configured. Generally 1 for warm HA and 2 for hot HA."
       4ASGUpdateType:
         default: "The type of deployment strategy should be used when updating the Scaling Group / Cluster."
+      4ASGMinInstancesInService:
+        default: "The minimum instances that should be in service during updates."
+      4ASGMaxBatchSize:
+        default: "The maximum number of instances to process at once."
       4ASGScheduledShutdownCron:
         default: "Optional cron schedule for complete runner Scaling Group / Cluster shutdown."
       4ASGScheduledStartupCron:
@@ -291,6 +295,18 @@ Parameters:
     AllowedValues:
       - ReplaceEntireASG
       - RollingThroughInstances
+  4ASGMinInstancesInService:
+    Description: >
+      (Only Applies To Updates) Minimum number of instances that should be available during an update. 
+      Consider about 75% of full capacity as a guideline.
+    Type: Integer
+    Default: 1
+  4ASGMaxBatchSize:
+    Description: >
+      (Only Applies To Updates) Maximum number of instances to update at one time. 
+      Consider about 25% of full capacity as a guideline.
+    Type: Integer
+    Default: 2  
   4ASGScheduledShutdownCron:
     Description: >
       Cron format when ASG should scale to 0 for Min and Desired. to completely stop all instances. This is UTC, so adjust for your timezone.
@@ -600,8 +616,8 @@ Resources:
         Count: !Ref 4ASGDesiredCapacity
     UpdatePolicy:
       AutoScalingRollingUpdate:
-        MaxBatchSize: 2
-        MinInstancesInService: 1
+        MaxBatchSize: !Ref 4ASGMaxBatchSize
+        MinInstancesInService: !Ref 4ASGMinInstancesInService
         MinSuccessfulInstancesPercent: 75
         WaitOnResourceSignals: true
         PauseTime: PT0M30S
@@ -788,9 +804,6 @@ Resources:
             - BuildInstanceRoleToUse
             -   Arn: !GetAtt ASGInstanceProfile.Arn
             -   Arn: !Sub "arn:aws:iam::${AWS::AccountId}:instance-profile/${9AWSSpecifiedIAMRoleNAME}"
-        NetworkInterfaces:
-        - DeviceIndex: 0
-          AssociatePublicIpAddress: false
         BlockDeviceMappings:
         - DeviceName: "/dev/xvda"
           Ebs:
