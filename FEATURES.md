@@ -18,8 +18,8 @@
 ## Runner Cost Management Built-In
 
 - Developer Self-Service through CloudFormation Direct Launch and Compatiblity with AWS Service Catalog for Enterprises.
-- Configurable scheduled shutdown and/or startup for runners that do not need to run 24x7.
-- Cost / Budget Management Tagging.
+- Flexible leveraging of spot compute.
+- Configurable scheduled shutdown and/or startup for runners that do not need to run 24x7. For instance, you save 77% when a runner is scheduled for 40 hours a week ((168-40/168)=77%)
 
 ## Runner Configuration Best Practices
 
