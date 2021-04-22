@@ -66,11 +66,31 @@ Note that you can override parameter file values on the command line - which is 
 aws cloudformation create-stack --stack-name "mynewrunner" --template-url https://s3.us-west-2.amazonaws.com/gl-public-templates/cfn/GitLabElasticScalingRunner.cf.yml --capabilities CAPABILITY_NAMED_IAM --parameters $(cat easy-button-parameter-sets/amazon-linux-2-docker-simple-hot-ha.cfparameters.json | jq -r '.[] | "ParameterKey=" + .ParameterKey + ",ParameterValue=" + .ParameterValue') ParameterKey="5ASGInstanceType1",ParameterValue="m5.xlarge" ParameterKey="3GITLABRunnerInstanceURL",ParameterValue="https://gitlab.com"  ParameterKey="3GITLABRunnerRegTokenList",ParameterValue="your-list-of-comma-seperated-tokens"
 ```
 
-### Walk Through Video of Full Template
+### Walk Through Videos
 
 This video does not cover everything in this readme - both need to be reviewed to be productive with this code.
 
-[GitLab Runner Vending Machine for AWS: HA and/or Autoscaling on AWS with Spot](https://youtu.be/llbSTVEeY28)
+- Easy Button: [Provisioning 100 GitLab Spot Runners on AWS in Less Than 10 Minutes Using Less Than 10 Clicks + Updating 100 Spot Runners in 10 Minutes](https://youtu.be/EW4RJv5zW4U)
+- Full Template [GitLab Runner Vending Machine for AWS: HA and/or Autoscaling on AWS with Spot](https://youtu.be/llbSTVEeY28)
+
+### GitLab Runners on AWS Spot Best Practices
+
+1. Spot termination rates are lower than many folks assume, you can see them in the [AWS Spot Advisor](https://aws.amazon.com/ec2/spot/instance-advisor/)
+
+2. They can be made even lower by paying a little more using the "capacity-optimized" allocation strategy - which is available in this automation.
+
+3. This template bubbles the compute type up as a gitlab runner tag.  "computetype-spot" or "computetype-ondemand" - so on a job-by-job basis pipeline developers can decide whether to run on spot.  Something like mass testing - which is likely resilient to losing nodes anyway - is a perfect use case. Polling a remote system for status for 12+ hours - probably do not want to run that on spot.
+
+4. The below .gitlab-ci.yml code can be used in jobs to have them retry if they are terminated while running on spot (obviously the job must be engineered to tolerate unexpected terminations)
+
+   ```#From: https://docs.gitlab.com/ee/ci/yaml/#retrytest:  script: rspec  retry:    max: 2    when: runner_system_failureyaml
+   #From: https://docs.gitlab.com/ee/ci/yaml/#retry
+   test:
+     script: rspec
+     retry:
+       max: 2
+       when: runner_system_failure
+   ```
 
 ### AWS Service Catalog and QuickStarts
 
