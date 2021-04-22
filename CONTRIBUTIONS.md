@@ -11,4 +11,4 @@
 ## Right before merge to main
 1. Reverse the raw retreieval back main (do this every time to be sure) by replacing occurances of `/-/raw/v1.4.5-alpha10/` with `/-/raw/main/` (for example version v1.4.5-alpha10)
 
-> Note: The pointers in to the CloudFormation key with the version number can be left intact to keep a version history
+> Note: The pointers in to the CloudFormation key with the version number can be left intact to allow folks to peg to a version when necessary.
