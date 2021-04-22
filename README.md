@@ -15,6 +15,12 @@
 ### Many Strategic Features Built In (TL;DR)
 
 The list of built-in features - things you don't have to engineer your - is so long most folks do a TL;DR and so they are now covered in [FEATURES.md](./FEATURES.md) The feature categories are: **Scaled Runner Management Built-In, Runner Cost Management Built-In, Runner Configuration Best Practices, Security, High Availability, Elastic Scaling, AWS Features and Best Practices,Extensibility, Reusability and Troubleshooting, and Supported Combinations of Operating Systems, Runner Executors and Hardware Architectures.**
+
+### Significant Cost Control
+- 90% savings - flexible leveraging of spot compute - save up to 90%.
+- 77% or more savings - configurable scheduled shutdown and/or startup for runners runners that do not need to run 24x7. For instance, you save 77% when a runner is scheduled for 40 hours a week ((168-40/168)=77%).
+- scheduled spot runners compound the above savings over always running ondemand instances.
+
 ### Easy Buttons
 
 [Walkthrough Video of the Easy Button Capability](https://youtu.be/2dXw8Dx6ENw)
