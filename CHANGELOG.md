@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v1.4.6-alpha11] - 2021-04-22
+
+- Surfaced parameters for better control of large scale updates:   4ASGUpdateMinInstancesInService and 4ASGUpdateMaxBatchSize
+- Upped maximum initially deployable instances to 20 (update your CF stack to push this higher after deployment)
+-  In [README.md](./README.md), added documentation section **GitLab Runners on AWS Spot Best Practices**
+-  In [README.md](./README.md), added a link to video: [Provisioning 100 GitLab Spot Runners on AWS in Less Than 10 Minutes Using Less Than 10 Clicks + Updating 100 Spot Runners in 10 Minutes](https://youtu.be/EW4RJv5zW4U)
+
 ## [v1.4.5-alpha10] - 2021-04-19
 
 - Simplification of number of easy buttons provided.  Consolidated all manual scaling options and scheduling on per-platform and per-spot basis. Users pick 1, 2, or more instances to control Warm HA, Hot HA or Manual Scaled Fleet. Instance count can be tuned via ASG parameter edits after deployment.
