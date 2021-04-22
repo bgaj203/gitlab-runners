@@ -19,7 +19,7 @@ The list of built-in features - things you don't have to engineer your - is so l
 ### Significant Cost Control
 
 - 90% savings - flexible leveraging of spot compute - save up to 90%.
-- 77% or more savings - configurable scheduled shutdown and/or startup for runners runners that do not need to run 24x7. For instance, you save 77% when a runner is scheduled for 40 hours a week ((168-40/168)=77%).
+- 76% or more savings - configurable scheduled shutdown and/or startup for runners runners that do not need to run 24x7. For instance, you save 76% when a runner is scheduled for 40 hours a week ((168-40/168)=76%).
 - scheduled spot runners compound the above savings over always running ondemand instances.
 
 ### Easy Buttons

@@ -19,7 +19,7 @@
 
 - Developer Self-Service through CloudFormation Direct Launch and Compatiblity with AWS Service Catalog for Enterprises.
 - Flexible leveraging of spot compute.
-- Configurable scheduled shutdown and/or startup for runners that do not need to run 24x7. For instance, you save 77% when a runner is scheduled for 40 hours a week ((168-40/168)=77%)
+- Configurable scheduled shutdown and/or startup for runners that do not need to run 24x7. For instance, you save 76% when a runner is scheduled for 40 hours a week ((168-40/168)=76%)
 
 ## Runner Configuration Best Practices
 
