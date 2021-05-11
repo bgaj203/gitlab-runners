@@ -115,8 +115,7 @@ Function logit (`$Msg, `$MsgType='Information', `$ID='1') {
   `$applog.WriteEntry("From: `$SourcePathName : `$Msg", `$MsgType, `$ID)
 }
 
-try {`$HTTP_Response = [System.Net.WebRequest]::Create('http://169.254.169.254/latest/meta-data/spot/instance-action').GetResponse()} catch [System.Net.WebException] {`$HTTP_Response = $_.Exception.Response.statuscoode}
-if ([int]`$HTTP_Response.StatusCode -eq 200) {  
+if ( (aws autoscaling describe-auto-scaling-instances --instance-ids $MYINSTANCEID --region $AWS_REGION | convertfrom-json).AutoScalingInstances.LifecycleState -ilike "*Terminating*" ) { 
   #if the url exists, we are being terminated
   logit "This instance ($MYINSTANCEID) is being terminated, perform cleanup..."
 
