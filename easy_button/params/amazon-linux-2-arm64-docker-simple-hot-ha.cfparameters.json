@@ -22,7 +22,7 @@
   }, 
   {
     "ParameterKey": "3INSTConfigurationScript",
-    "ParameterValue": "https://gitlab.com/guided-explorations/aws/gitlab-runner-autoscaling-aws-asg/-/raw/main/runner_configs/amazon-linux-2-docker.sh"
+    "ParameterValue": "https://gitlab.com/guided-explorations/aws/gitlab-runner-autoscaling-aws-asg/-/raw/v1.4.7-alpha12/runner_configs/amazon-linux-2-docker.sh"
   },
   {
     "ParameterKey": "4ASGDesiredCapacity",

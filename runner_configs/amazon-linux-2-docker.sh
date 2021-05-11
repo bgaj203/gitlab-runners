@@ -120,7 +120,8 @@ if [ ! -z "$NAMEOFASG" ] && [ "$ASGSelfMonitorTerminationInterval" != "Disabled"
     }
     #These are resolved at script creation time to reduce api calls when this script runs every minute on instances.
 
-    if [[ "\$(aws autoscaling describe-auto-scaling-instances --instance-ids $MYINSTANCEID --region $AWS_REGION | jq --raw-output '.AutoScalingInstances[0] .LifecycleState')" == *"Terminating"* ]]; then
+    if [[ "\$(curl -s -o /dev/null -w '%{http_code}\n' -v http://169.254.169.254/latest/meta-data/spot/instance-action)" != "404" ]]; then
+      #if the url exists, we are being terminated
       logit "This instance ($MYINSTANCEID) is being terminated, perform cleanup..."
 
       if [ "${COMPUTETYPE,,}" != "spot" ]; then
