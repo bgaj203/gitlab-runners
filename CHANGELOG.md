@@ -2,9 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
-## [v1.4.7-alpha12] - 2021-05-MM
+## [v1.4.7-alpha12] - 2021-05-14
 
-- 5SPOTSpotAllocationStrategy now defaults to 'capacity-optimized'
+- As per AWS Spot team recommendations: 5SPOTSpotAllocationStrategy now defaults to 'capacity-optimized-prioritized' 
+- Replaced single ARM64 Easy button with two that mimic the Linux ones where the user can provide the number of instances to obtain Warm HA, Hot HA or scaling.
+- Forced 5ASGSelfMonitorTerminationInterval to lowest value (currently 1) for any easy button containing spot instances rather than rely on default value in the template
 
 ## [v1.4.6-alpha11] - 2021-04-22
 

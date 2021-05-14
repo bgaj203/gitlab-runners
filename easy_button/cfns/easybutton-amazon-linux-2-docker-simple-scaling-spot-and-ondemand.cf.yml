@@ -209,10 +209,11 @@ Resources:
         1OSPatchScope: NoPatching
         3GITLABRunnerInstanceURL: !Ref 3GITLABRunnerInstanceURL
         3GITLABRunnerRegTokenList: !Ref 3GITLABRunnerRegTokenList
-        3INSTConfigurationScript: https://gitlab.com/guided-explorations/aws/gitlab-runner-autoscaling-aws-asg/-/raw/v1.4.7-alpha12/runner_configs/amazon-linux-2-docker.sh
+        3INSTConfigurationScript: https://gitlab.com/guided-explorations/aws/gitlab-runner-autoscaling-aws-asg/-/raw/main/runner_configs/amazon-linux-2-docker.sh
         3GITLABRunnerTagList: !Ref 3GITLABRunnerTagList
         4ASGDesiredCapacity: 2
         4ASGSpecifyVPC: !Ref 4ASGSpecifyVPC
+        5ASGSelfMonitorTerminationInterval: 1 #Should always be the lowest possible value for spot
         5ASGAutoScalingEnabled: true
         5ASGAutoScalingMetricTypeToMonitor: CPU
         5ASGAutoScalingSetScaleOutUtilizationThreshold: 70
