@@ -168,8 +168,8 @@ Parameters:
   1AAAATemplateVersion:
     Description: "Version of this template. Read only."
     Type: String
-    Default: "v1.4.7-alpha12"
-    AllowedValues: [ "v1.4.7-alpha12" ]
+    Default: "v1.4.8-alpha13"
+    AllowedValues: [ "v1.4.8-alpha13" ]
     ConstraintDescription: "1AAAATemplateVersion is the template version number and cannot be changed at runtime."
   1AAASourceProject:
     Description: >
@@ -356,7 +356,7 @@ Parameters:
     Description: >
       Maximum number of instances the ASG can contain.
     Type: Number
-    Default: 20
+    Default: 205
   5ASGSelfMonitorTerminationInterval:
     Description: >
       How often in minutes should the instance check if it is being asked to terminate so it can run a clean up script.
