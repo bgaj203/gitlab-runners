@@ -1,8 +1,9 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Description: >
-  Windows 2019 Shell Manual Scaling Spot Instances. 
-  Two Window Shell executors, scaling based on fixed instance count, only spot.
-  Instance scaling updated by editing the AutoScaling Group parameters.
+  ARM64 Amazon Linux 2 Docker HA with manual scaling with scheduling of uptime (non-spot).
+  Desired capacity of 1 enables WARM HA through ASG Respawn.
+  Desired capacity of 2 enables HOT/HOT HA since loss of a node does not make the service unavailable.
+  Desired capacity of 3 or more enables HOT/HOT HA and manual scaling of runner fleet.
 Metadata: 
   AWS::CloudFormation::Interface: 
     ParameterGroups: 
@@ -219,7 +220,7 @@ Parameters:
     Description: >
       Specify the instance type to be used.  Do not use bursty instance types like t2 or t3.
     Type: String
-    Default: "m5.large"
+    Default: "a1.large"
     AllowedPattern: ^[A-Za-z0-9.]+$
 Resources:
   RnrASG:
@@ -233,16 +234,16 @@ Resources:
           Value: GitLabRunner
       Parameters:
         1OSPeggedAMIID: AlwaysUseLatest
-        1OSInstanceOSPlatform: Windows
+        1OSInstanceOSPlatform: Linux
         1OSPatchScope: NoPatching
         3GITLABRunnerInstanceURL: !Ref 3GITLABRunnerInstanceURL
         3GITLABRunnerRegTokenList: !Ref 3GITLABRunnerRegTokenList
-        3INSTConfigurationScript: https://gitlab.com/guided-explorations/aws/gitlab-runner-autoscaling-aws-asg/-/raw/main/runner_configs/windows-shell.ps1
+        3INSTConfigurationScript: https://gitlab.com/guided-explorations/aws/gitlab-runner-autoscaling-aws-asg/-/raw/main/runner_configs/amazon-linux-2-docker.sh
         3GITLABRunnerTagList: !Ref 3GITLABRunnerTagList
-        4ASGSpecifyVPC: !Ref 4ASGSpecifyVPC
         4ASGDesiredCapacity: !Ref 4ASGDesiredCapacity
         4ASGScheduledShutdownCron: !Ref 4ASGScheduledShutdownCron
         4ASGScheduledStartupCron: !Ref 4ASGScheduledStartupCron
+        4ASGSpecifyVPC: !Ref 4ASGSpecifyVPC
         5ASGAutoScalingEnabled: false
         5ASGInstanceType1: !Ref 5ASGInstanceType1
         5ASGInstanceType2: ""
@@ -250,4 +251,4 @@ Resources:
         5ASGInstanceType4: ""
         5SPOTOnDemandPercentageAboveBaseCapacity: 100
         8DBGKeypairName: ""
-        9AWSRetrieveLatestAWSOSAmiIdFromSSM: /aws/service/ami-windows-latest/Windows_Server-2019-English-Core-ContainersLatest
+        9AWSRetrieveLatestAWSOSAmiIdFromSSM: /aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-arm64-gp2
