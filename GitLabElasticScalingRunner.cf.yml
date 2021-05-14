@@ -168,8 +168,8 @@ Parameters:
   1AAAATemplateVersion:
     Description: "Version of this template. Read only."
     Type: String
-    Default: "v1.4.6-alpha11"
-    AllowedValues: [ "v1.4.6-alpha11" ]
+    Default: "v1.4.7-alpha12"
+    AllowedValues: [ "v1.4.7-alpha12" ]
     ConstraintDescription: "1AAAATemplateVersion is the template version number and cannot be changed at runtime."
   1AAASourceProject:
     Description: >
@@ -425,10 +425,11 @@ Parameters:
       Determines which allocation strategy to use. 'capacity-optimized' helps reduce spot terminations.
       More information: https://docs.aws.amazon.com/autoscaling/ec2/APIReference/API_InstancesDistribution.html
     Type: String
-    Default: lowest-price
+    Default: capacity-optimized-prioritized
     AllowedValues:
       - lowest-price
       - capacity-optimized
+      - capacity-optimized-prioritized
   5SPOTOnDemandBaseCapacity:
     Description: >
       Sets a minimum number of always on on-demand (non-spot) base capacity.  The number of instances here will benefit from InstanceType

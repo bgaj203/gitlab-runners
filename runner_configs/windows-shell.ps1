@@ -108,7 +108,7 @@ Function logit (`$Msg, `$MsgType='Information', `$ID='1') {
   `$applog.WriteEntry("From: `$SourcePathName : `$Msg", `$MsgType, `$ID)
 }
 
-if ( (aws autoscaling describe-auto-scaling-instances --instance-ids $MYINSTANCEID --region $AWS_REGION | convertfrom-json).AutoScalingInstances.LifecycleState -ilike "*Terminating*" ) {
+if ( (aws autoscaling describe-auto-scaling-instances --instance-ids $MYINSTANCEID --region $AWS_REGION | convertfrom-json).AutoScalingInstances.LifecycleState -ilike "*Terminating*" ) { 
   logit "This instance ($MYINSTANCEID) is being terminated, perform cleanup..."
 
   cd $RunnerInstallRoot
