@@ -168,8 +168,8 @@ Parameters:
   1AAAATemplateVersion:
     Description: "Version of this template. Read only."
     Type: String
-    Default: "v1.4.8-alpha13"
-    AllowedValues: [ "v1.4.8-alpha13" ]
+    Default: "v1.4.7-alpha12"
+    AllowedValues: [ "v1.4.7-alpha12" ]
     ConstraintDescription: "1AAAATemplateVersion is the template version number and cannot be changed at runtime."
   1AAASourceProject:
     Description: >
