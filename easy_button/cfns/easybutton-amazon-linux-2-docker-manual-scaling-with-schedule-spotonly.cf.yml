@@ -218,9 +218,27 @@ Parameters:
     Default: DefaultVPC
   5ASGInstanceType1:
     Description: >
-      Specify the instance type to be used.  Do not use bursty instance types like t2 or t3.
+      Specify the instance type to be used.  Do not use bursty instance types like t2 or t3. Four types required for 100% spot configuration to avoid rebalancing churn.
     Type: String
     Default: "m5.large"
+    AllowedPattern: ^[A-Za-z0-9.]+$
+  5ASGInstanceType2:
+    Description: >
+      Specify the instance type to be used.  Do not use bursty instance types like t2 or t3. Four types required for 100% spot configuration to avoid rebalancing churn.
+    Type: String
+    Default: "m5d.large"
+    AllowedPattern: ^[A-Za-z0-9.]+$
+  5ASGInstanceType3:
+    Description: >
+      Specify the instance type to be used.  Do not use bursty instance types like t2 or t3. Four types required for 100% spot configuration to avoid rebalancing churn.
+    Type: String
+    Default: "m5n.large"
+    AllowedPattern: ^[A-Za-z0-9.]+$
+  5ASGInstanceType4:
+    Description: >
+      Specify the instance type to be used.  Do not use bursty instance types like t2 or t3. Four types required for 100% spot configuration to avoid rebalancing churn.
+    Type: String
+    Default: "c5.large"
     AllowedPattern: ^[A-Za-z0-9.]+$
 Resources:
   RnrASG:
@@ -248,9 +266,9 @@ Resources:
         5ASGSelfMonitorTerminationInterval: 1 #Should always be the lowest possible value for spot
         5ASGAutoScalingEnabled: false
         5ASGInstanceType1: !Ref 5ASGInstanceType1
-        5ASGInstanceType2: ""
-        5ASGInstanceType3: ""
-        5ASGInstanceType4: ""
+        5ASGInstanceType2: !Ref 5ASGInstanceType2
+        5ASGInstanceType3: !Ref 5ASGInstanceType3
+        5ASGInstanceType4: !Ref 5ASGInstanceType4
         5SPOTOnDemandPercentageAboveBaseCapacity: 0
         8DBGKeypairName: ""
         9AWSRetrieveLatestAWSOSAmiIdFromSSM: /aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2
