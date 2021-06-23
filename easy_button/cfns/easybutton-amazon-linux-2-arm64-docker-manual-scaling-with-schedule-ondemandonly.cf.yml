@@ -145,11 +145,11 @@ Metadata:
       5ASGInstanceType1:
         default: "Primary instance type to be used - if available."
       5ASGInstanceType2:
-        default: "Optional second priority instance type to be used - if previous priorities are exhausted. Used for Ec2 Fleet when not using spot."
+        default: "Second priority instance type to be used - if previous priorities are exhausted. Used for Ec2 Fleet when not using spot."
       5ASGInstanceType3:
-        default: "Optional third priority instance type to be used - if previous priorities are exhausted. Used for Ec2 Fleet when not using spot."
+        default: "Third priority instance type to be used - if previous priorities are exhausted. Used for Ec2 Fleet when not using spot."
       5ASGInstanceType4:
-        default: "Optional fourth priority instance type to be used - if previous priorities are exhausted. Used for Ec2 Fleet when not using spot."
+        default: "Fourth priority instance type to be used - if previous priorities are exhausted. Used for Ec2 Fleet when not using spot."
       5SPOTSpotAllocationStrategy:
         default: "Focus spot request strategy on price or lower terminations."  
       5SPOTOnDemandBaseCapacity:
