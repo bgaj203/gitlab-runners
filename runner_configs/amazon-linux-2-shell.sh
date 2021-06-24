@@ -29,8 +29,10 @@ done
 
 if [ $failurecount -gt 0 ]; then
  logit "$failurecount tcp connect tests failed. Please check all networking configuration for problems."
-  if [ -f /opt/aws/bin/cfn-signal ]; then /opt/aws/bin/cfn-signal --success false --stack ${AWS::StackName} --resource InstanceASG --region $AWS_REGION --reason "Cant connect to GitLab or other endpoints"
- exit $failurecount
+  if [ -f /opt/aws/bin/cfn-signal ]; then 
+    /opt/aws/bin/cfn-signal --success false --stack ${AWS::StackName} --resource InstanceASG --region $AWS_REGION --reason "Cant connect to GitLab or other endpoints"
+  fi
+  exit $failurecount
 fi
 
 #Detect package manager
@@ -44,8 +46,8 @@ set -ex
 
 RunnerCompleteTagList="$RunnerOSTags,glexecutor-$GITLABRunnerExecutor,${OSInstanceLinuxArch,,}"
 
-if [ -n ${GITLABRunnerTagList} ]; then RunnerCompleteTagList="$RunnerCompleteTagList,${GITLABRunnerTagList,,}"; fi
-if [ -n ${COMPUTETYPE} ]; then RunnerCompleteTagList="$RunnerCompleteTagList,computetype-${COMPUTETYPE,,}"; fi
+if [[ -n "${GITLABRunnerTagList}" ]]; then RunnerCompleteTagList="$RunnerCompleteTagList,${GITLABRunnerTagList,,}"; fi
+if [[ -n "${COMPUTETYPE}" ]]; then RunnerCompleteTagList="$RunnerCompleteTagList,computetype-${COMPUTETYPE,,}"; fi
 
 # Installing and configuring Gitlab Runner
 if [ ! -d $RunnerInstallRoot ]; then mkdir -p $RunnerInstallRoot; fi
@@ -221,4 +223,3 @@ yum -y install git
 #90% of available memory: $(awk '/MemAvailable/{printf "%d\n", $2 * 0.9;}' < /proc/meminfo)k
 #100% of total memory: $(awk '/MemTotal/{printf "%d\n", $2;}' < /proc/meminfo)k
 # cpus * 2: $(awk '/cpu cores/{printf "%d\n", $4 * 2;}' < /proc/cpuinfo)
-

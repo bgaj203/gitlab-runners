@@ -33,13 +33,13 @@ Metadata:
           - 3GITLABRunnerTagList
           - 3INSTConfigurationScript
           - 3GITLABRunnerS3CacheBucket
+          - 3GITLABRunnerConcurrentJobs          
       - 
         Label: 
           default: "Scaling Group / Cluster Size, HA Type, Instance Type, VPC Location, Security and Scheduling"
         Parameters: 
           - 4ASGDesiredCapacity
-          - 3GITLABRunnerConcurrentJobs
-          - 3INSTConfigurationScript
+          - 3GITLABRunnerConcurrentJobs           
           - 3GITLABRunnerS3CacheBucket
           - 9AWSSpecifiedIAMRoleNAME
           - 4ASGSpecifyVPC
@@ -147,11 +147,11 @@ Metadata:
       5ASGInstanceType1:
         default: "Primary instance type to be used - if available."
       5ASGInstanceType2:
-        default: "Optional second priority instance type to be used - if previous priorities are exhausted. Used for Ec2 Fleet when not using spot."
+        default: "Second priority instance type to be used - if previous priorities are exhausted. Used for Ec2 Fleet when not using spot."
       5ASGInstanceType3:
-        default: "Optional third priority instance type to be used - if previous priorities are exhausted. Used for Ec2 Fleet when not using spot."
+        default: "Third priority instance type to be used - if previous priorities are exhausted. Used for Ec2 Fleet when not using spot."
       5ASGInstanceType4:
-        default: "Optional fourth priority instance type to be used - if previous priorities are exhausted. Used for Ec2 Fleet when not using spot."
+        default: "Fourth priority instance type to be used - if previous priorities are exhausted. Used for Ec2 Fleet when not using spot."
       5SPOTSpotAllocationStrategy:
         default: "Focus spot request strategy on price or lower terminations."  
       5SPOTOnDemandBaseCapacity:
@@ -168,8 +168,8 @@ Parameters:
   1AAAATemplateVersion:
     Description: "Version of this template. Read only."
     Type: String
-    Default: "v1.4.7-alpha12"
-    AllowedValues: [ "v1.4.7-alpha12" ]
+    Default: "v1.4.8-alpha13"
+    AllowedValues: [ "v1.4.8-alpha13" ]
     ConstraintDescription: "1AAAATemplateVersion is the template version number and cannot be changed at runtime."
   1AAASourceProject:
     Description: >
@@ -236,10 +236,10 @@ Parameters:
       The instance must have a network route and permission to any remote locations.
       The code you write must be idempotent so that it does the correct thing when run again after a patching reboot.
       Runner examples provided in this project are: amazon-linux-2-shell.sh, amazon-linux-2-docker.sh, windows-shell.ps1 and windows-docker-windows.ps1 at
-      git raw url: https://gitlab.com/guided-explorations/aws/gitlab-runner-autoscaling-aws-asg/-/raw/main/runner_configs/
+      git raw url: https://gitlab.com/guided-explorations/aws/gitlab-runner-autoscaling-aws-asg/-/raw/v1.4.8-alpha13/runner_configs/
     Type: String
-    Default: https://gitlab.com/guided-explorations/aws/gitlab-runner-autoscaling-aws-asg/-/raw/main/runner_configs/amazon-linux-2-docker.sh
-    #Reset above to: https://gitlab.com/guided-explorations/aws/gitlab-runner-autoscaling-aws-asg/-/raw/main/runner_configs/amazon-linux-2-docker.sh
+    Default: https://gitlab.com/guided-explorations/aws/gitlab-runner-autoscaling-aws-asg/-/raw/v1.4.8-alpha13/runner_configs/amazon-linux-2-docker.sh
+    #Reset above to: https://gitlab.com/guided-explorations/aws/gitlab-runner-autoscaling-aws-asg/-/raw/v1.4.8-alpha13/runner_configs/amazon-linux-2-docker.sh
   3GITLABRunnerConcurrentJobs:
     Description: >
       How many desired concurrent jobs can this runner take at a time.
@@ -356,7 +356,7 @@ Parameters:
     Description: >
       Maximum number of instances the ASG can contain.
     Type: Number
-    Default: 20
+    Default: 505
   5ASGSelfMonitorTerminationInterval:
     Description: >
       How often in minutes should the instance check if it is being asked to terminate so it can run a clean up script.
@@ -395,29 +395,28 @@ Parameters:
   5ASGInstanceType1:
     Description: >
       ATTENTION: DISABLING SPOT *instance usage* is achieved by setting 5SPOTOnDemandPercentageAboveBaseCapacity to 100.
-      At least one instancetype is required, use at least 2 to demonstrate spot. You do not have to keep your instance
-      sizes small because the lowest price will always be choosen and is likely cheaper than small on demand instances.
+      Specify the instance type to be used.  Do not use bursty instance types like t2 or t3. Four types required for spot configuration to avoid rebalancing churn. Selecting instances that all have the same size name will ensure similar costs.
       More information: https://docs.aws.amazon.com/autoscaling/ec2/APIReference/API_InstancesDistribution.html
     Type: String
     Default: "m5.large"
     AllowedPattern: ^[A-Za-z0-9.]+$
-    ConstraintDescription: At least two instancetypes are required, use at least 2 to demonstrate spot.
+    ConstraintDescription: At least one instancetype is required, use at least 2 to demonstrate spot.
   5ASGInstanceType2:
     Description: >
-      At least one instancetype is required, use at least 2 to demonstrate spot. You do not have to keep your instance
-      sizes small because the lowest price will always be choosen and is likely cheaper than small on demand instances.
+      Specify the instance type to be used.  Do not use bursty instance types like t2 or t3. Four types required for 
+      spot configuration to avoid rebalancing churn. Selecting instances that all have the same size name will ensure similar costs.
       More information: https://docs.aws.amazon.com/autoscaling/ec2/APIReference/API_InstancesDistribution.html
     Type: String
   5ASGInstanceType3:
     Description: >
-      At least one instancetype is required, use at least 2 to demonstrate spot. You do not have to keep your instance
-      sizes small because the lowest price will always be choosen and is likely cheaper than small on demand instances.
+      Specify the instance type to be used.  Do not use bursty instance types like t2 or t3. Four types required for 
+      spot configuration to avoid rebalancing churn. Selecting instances that all have the same size name will ensure similar costs.
       More information: https://docs.aws.amazon.com/autoscaling/ec2/APIReference/API_InstancesDistribution.html
     Type: String
   5ASGInstanceType4:
     Description: >
-      At least one instancetype is required, use at least 2 to demonstrate spot. You do not have to keep your instance
-      sizes small because the lowest price will always be choosen and is likely cheaper than small on demand instances.
+      Specify the instance type to be used.  Do not use bursty instance types like t2 or t3. Four types required for 
+      spot configuration to avoid rebalancing churn. Selecting instances that all have the same size name will ensure similar costs.
       More information: https://docs.aws.amazon.com/autoscaling/ec2/APIReference/API_InstancesDistribution.html
     Type: String
   5SPOTSpotAllocationStrategy:
@@ -613,7 +612,7 @@ Resources:
       AutoScalingCreationPolicy:
         MinSuccessfulInstancesPercent: 75
       ResourceSignal:
-        Timeout: !If [InstancePlatformLinux,PT15M,PT1H]
+        Timeout: !If [InstancePlatformLinux,PT45M,PT2H]
         Count: !Ref 4ASGDesiredCapacity
     UpdatePolicy:
       AutoScalingRollingUpdate:
@@ -836,14 +835,18 @@ Resources:
 
                 if ! ps -ef | grep -q '[a]mazon-ssm-agent'; then
                   logit "SSM Agent is not installed, Installing SSM for Session Manager Access..."
-                  sudo yum install -y https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/linux_amd64/amazon-ssm-agent.rpm
+                  sudo yum install -y https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/linux_${1OSInstanceLinuxArch}/amazon-ssm-agent.rpm
                   sudo start amazon-ssm-agent
                 fi
 
                 if [[ -z "$(command -v aws)" ]] ; then
                   logit "AWS CLI is not present, installing it to control asg lifecycle hook completion..."
                   if [[ -z "$(command -v pip)" ]] ; then
-                    curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+                    if [[ "${1OSInstanceLinuxArch}" == "arm64" ]]; then
+                      curl "https://awscli.amazonaws.com/awscli-exe-linux-aarch64.zip" -o "awscliv2.zip"
+                    else
+                      curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+                    fi
                     unzip -q awscliv2.zip
                     ./aws/install -i /usr/local/aws-cli -b /usr/bin
                     rm -rf aws

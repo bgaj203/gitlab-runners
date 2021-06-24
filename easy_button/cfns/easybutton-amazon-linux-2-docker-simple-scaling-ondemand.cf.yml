@@ -143,11 +143,11 @@ Metadata:
       5ASGInstanceType1:
         default: "Primary instance type to be used - if available."
       5ASGInstanceType2:
-        default: "Optional second priority instance type to be used - if previous priorities are exhausted. Used for Ec2 Fleet when not using spot."
+        default: "Second priority instance type to be used - if previous priorities are exhausted. Used for Ec2 Fleet when not using spot."
       5ASGInstanceType3:
-        default: "Optional third priority instance type to be used - if previous priorities are exhausted. Used for Ec2 Fleet when not using spot."
+        default: "Third priority instance type to be used - if previous priorities are exhausted. Used for Ec2 Fleet when not using spot."
       5ASGInstanceType4:
-        default: "Optional fourth priority instance type to be used - if previous priorities are exhausted. Used for Ec2 Fleet when not using spot."
+        default: "Fourth priority instance type to be used - if previous priorities are exhausted. Used for Ec2 Fleet when not using spot."
       5SPOTSpotAllocationStrategy:
         default: "Focus spot request strategy on price or lower terminations."  
       5SPOTOnDemandBaseCapacity:
@@ -195,7 +195,7 @@ Resources:
   RnrASG:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: https://gl-public-templates.s3.amazonaws.com/cfn/v1.4.7-alpha12/GitLabElasticScalingRunner.cf.yml
+      TemplateURL: https://gl-public-templates.s3.amazonaws.com/cfn/v1.4.8-alpha13/GitLabElasticScalingRunner.cf.yml
       Tags:
         - Key: Product
           Value: GitLab
@@ -207,7 +207,7 @@ Resources:
         1OSPatchScope: NoPatching
         3GITLABRunnerInstanceURL: !Ref 3GITLABRunnerInstanceURL
         3GITLABRunnerRegTokenList: !Ref 3GITLABRunnerRegTokenList
-        3INSTConfigurationScript: https://gitlab.com/guided-explorations/aws/gitlab-runner-autoscaling-aws-asg/-/raw/main/runner_configs/amazon-linux-2-docker.sh
+        3INSTConfigurationScript: https://gitlab.com/guided-explorations/aws/gitlab-runner-autoscaling-aws-asg/-/raw/v1.4.8-alpha13/runner_configs/amazon-linux-2-docker.sh
         3GITLABRunnerTagList: !Ref 3GITLABRunnerTagList
         4ASGDesiredCapacity: 2
         4ASGSpecifyVPC: !Ref 4ASGSpecifyVPC
