@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v1.4.8-alpha13] - 2021-09-18
+
+- All easy buttons and the main cloud formation template maintain internal version pegging via source pointers even when 'main' matches the most recent version.
+- arm64 specific install of SSM agent and AWS CLI 2 (was not completing CF signals)
+- extended ASG resource creation timeout to allow for larger initial ASG creations
+- linux runner install fixes (especially shell runner)
+- duplicate concurrent jobs parameter in both scaling and GitLab runner sections of CF form
+- four instance types required for spot only easy buttons - this is to reduce terminations along with 'capacity-optimized-prioritized'. Selecting instances that all have the same size name will ensure similar costs. Selecting instances that all have the same size name will ensure similar costs.
 ## [v1.4.7-alpha12] - 2021-05-14
 
 - As per AWS Spot team recommendations: 5SPOTSpotAllocationStrategy now defaults to 'capacity-optimized-prioritized' 
@@ -25,6 +33,7 @@ All notable changes to this project will be documented in this file.
 - Fix for Windows spot draining code.
 - Fail immediately if instance configuration script has non-zero exit.
 - Fixed "known problem: Windows machines are not completing autoscaling." noted in release v1.4.1-alpha7.
+
 ## [v1.4.3-alpha9] - 2021-03-22
 
 - Enable a much better form based experience without oddly named parameters using AWS::CloudFormation::Interface (#23)

@@ -145,11 +145,11 @@ Metadata:
       5ASGInstanceType1:
         default: "Primary instance type to be used - if available."
       5ASGInstanceType2:
-        default: "Optional second priority instance type to be used - if previous priorities are exhausted. Used for Ec2 Fleet when not using spot."
+        default: "Second priority instance type to be used - if previous priorities are exhausted. Used for Ec2 Fleet when not using spot."
       5ASGInstanceType3:
-        default: "Optional third priority instance type to be used - if previous priorities are exhausted. Used for Ec2 Fleet when not using spot."
+        default: "Third priority instance type to be used - if previous priorities are exhausted. Used for Ec2 Fleet when not using spot."
       5ASGInstanceType4:
-        default: "Optional fourth priority instance type to be used - if previous priorities are exhausted. Used for Ec2 Fleet when not using spot."
+        default: "Fourth priority instance type to be used - if previous priorities are exhausted. Used for Ec2 Fleet when not using spot."
       5SPOTSpotAllocationStrategy:
         default: "Focus spot request strategy on price or lower terminations."  
       5SPOTOnDemandBaseCapacity:
@@ -189,15 +189,37 @@ Parameters:
     Default: DefaultVPC
   5ASGInstanceType1:
     Description: >
-      Specify the instance type to be used.  Do not use bursty instance types like t2 or t3.
+      Specify the instance type to be used.  Do not use bursty instance types like t2 or t3. 
+      Four types required for spot configuration to avoid rebalancing churn.
     Type: String
     Default: "m5.large"
-    AllowedPattern: ^[A-Za-z0-9.]+$      
+    AllowedPattern: ^[A-Za-z0-9.]+$
+  5ASGInstanceType2:
+    Description: >
+      Specify the instance type to be used.  Do not use bursty instance types like t2 or t3. 
+      Four types required for spot configuration to avoid rebalancing churn.
+    Type: String
+    Default: "m5d.large"
+    AllowedPattern: ^[A-Za-z0-9.]+$
+  5ASGInstanceType3:
+    Description: >
+      Specify the instance type to be used.  Do not use bursty instance types like t2 or t3. 
+      Four types required for spot configuration to avoid rebalancing churn.
+    Type: String
+    Default: "m5n.large"
+    AllowedPattern: ^[A-Za-z0-9.]+$
+  5ASGInstanceType4:
+    Description: >
+      Specify the instance type to be used.  Do not use bursty instance types like t2 or t3. 
+      Four types required for spot configuration to avoid rebalancing churn.
+    Type: String
+    Default: "c5.large"
+    AllowedPattern: ^[A-Za-z0-9.]+$
 Resources:
   RnrASG:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: https://gl-public-templates.s3.amazonaws.com/cfn/v1.4.7-alpha12/GitLabElasticScalingRunner.cf.yml
+      TemplateURL: https://gl-public-templates.s3.amazonaws.com/cfn/v1.4.8-alpha13/GitLabElasticScalingRunner.cf.yml
       Tags:
         - Key: Product
           Value: GitLab
@@ -209,7 +231,7 @@ Resources:
         1OSPatchScope: NoPatching
         3GITLABRunnerInstanceURL: !Ref 3GITLABRunnerInstanceURL
         3GITLABRunnerRegTokenList: !Ref 3GITLABRunnerRegTokenList
-        3INSTConfigurationScript: https://gitlab.com/guided-explorations/aws/gitlab-runner-autoscaling-aws-asg/-/raw/main/runner_configs/windows-shell.ps1
+        3INSTConfigurationScript: https://gitlab.com/guided-explorations/aws/gitlab-runner-autoscaling-aws-asg/-/raw/v1.4.8-alpha13/runner_configs/windows-shell.ps1
         3GITLABRunnerTagList: !Ref 3GITLABRunnerTagList
         4ASGDesiredCapacity: 2
         4ASGSpecifyVPC: !Ref 4ASGSpecifyVPC
@@ -223,8 +245,8 @@ Resources:
         5SPOTOnDemandBaseCapacity: 1
         5SPOTOnDemandPercentageAboveBaseCapacity: 50
         5ASGInstanceType1: !Ref 5ASGInstanceType1
-        5ASGInstanceType2: ""
-        5ASGInstanceType3: ""
-        5ASGInstanceType4: ""
+        5ASGInstanceType2: !Ref 5ASGInstanceType2
+        5ASGInstanceType3: !Ref 5ASGInstanceType3
+        5ASGInstanceType4: !Ref 5ASGInstanceType4
         8DBGKeypairName: ""
         9AWSRetrieveLatestAWSOSAmiIdFromSSM: /aws/service/ami-windows-latest/Windows_Server-2019-English-Core-ContainersLatest
