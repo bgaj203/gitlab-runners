@@ -108,18 +108,25 @@ if [ ! -z "$NAMEOFASG" ] && [ "$ASGSelfMonitorTerminationInterval" != "Disabled"
     }
     #These are resolved at script creation time to reduce api calls when this script runs every minute on instances.
 
-    if [[ "\$(aws autoscaling describe-auto-scaling-instances --instance-ids $MYINSTANCEID --region $AWS_REGION | jq --raw-output '.AutoScalingInstances[0] .LifecycleState')" == *"Terminating"* ]]; then
-      logit "This instance ($MYINSTANCEID) is being terminated, perform cleanup..."
-
-      if [ "${COMPUTETYPE,,}" != "spot" ]; then
+    if [ "${COMPUTETYPE,,}" != "spot" ]; then
+      if [[ "\$(aws autoscaling describe-auto-scaling-instances --instance-ids $MYINSTANCEID --region $AWS_REGION | jq --raw-output '.AutoScalingInstances[0] .LifecycleState')" == *"Terminating"* ]]; then
+        logit "This instance ($MYINSTANCEID) is being terminated, perform cleanup..."
         logit "Instance is not spot compute, draining running jobs..."
         $RunnerInstallRoot/gitlab-runner stop
-      else
-        logit "Instance is spot compute, deregistering runner immediately without draining running jobs..."
+        Terminating='true'
       fi
-      $RunnerInstallRoot/gitlab-runner unregister --all-runners
+    else
+      #Instance metadata termination checking (only available for spot) has higher rate limits than ASG checks
+      #And spot is also where we need a tight cycle check interval (1 minute or less)
+      if [[ $(curl -s -o /dev/null -w '%{http_code}\n' -v http://169.254.169.254/latest/meta-data/spot/instance-action) != 404 ]]; then
+        logit "Instance is spot compute, deregistering runner immediately without draining running jobs..."
+        Terminating='true'
+      fi
+    fi
 
-      #### PUT YOUR CLEANUP CODE HERE, DECIDE IF CLEANUP CODE SHOULD ERROR OUT OR SILENTLY FAIL (best effort cleanup)
+    if [[ "${Terminating}" == "true" ]]; then
+      #Common termination items
+      $RunnerInstallRoot/gitlab-runner unregister --all-runners
 
       aws autoscaling complete-lifecycle-action --region $AWS_REGION --lifecycle-action-result CONTINUE --instance-id $MYINSTANCEID --lifecycle-hook-name instance-terminating --auto-scaling-group-name $NAMEOFASG
       logit "This instance ($MYINSTANCEID) is ready for termination"
