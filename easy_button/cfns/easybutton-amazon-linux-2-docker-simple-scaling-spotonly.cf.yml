@@ -233,7 +233,7 @@ Resources:
         3GITLABRunnerRegTokenList: !Ref 3GITLABRunnerRegTokenList
         3INSTConfigurationScript: https://gitlab.com/guided-explorations/aws/gitlab-runner-autoscaling-aws-asg/-/raw/v1.4.9-alpha14/runner_configs/amazon-linux-2-docker.sh
         3GITLABRunnerTagList: !Ref 3GITLABRunnerTagList
-        5ASGSelfMonitorTerminationInterval: 1 #Should always be the lowest possible value for spot
+        5ASGSelfMonitorTerminationInterval: 5
         4ASGDesiredCapacity: 2
         4ASGSpecifyVPC: !Ref 4ASGSpecifyVPC
         5ASGAutoScalingEnabled: true

@@ -360,12 +360,11 @@ Parameters:
   5ASGSelfMonitorTerminationInterval:
     Description: >
       How often in minutes should the instance check if it is being asked to terminate so it can run a clean up script.
-      Terminations initiated by spot occur two minutes after notification, so this value should less than that for spot implementations.
-      AWS and instance resources for monitoring termination are not created if this value is not provided.
-      It is best practice to delete this if a termination hook truely is not needed for cleanup.
+      This only applies to terminations from standard ASG operations like scale out and scale in.
+      If an instance is spot, it always checks twice a minute for spot specific terminations.
     Type: String
-    Default: 1
-    AllowedValues: [0,1,2,3,4,5,Disabled]
+    Default: 5
+    AllowedValues: [5,10,15,Disabled]
   5ASGAutoScalingMetricTypeToMonitor:
     Description: >
       Which utilization metric should scaling alarms key off.

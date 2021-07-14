@@ -235,7 +235,7 @@ Resources:
         3GITLABRunnerTagList: !Ref 3GITLABRunnerTagList
         4ASGDesiredCapacity: 2
         4ASGSpecifyVPC: !Ref 4ASGSpecifyVPC
-        5ASGSelfMonitorTerminationInterval: 1 #Should always be the lowest possible value for spot
+        5ASGSelfMonitorTerminationInterval: 5
         5ASGAutoScalingEnabled: true
         5ASGAutoScalingMetricTypeToMonitor: CPU
         5ASGAutoScalingSetScaleOutUtilizationThreshold: 70

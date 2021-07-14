@@ -113,6 +113,7 @@ if [ ! -z "$NAMEOFASG" ] && [ "$ASGSelfMonitorTerminationInterval" != "Disabled"
     #  2) spot termination only happens to spot instances and only if initiated by a spot event. Limited to 2 minutes from notification time until hard termination.
 
     SpotTermChecksPerMin=2
+    MetaDataURL=http://169.254.169.254
     #Check for non-spot termination (happens to spot instances too)
     if [[ "\$(aws autoscaling describe-auto-scaling-instances --instance-ids $MYINSTANCEID --region $AWS_REGION | jq --raw-output '.AutoScalingInstances[0] .LifecycleState')" == *"Terminating"* ]]; then
       logit "Non-spot termination is occurring..."
@@ -123,7 +124,7 @@ if [ ! -z "$NAMEOFASG" ] && [ "$ASGSelfMonitorTerminationInterval" != "Disabled"
       #if we aren't doing a regular termination and we're spot, use the cycle to check for spot termination multiple times per minute for spot specific termination.
       let totaliterations=ASGSelfMonitorTerminationInterval*SpotTermChecksPerMin
       until [[ \$LoopIteration -eq $totaliterations || "${Terminating}" == "true" ]]; do
-          if [[ \$(curl -s -o /dev/null -w '%{http_code}\n' -v http://169.254.169.254/latest/meta-data/spot/instance-action) != 404 ]]; then
+          if [[ \$(curl -s -o /dev/null -w '%{http_code}\n' -v ${MetaDataURL}/latest/meta-data/spot/instance-action) != 404 ]]; then
           logit "Instance is spot compute, deregistering runner immediately without draining running jobs..."
           logit "This instance ($MYINSTANCEID) is being terminated, perform cleanup..."
           logit "Instance is not spot compute, draining running jobs..."

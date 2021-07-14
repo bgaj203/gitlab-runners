@@ -267,7 +267,7 @@ Resources:
         4ASGScheduledShutdownCron: !Ref 4ASGScheduledShutdownCron
         4ASGScheduledStartupCron: !Ref 4ASGScheduledStartupCron
         4ASGSpecifyVPC: !Ref 4ASGSpecifyVPC
-        5ASGSelfMonitorTerminationInterval: 1 #Should always be the lowest possible value for spot
+        5ASGSelfMonitorTerminationInterval: 5
         5ASGAutoScalingEnabled: false
         5ASGInstanceType1: !Ref 5ASGInstanceType1
         5ASGInstanceType2: !Ref 5ASGInstanceType2

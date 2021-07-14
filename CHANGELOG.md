@@ -5,6 +5,8 @@ All notable changes to this project will be documented in this file.
 ## [v1.4.9-alpha14] - 2021-07-DD
 
 - Spot instances use instance metadata for termination checking due to higher rate limits than ASG based checking.
+- 5ASGSelfMonitorTerminationInterval is now only for non-spot termination monitoring - so it can be 5 minutes or longer.
+- spot instances are always checked twice a minute for terminations.
 ## [v1.4.8-alpha13] - 2021-09-18
 
 - All easy buttons and the main cloud formation template maintain internal version pegging via source pointers even when 'main' matches the most recent version.
