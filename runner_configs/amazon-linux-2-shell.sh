@@ -100,13 +100,17 @@ if [ ! -z "$NAMEOFASG" ] && [ "$ASGSelfMonitorTerminationInterval" != "Disabled"
   SCRIPTBASENAME=$(basename $SCRIPTNAME)
   
   #Heredoc script
-  cat << EndOfScript > $SCRIPTNAME
+  cat << EndOfScript > /tmp/SCRIPTNAME
     function logit() {
       LOGSTRING="\$(date +'%_b %e %H:%M:%S') \$(hostname) TERMINATIONMON_SCRIPT: \$1"
       echo "\$LOGSTRING"
       echo "\$LOGSTRING" >> /var/log/messages
     }
     #These are resolved at script creation time to reduce api calls when this script runs every minute on instances.
+
+    #Termination types: 
+    #  1) Non-spot - happens to non-spot instances and spot instances when termination is due to scale-in or other non-spot termination event. No limit on wrapup / cleanup time.
+    #  2) spot termination only happens to spot instances and only if initiated by a spot event. Limited to 2 minutes from notification time until hard termination.
 
     SpotTermChecksPerMin=2
     #Check for non-spot termination (happens to spot instances too)
@@ -117,7 +121,7 @@ if [ ! -z "$NAMEOFASG" ] && [ "$ASGSelfMonitorTerminationInterval" != "Disabled"
       Terminating='true'
     elif [ "${COMPUTETYPE,,}" == "spot" ]; then
       #if we aren't doing a regular termination and we're spot, use the cycle to check for spot termination multiple times per minute for spot specific termination.
-      until [[ \$LoopIteration -eq $((${ASGSelfMonitorTerminationInterval} * ${SpotTermChecksPerMin})) || "${Terminating}" == "true" ]]; do
+      until [[ \$LoopIteration -eq $((${ASGSelfMonitorTerminationInterval}*${SpotTermChecksPerMin})) || "${Terminating}" == "true" ]]; do
         if [[ \$(curl -s -o /dev/null -w '%{http_code}\n' -v http://169.254.169.254/latest/meta-data/spot/instance-action) != 404 ]]; then
           logit "Instance is spot compute, deregistering runner immediately without draining running jobs..."
           logit "This instance ($MYINSTANCEID) is being terminated, perform cleanup..."

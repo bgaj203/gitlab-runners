@@ -133,7 +133,7 @@ if [ ! -z "$NAMEOFASG" ] && [ "$ASGSelfMonitorTerminationInterval" != "Disabled"
       Terminating='true'
     elif [ "${COMPUTETYPE,,}" == "spot" ]; then
       #if we aren't doing a regular termination and we're spot, use the cycle to check for spot termination multiple times per minute for spot specific termination.
-      until [[ \$LoopIteration -eq \$((\${ASGSelfMonitorTerminationInterval} \* \${SpotTermChecksPerMin})) || "${Terminating}" == "true" ]]; do
+      until [[ \$LoopIteration -eq $((${ASGSelfMonitorTerminationInterval}*${SpotTermChecksPerMin})) || "${Terminating}" == "true" ]]; do
         if [[ \$(curl -s -o /dev/null -w '%{http_code}\n' -v http://169.254.169.254/latest/meta-data/spot/instance-action) != 404 ]]; then
           logit "Instance is spot compute, deregistering runner immediately without draining running jobs..."
           logit "This instance ($MYINSTANCEID) is being terminated, perform cleanup..."
