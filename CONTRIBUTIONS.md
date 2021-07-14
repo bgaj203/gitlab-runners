@@ -2,10 +2,10 @@
 # Branch Testing Before Merging to Main
 
 ## Setting up a new development branch
-1. Name the branch exactly as the new version with  (e.g. v1.4.5-alpha10)
+1. Name the branch exactly as the new version with  (e.g. v1.4.8-alpha13)
 2. Search and replace all occurances of the old branch to the new (e.g. v1.4.2-alpha9 == replace with ==> v1.4.5-alpha10)
-3. Files under "runner_configs" use raw file retrieval from gitlab to pull these files, if they might change on this branch, the retrieval must be updated to isolate to the branch by replacing occurances of `/-/raw/main/` with `/-/raw/v1.4.5-alpha10/`
-4. In the public S3 bucket that houses the templates, create a new version key (subdirectory) with the same name (e.g. v1.4.5-alpha10)
+3. Files under "runner_configs" use raw file retrieval from gitlab to pull these files, if they might change on this branch, the retrieval must be updated to isolate to the branch by replacing occurences of the last version (e.g. `/v1.4.8-alpha13/`) with the next version (e.g. `/v1.4.5-alpha10/`)
+4. In the public S3 bucket that houses the templates, create a new version key (subdirectory) with the same name (e.g. v1.4.8-alpha13)
 
 ## Releasing
 1. Ensure that 5ASGAutoScalingMaxSize, Default: 20 is set - to prevent overrun of tests against Gitlab.com
