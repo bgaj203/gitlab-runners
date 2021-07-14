@@ -130,7 +130,7 @@ if [ ! -z "$NAMEOFASG" ] && [ "$ASGSelfMonitorTerminationInterval" != "Disabled"
     else
       #Instance metadata termination checking (only available for spot) has higher rate limits than ASG checks
       #And spot is also where we need a tight cycle check interval (1 minute or less)
-      if [[ $(curl -s -o /dev/null -w '%{http_code}\n' -v http://169.254.169.254/latest/meta-data/spot/instance-action) != 404 ]]; then
+      if [[ \$(curl -s -o /dev/null -w '%{http_code}\n' -v http://169.254.169.254/latest/meta-data/spot/instance-action) != 404 ]]; then
         logit "Instance is spot compute, deregistering runner immediately without draining running jobs..."
         Terminating='true'
       fi

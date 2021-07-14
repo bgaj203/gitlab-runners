@@ -108,20 +108,25 @@ if [ ! -z "$NAMEOFASG" ] && [ "$ASGSelfMonitorTerminationInterval" != "Disabled"
     }
     #These are resolved at script creation time to reduce api calls when this script runs every minute on instances.
 
-    if [ "${COMPUTETYPE,,}" != "spot" ]; then
-      if [[ "\$(aws autoscaling describe-auto-scaling-instances --instance-ids $MYINSTANCEID --region $AWS_REGION | jq --raw-output '.AutoScalingInstances[0] .LifecycleState')" == *"Terminating"* ]]; then
-        logit "This instance ($MYINSTANCEID) is being terminated, perform cleanup..."
-        logit "Instance is not spot compute, draining running jobs..."
-        $RunnerInstallRoot/gitlab-runner stop
-        Terminating='true'
-      fi
-    else
-      #Instance metadata termination checking (only available for spot) has higher rate limits than ASG checks
-      #And spot is also where we need a tight cycle check interval (1 minute or less)
-      if [[ $(curl -s -o /dev/null -w '%{http_code}\n' -v http://169.254.169.254/latest/meta-data/spot/instance-action) != 404 ]]; then
-        logit "Instance is spot compute, deregistering runner immediately without draining running jobs..."
-        Terminating='true'
-      fi
+    #Check for non-spot termination (happens to spot instances too)
+    if [[ "\$(aws autoscaling describe-auto-scaling-instances --instance-ids $MYINSTANCEID --region $AWS_REGION | jq --raw-output '.AutoScalingInstances[0] .LifecycleState')" == *"Terminating"* ]]; then
+      logit "Instance is spot compute, deregistering runner immediately without draining running jobs..."
+      $RunnerInstallRoot/gitlab-runner stop
+      Terminating='true'
+    fi
+
+    #During the overall interval, check spot instances (only) multiple times per minute for spot specific termination.
+    SpotTermChecksPerMin=2
+    if [ "${COMPUTETYPE,,}" != "spot" && "${Terminating}" != "true" ]; then
+      until [ \$LoopIteration -eq $((${ASGSelfMonitorTerminationInterval} * ${SpotTermChecksPerMin})) || "${Terminating}" == "true" ]; do
+      if [[ \$(curl -s -o /dev/null -w '%{http_code}\n' -v http://169.254.169.254/latest/meta-data/spot/instance-action) != 404 ]]; then
+          logit "This instance ($MYINSTANCEID) is being terminated, perform cleanup..."
+          logit "Instance is not spot compute, draining running jobs..."
+          Terminating='true'
+        fi
+      sleep \$((1/${SpotTermChecksPerMin}))
+      ((LoopIteration=LoopIteration+1))
+      done
     fi
 
     if [[ "${Terminating}" == "true" ]]; then
