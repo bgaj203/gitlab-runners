@@ -129,7 +129,8 @@ if [ ! -z "$NAMEOFASG" ] && [ "$ASGSelfMonitorTerminationInterval" != "Disabled"
           logit "Instance is not spot compute, draining running jobs..."
           Terminating='true'
         fi
-        sleep $((1\/${SpotTermChecksPerMin}))
+        let sleepytime=1/SpotTermChecksPerMin
+        sleep $((1/${SpotTermChecksPerMin}))
         ((LoopIteration=LoopIteration+1))
       done
     fi
