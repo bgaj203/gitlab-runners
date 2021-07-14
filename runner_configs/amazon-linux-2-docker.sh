@@ -110,7 +110,9 @@ if [ ! -z "$NAMEOFASG" ] && [ "$ASGSelfMonitorTerminationInterval" != "Disabled"
   SCRIPTNAME=/etc/cron.d/MonitorTerminationHook.sh
   SCRIPTFOLDER=$(dirname $SCRIPTNAME)
   SCRIPTBASENAME=$(basename $SCRIPTNAME)
-  
+
+  SpotTermChecksPerMin=2
+  MetaDataURL=http://169.254.169.254 #Change to localhost:1338 to use with https://github.com/aws/amazon-ec2-metadata-mock  
   #Heredoc script
   cat << EndOfScript > /tmp/SCRIPTNAME
     function logit() {
@@ -124,8 +126,7 @@ if [ ! -z "$NAMEOFASG" ] && [ "$ASGSelfMonitorTerminationInterval" != "Disabled"
     #  1) Non-spot - happens to non-spot instances and spot instances when termination is due to scale-in or other non-spot termination event. No limit on wrapup / cleanup time.
     #  2) spot termination only happens to spot instances and only if initiated by a spot event. Limited to 2 minutes from notification time until hard termination.
 
-    SpotTermChecksPerMin=2
-    MetaDataURL=http://169.254.169.254 #Change to localhost:1338 to use with https://github.com/aws/amazon-ec2-metadata-mock
+
     #Check for non-spot termination (happens to spot instances too)
     if [[ "\$(aws autoscaling describe-auto-scaling-instances --instance-ids $MYINSTANCEID --region $AWS_REGION | jq --raw-output '.AutoScalingInstances[0] .LifecycleState')" == *"Terminating"* ]]; then
       logit "Non-spot termination is occurring..."
@@ -147,7 +148,7 @@ if [ ! -z "$NAMEOFASG" ] && [ "$ASGSelfMonitorTerminationInterval" != "Disabled"
       done
     fi
 
-    if [[ "${Terminating}" == "true" ]]; then
+    if [[ "\${Terminating}" == "true" ]]; then
       #Common termination items
       #stopping the runner takes time to drain it, so it is only done if we have a non-spot termination underway
       $RunnerInstallRoot/gitlab-runner unregister --all-runners
