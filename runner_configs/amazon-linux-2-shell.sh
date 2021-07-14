@@ -130,7 +130,7 @@ if [ ! -z "$NAMEOFASG" ] && [ "$ASGSelfMonitorTerminationInterval" != "Disabled"
           Terminating='true'
         fi
         let sleepytime=1/SpotTermChecksPerMin
-        sleep $((1/${SpotTermChecksPerMin}))
+        sleep $(awk "BEGIN {printf \"%.2f\",1/${SpotTermChecksPerMin}}")
         ((LoopIteration=LoopIteration+1))
       done
     fi
