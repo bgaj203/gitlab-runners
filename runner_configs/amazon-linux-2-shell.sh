@@ -113,7 +113,7 @@ if [ ! -z "$NAMEOFASG" ] && [ "$ASGSelfMonitorTerminationInterval" != "Disabled"
     #  2) spot termination only happens to spot instances and only if initiated by a spot event. Limited to 2 minutes from notification time until hard termination.
 
     SpotTermChecksPerMin=2
-    MetaDataURL=http://169.254.169.254
+    MetaDataURL=http://169.254.169.254 #Change to localhost:1338 to use with https://github.com/aws/amazon-ec2-metadata-mock
     #Check for non-spot termination (happens to spot instances too)
     if [[ "\$(aws autoscaling describe-auto-scaling-instances --instance-ids $MYINSTANCEID --region $AWS_REGION | jq --raw-output '.AutoScalingInstances[0] .LifecycleState')" == *"Terminating"* ]]; then
       logit "Non-spot termination is occurring..."
@@ -131,7 +131,7 @@ if [ ! -z "$NAMEOFASG" ] && [ "$ASGSelfMonitorTerminationInterval" != "Disabled"
           Terminating='true'
         fi
         let sleepytime=1/SpotTermChecksPerMin
-        sleep $(awk "BEGIN {printf \"%.2f\",1/${SpotTermChecksPerMin}}")
+        sleep $(awk "BEGIN {printf \"%.2f\",1/$SpotTermChecksPerMin}")
         ((LoopIteration=LoopIteration+1))
       done
     fi
