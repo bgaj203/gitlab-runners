@@ -108,29 +108,30 @@ if [ ! -z "$NAMEOFASG" ] && [ "$ASGSelfMonitorTerminationInterval" != "Disabled"
     }
     #These are resolved at script creation time to reduce api calls when this script runs every minute on instances.
 
+    SpotTermChecksPerMin=2
     #Check for non-spot termination (happens to spot instances too)
     if [[ "\$(aws autoscaling describe-auto-scaling-instances --instance-ids $MYINSTANCEID --region $AWS_REGION | jq --raw-output '.AutoScalingInstances[0] .LifecycleState')" == *"Terminating"* ]]; then
-      logit "Instance is spot compute, deregistering runner immediately without draining running jobs..."
+      logit "Non-spot termination is occurring..."
+      logit "Draining jobs (best effort)..."
       $RunnerInstallRoot/gitlab-runner stop
       Terminating='true'
-    fi
-
-    #During the overall interval, check spot instances (only) multiple times per minute for spot specific termination.
-    SpotTermChecksPerMin=2
-    if [ "${COMPUTETYPE,,}" != "spot" && "${Terminating}" != "true" ]; then
-      until [ \$LoopIteration -eq $((${ASGSelfMonitorTerminationInterval} * ${SpotTermChecksPerMin})) || "${Terminating}" == "true" ]; do
-      if [[ \$(curl -s -o /dev/null -w '%{http_code}\n' -v http://169.254.169.254/latest/meta-data/spot/instance-action) != 404 ]]; then
+    elif [ "${COMPUTETYPE,,}" == "spot" ]; then
+      #if we aren't doing a regular termination and we're spot, use the cycle to check for spot termination multiple times per minute for spot specific termination.
+      until [[ \$LoopIteration -eq $((${ASGSelfMonitorTerminationInterval} * ${SpotTermChecksPerMin})) || "${Terminating}" == "true" ]]; do
+        if [[ \$(curl -s -o /dev/null -w '%{http_code}\n' -v http://169.254.169.254/latest/meta-data/spot/instance-action) != 404 ]]; then
+          logit "Instance is spot compute, deregistering runner immediately without draining running jobs..."
           logit "This instance ($MYINSTANCEID) is being terminated, perform cleanup..."
           logit "Instance is not spot compute, draining running jobs..."
           Terminating='true'
         fi
-      sleep \$((1/${SpotTermChecksPerMin}))
-      ((LoopIteration=LoopIteration+1))
+        sleep $((1/${SpotTermChecksPerMin}))
+        ((LoopIteration=LoopIteration+1))
       done
     fi
 
     if [[ "${Terminating}" == "true" ]]; then
       #Common termination items
+      #stopping the runner takes time to drain it, so it is only done if we have a non-spot termination underway
       $RunnerInstallRoot/gitlab-runner unregister --all-runners
 
       aws autoscaling complete-lifecycle-action --region $AWS_REGION --lifecycle-action-result CONTINUE --instance-id $MYINSTANCEID --lifecycle-hook-name instance-terminating --auto-scaling-group-name $NAMEOFASG
