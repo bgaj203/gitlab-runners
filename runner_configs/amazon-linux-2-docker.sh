@@ -143,7 +143,7 @@ if [ ! -z "$NAMEOFASG" ] && [ "$ASGSelfMonitorTerminationInterval" != "Disabled"
           logit "Instance is not spot compute, draining running jobs..."
           Terminating='true'
         fi
-        sleep \$(awk "BEGIN {printf \"%.2f\",1/$SpotTermChecksPerMin}")
+        sleep $(awk "BEGIN {printf \"%.2f\",1/$SpotTermChecksPerMin}")
         ((LoopIteration=LoopIteration+1))
       done
     fi
