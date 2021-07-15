@@ -128,16 +128,17 @@ if ( (aws autoscaling describe-auto-scaling-instances --instance-ids $MYINSTANCE
 elseif ( "$($COMPUTETYPE.ToLower())" -eq "spot" ) {
 
   do {
-    try {$HTTP_Response = [System.Net.WebRequest]::Create('http://169.254.169.254/latest/meta-data/spot/instance-action').GetResponse()} catch [System.Net.WebException] {$HTTP_Response = $_.Exception.Response.statuscode}; if ([int]$HTTP_Response.StatusCode -eq 200) {
+    try {$HTTP_Response = [System.Net.WebRequest]::Create("$MetaDataURL/latest/meta-data/spot/instance-action").GetResponse()} catch [System.Net.WebException] {$HTTP_Response = $_.Exception.Response.statuscode}; if ([int]$HTTP_Response.StatusCode -eq 200) {
         logit "Instance is spot compute, deregistering runner immediately without draining running jobs..."
         Terminating='true'
     }
     start-sleep 1/$SpotTermChecksPerMin
     ((LoopIteration=LoopIteration+1))
-  } until ((`$LoopIteration -eq `$totaliterations) -or (${Terminating}" == "true" ))
+  } until ((`$LoopIteration -eq `$totaliterations) -or (`${Terminating}" == "true" ))
 }
 
 if ($Terminating -eq 'true') {
+  logit "Deregistering GitLab Runners..."
   .\gitlab-runner unregister --all-runners
   aws autoscaling complete-lifecycle-action --region $AWS_REGION --lifecycle-action-result CONTINUE --instance-id $MYINSTANCEID --lifecycle-hook-name instance-terminating --auto-scaling-group-name $NAMEOFASG
   logit "This instance ($MYINSTANCEID) is ready for termination"

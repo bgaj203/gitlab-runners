@@ -136,7 +136,7 @@ if [ ! -z "$NAMEOFASG" ] && [ "$ASGSelfMonitorTerminationInterval" != "Disabled"
 
     if [[ "\${Terminating}" == "true" ]]; then
       #Common termination items
-      #stopping the runner takes time to drain it, so it is only done if we have a non-spot termination underway
+      logit "Deregistering GitLab Runners..."
       $RunnerInstallRoot/gitlab-runner unregister --all-runners
 
       aws autoscaling complete-lifecycle-action --region $AWS_REGION --lifecycle-action-result CONTINUE --instance-id $MYINSTANCEID --lifecycle-hook-name instance-terminating --auto-scaling-group-name $NAMEOFASG
