@@ -102,7 +102,7 @@ if [ ! -z "$NAMEOFASG" ] && [ "$ASGSelfMonitorTerminationInterval" != "Disabled"
   SpotTermChecksPerMin=2
   MetaDataURL=http://169.254.169.254 #Change to localhost:1338 to use with https://github.com/aws/amazon-ec2-metadata-mock  
   #Heredoc script
-  cat << EndOfScript > /tmp/SCRIPTNAME
+  cat << EndOfScript > $SCRIPTNAME
     function logit() {
       LOGSTRING="\$(date +'%_b %e %H:%M:%S') \$(hostname) TERMINATIONMON_SCRIPT: \$1"
       echo "\$LOGSTRING"
