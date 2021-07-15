@@ -106,6 +106,8 @@ aws ec2 create-tags --region $AWS_REGION --resources $MYINSTANCEID --tags "Key=`
 logit "Creating cleanup script for use with termination hook"
 
 #Termination script hard codes variables to reduce api calls when it runs every minute
+$SpotTermChecksPerMin=2
+$MetaDataURL=http://169.254.169.254 #Change to localhost:1338 to use with https://github.com/aws/amazon-ec2-metadata-mock  
 set-content $env:public\MonitorTerminationHook.ps1 -Value @"
 Function logit (`$Msg, `$MsgType='Information', `$ID='1') {
   If (`$script:PSCommandPath -ne '' ) { `$SourcePathName = `$script:PSCommandPath ; `$SourceName = split-path -leaf `$SourcePathName } else { `$SourceName = "Automation Code"; `$SourcePathName = "Unknown" }
@@ -117,22 +119,30 @@ Function logit (`$Msg, `$MsgType='Information', `$ID='1') {
 
 if ( (aws autoscaling describe-auto-scaling-instances --instance-ids $MYINSTANCEID --region $AWS_REGION | convertfrom-json).AutoScalingInstances.LifecycleState -ilike "*Terminating*" ) { 
   #if the url exists, we are being terminated
-  logit "This instance ($MYINSTANCEID) is being terminated, perform cleanup..."
-
+  logit "This instance ($MYINSTANCEID) is experiencing a non-spot termination, perform cleanup..."
+  logit "Draining jobs (best effort)..."
   cd $RunnerInstallRoot
+  .\gitlab-runner stop
+  $Terminating='true'
 
-  if ( "$($COMPUTETYPE.ToLower())" -ne "spot" ) {
-    logit "Instance is not spot compute, draining running jobs..."
-    .\gitlab-runner stop
-  } else {
-    logit "Instance is spot compute, deregistering runner immediately without draining running jobs..."
-  }
+elseif ( "$($COMPUTETYPE.ToLower())" -eq "spot" ) {
+
+  do {
+    try {$HTTP_Response = [System.Net.WebRequest]::Create('http://169.254.169.254/latest/meta-data/spot/instance-action').GetResponse()} catch [System.Net.WebException] {$HTTP_Response = $_.Exception.Response.statuscode}; if ([int]$HTTP_Response.StatusCode -eq 200) {
+        logit "Instance is spot compute, deregistering runner immediately without draining running jobs..."
+        Terminating='true'
+    }
+    start-sleep 1/$SpotTermChecksPerMin
+    ((LoopIteration=LoopIteration+1))
+  } until ((`$LoopIteration -eq `$totaliterations) -or (${Terminating}" == "true" ))
+}
+
+if ($Terminating -eq 'true') {
   .\gitlab-runner unregister --all-runners
-
   aws autoscaling complete-lifecycle-action --region $AWS_REGION --lifecycle-action-result CONTINUE --instance-id $MYINSTANCEID --lifecycle-hook-name instance-terminating --auto-scaling-group-name $NAMEOFASG
   logit "This instance ($MYINSTANCEID) is ready for termination"
   logit "Lifecycle CONTINUE was sent to termination hook in ASG: $NAMEOFASG for this instance ($MYINSTANCEID)."
-  }
+}
 "@
 #unregister all runners
 #stop service (wait for completion)
