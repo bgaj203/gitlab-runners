@@ -1,0 +1,41 @@
+
+#  From: GitLab HA Scaling Runner Vending Machine for AWS EC2 ASG (https://gitlab.com/guided-explorations/aws/gitlab-runner-autoscaling-aws-asg/)
+#  EC2 Image Builder 'Component' for Windows Shell GitLab Runner
+#   Be sure to configure AWS built in component 'chocolatey' and have it run before this one.
+# Use a large disk volume because Visual Studio is large (probably 300-500GB) the default disk size for 
+#   Windows is 30GB and Visual Studio installer does not properly bubble up the error that there is 
+#   insufficient disk space to the chocolately log. Instead chocolatey errors with an exit code of '1'
+# This component does not install GitLab runner because you always want the latest and it is very quick to install
+#   The companion automation ASG automation 
+#   Dynamically installs the runner due to those two reasons.
+# Tested with Windows 2016
+
+name: GitLab Runner Windows Shell Runner for .NET 4 Builds
+description: GitLab Runner Windows Shell Runner for .NET 4 Builds
+schemaVersion: 1.0
+
+phases:
+  - name: build
+    steps:
+      - name: BuildEnvironment
+        action: ExecutePowerShell
+        inputs:
+          commands:
+            - # Must have git preinstalled for GitLab Runner
+            - choco install -y git --version=2.30.0 -params '"/GitOnlyOnPath"' -force
+            - choco install -y visualstudio2019buildtools --package-parameters " --allWorkloads --includeRecommended --includeOptional --passive --locale en-US --noUpdateInstaller"
+            - #choco install -y visualstudio2017-workload-netcorebuildtools
+            - #choco install -y visualstudio2017-workload-nodebuildtools
+            - #choco install -y visualstudio2017-workload-vctools
+            - #choco install -y visualstudio2017-workload-manageddesktopbuildtools
+            - choco install -y visualstudio2017-workload-webbuildtools
+            - choco install -y jq nuget.commandline
+            - write-host "Put some really old web runtimes down for Nopcommerce so we can build tag 'release-3.90' for a dotnet 4.x version."
+            - nuget install MSBuild.Microsoft.VisualStudio.Web.targets -source https://api.nuget.org/v3/index.json -version 11.0.2.1 -output $env:public
+            - Mkdir “C:\Program Files (x86)\MSBuild\Microsoft\VisualStudio\v11.0”
+            - cp C:\Users\Public\MSBuild.Microsoft.VisualStudio.Web.targets.11.0.2.1\tools\VSToolsPath\* “C:\Program Files (x86)\MSBuild\Microsoft\VisualStudio\v11.0” -recurse
+            
+# Troubleshooting:
+# Summary of all Chocolatey Installs: get-content $env:ProgramData\chocolatey\logs\chocolatey.log | sls "The install of "
+# Location of logs from installers within chocolatey: dir $env:windir\temp\chocolatey\
+# Find errors in all vs logs: Select-String -Path $env:windir\temp\chocolatey\*.log -Pattern 'Error'
