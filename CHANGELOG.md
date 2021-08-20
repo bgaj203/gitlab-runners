@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v1.4.8-alpha13] - 2021-08-20
+
+- This is ancilliary sample code, so I did not increment the version (I know, I know)
+- Added EC2 Image Builder components for building Windows Shell Runners AMIs - can be found here: [ec2-image-builder](ec2-image-builder)
+
 ## [v1.4.8-alpha13] - 2021-09-18
 
 - All easy buttons and the main cloud formation template maintain internal version pegging via source pointers even when 'main' matches the most recent version.
@@ -10,6 +15,7 @@ All notable changes to this project will be documented in this file.
 - linux runner install fixes (especially shell runner)
 - duplicate concurrent jobs parameter in both scaling and GitLab runner sections of CF form
 - four instance types required for spot only easy buttons - this is to reduce terminations along with 'capacity-optimized-prioritized'. Selecting instances that all have the same size name will ensure similar costs. Selecting instances that all have the same size name will ensure similar costs.
+
 ## [v1.4.7-alpha12] - 2021-05-14
 
 - As per AWS Spot team recommendations: 5SPOTSpotAllocationStrategy now defaults to 'capacity-optimized-prioritized' 

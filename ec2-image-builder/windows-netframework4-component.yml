@@ -40,3 +40,18 @@ phases:
 # Summary of all Chocolatey Installs: get-content $env:ProgramData\chocolatey\logs\chocolatey.log | sls "The install of "
 # Location of logs from installers within chocolatey: dir $env:windir\temp\chocolatey\
 # Find errors in all vs logs: Select-String -Path $env:windir\temp\chocolatey\*.log -Pattern 'Error'
+
+#The following is a validation component that can be run during EC2 Image Builder Validations
+name: GitLab Runner Windows Shell Runner for .NET Builds Validation Test
+description: GitLab Runner Windows Shell Runner for .NET Builds Validate Test
+schemaVersion: 1.0
+
+phases:
+  - name: test
+    steps:
+      - name: NET4BuildAgent
+        action: ExecutePowerShell
+        inputs:
+          commands:
+            - write-host ('git','dotnet','nuget','jq') | foreach { if (-not (Get-Command $psitem -ErrorAction SilentlyContinue)) { echo "$psitem did not install correctly."; exit 5 }}
+            - if (-not (test-path 'C:\Program Files (x86)\MSBuild\Microsoft\VisualStudio\v11.0\Web\Microsoft.Web.Publishing.targets'))  { echo "Webtargets did not install correctly."; exit 5 }

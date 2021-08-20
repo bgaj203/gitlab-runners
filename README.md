@@ -60,7 +60,7 @@ You will need your GitLab Instance URL and one or more Runner Registration Token
 
 ### Versioning In This Repository
 
-Versions are managed through branches
+Versions are managed through tags.
 
 ### Easy Buttons In the CLI
 
@@ -104,6 +104,10 @@ This video does not cover everything in this readme - both need to be reviewed t
        when: runner_system_failure
    ```
 
+### EC2 Image Builder Components for Creating Windows Shell Runner AMIs
+
+In the directory [ec2-image-builder](ec2-image-builder) you will find EC2 Image Builder Components for both building and testing a sample .NET Framework 4 CI Runner.
+
 ### AWS Service Catalog and QuickStarts
 
 The easy button parent cloudformation templates and the underlying full template are compatible with AWS Service Catalog.
@@ -129,8 +133,6 @@ Runner Specific or Highlighted Features:
 Each runner supported as a bash or powershell script in the "runner_configs" directory. The parameter that take these scripts can be point to any available URL. When pointing it to GitLab, be sure to use a full raw URL that is accessible directly from your instance as it spins up in AWS.
 
 These are then referenced in the primary Cloud Formation template in the CloudFormation parameter 3INSTConfigurationScript.
-
-Currently the windows one is the most developed (because scaling shell runners is a need).
 
 Note that these runner scripts have the following attributes (when fully completed):
 * They are pulled dynamically by instances that are scaling - so they cannot use CloudFormation variable substitutions because that is done long before these are pulled and used.
