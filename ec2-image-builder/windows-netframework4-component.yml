@@ -34,7 +34,7 @@ phases:
             - write-host "Original information for this hack from: https://medium.com/@udomsak/note-setup-build-server-environment-for-old-visual-studio-2010-project-ccb634dade85"
             - nuget install MSBuild.Microsoft.VisualStudio.Web.targets -source https://api.nuget.org/v3/index.json -version 11.0.2.1 -output $env:public
             - mkdir "${env:ProgramFiles`(x86`)}\MSBuild\Microsoft\VisualStudio\v11.0"
-            - copy-item "C:\Users\Public\MSBuild.Microsoft.VisualStudio.Web.targets.11.0.2.1\tools\VSToolsPath\*" “${env:ProgramFiles`(x86`)}\MSBuild\Microsoft\VisualStudio\v11.0” -recurse
+            - copy-item "C:\Users\Public\MSBuild.Microsoft.VisualStudio.Web.targets.11.0.2.1\tools\VSToolsPath\*" "${env:ProgramFiles`(x86`)}\MSBuild\Microsoft\VisualStudio\v11.0" -recurse
             
 # Troubleshooting:
 # Summary of all Chocolatey Installs: get-content $env:ProgramData\chocolatey\logs\chocolatey.log | sls "The install of "
