@@ -17,7 +17,7 @@ schemaVersion: 1.0
 phases:
   - name: build
     steps:
-      - name: BuildEnvironment
+      - name: NET4BuildEnvironment
         action: ExecutePowerShell
         inputs:
           commands:
@@ -49,7 +49,7 @@ schemaVersion: 1.0
 phases:
   - name: test
     steps:
-      - name: NET4BuildAgent
+      - name: NET4BuildAgentTest
         action: ExecutePowerShell
         inputs:
           commands:
