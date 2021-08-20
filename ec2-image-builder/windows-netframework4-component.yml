@@ -33,8 +33,8 @@ phases:
             - write-host "Put some really old web runtimes down for Nopcommerce so we can build tag 'release-3.90' for a dotnet 4.x version."
             - write-host "Original information for this hack from: https://medium.com/@udomsak/note-setup-build-server-environment-for-old-visual-studio-2010-project-ccb634dade85"
             - nuget install MSBuild.Microsoft.VisualStudio.Web.targets -source https://api.nuget.org/v3/index.json -version 11.0.2.1 -output $env:public
-            - Mkdir “C:\Program Files (x86)\MSBuild\Microsoft\VisualStudio\v11.0”
-            - cp C:\Users\Public\MSBuild.Microsoft.VisualStudio.Web.targets.11.0.2.1\tools\VSToolsPath\* “C:\Program Files (x86)\MSBuild\Microsoft\VisualStudio\v11.0” -recurse
+            - mkdir "${env:ProgramFiles`(x86`)}\MSBuild\Microsoft\VisualStudio\v11.0"
+            - copy-item "C:\Users\Public\MSBuild.Microsoft.VisualStudio.Web.targets.11.0.2.1\tools\VSToolsPath\*" “${env:ProgramFiles`(x86`)}\MSBuild\Microsoft\VisualStudio\v11.0” -recurse
             
 # Troubleshooting:
 # Summary of all Chocolatey Installs: get-content $env:ProgramData\chocolatey\logs\chocolatey.log | sls "The install of "
