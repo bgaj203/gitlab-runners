@@ -21,6 +21,7 @@ phases:
         inputs:
           commands:
             - # Must have git preinstalled for GitLab Runner
+            - if (-not (Get-Command cinst -ErrorAction SilentlyContinue)) { echo "Chocolatey must be installed before this component runs"; exit 5 }
             - choco install -y git --version=2.30.0 -params '"/GitOnlyOnPath"' -force
             - choco install -y visualstudio2019buildtools --package-parameters " --allWorkloads --includeRecommended --includeOptional --passive --locale en-US --noUpdateInstaller"
             - #choco install -y visualstudio2017-workload-netcorebuildtools
@@ -35,18 +36,19 @@ phases:
             - Mkdir "${env:ProgramFiles`(x86`)}\MSBuild\Microsoft\VisualStudio\v11.0"
             - copy-item "C:\Users\Public\MSBuild.Microsoft.VisualStudio.Web.targets.11.0.2.1\tools\VSToolsPath\*" "C:\Program Files `(x86`)\MSBuild\Microsoft\VisualStudio\v11.0" -recurse
 
-
   - name: validate
     steps:
       - name: NET4BuildAgent
         action: ExecutePowerShell
         inputs:
           commands:
-            - write-host ('git','dotnet','nuget','jq') | foreach { if (-not (Get-Command $psitem -ErrorAction SilentlyContinue)) { echo "$psitem did not install correctly."; exit 5 }}
-            - if (-not (test-path "C:\Program Files `(x86`)\MSBuild\Microsoft\VisualStudio\v11.0\Web\Microsoft.Web.Publishing.targets"))  { echo "Webtargets did not install correctly."; exit 5 }
+            - #General Requirements for all GitLab Windows Runners installed by this script
+            - write-host ('git') | foreach { if (-not (Get-Command $psitem -ErrorAction SilentlyContinue)) { echo "$psitem did not install correctly."; exit 5 }}
+            - #Requirements for this .NET 4 Framework Runner
+            - write-host  ('dotnet','nuget','jq') | foreach { if (-not (Get-Command $psitem -ErrorAction SilentlyContinue)) { echo "$psitem did not install correctly."; exit 5 }}             - if (-not (test-path "C:\Program Files `(x86`)\MSBuild\Microsoft\VisualStudio\v11.0\Web\Microsoft.Web.Publishing.targets"))  { echo "Webtargets did not install correctly."; exit 5 }
 
-#Create and schedule this as a Test component. In this case we have the same code as "validate" but there are times when you may need to wait for the test stage or want
-# to test in both phases in case sysprep or something else removes something you installed (and validates fine) in the build component.
+#Create and schedule this as a Test component. In addition to what is in the validate script, this script is checking for powershell core (pwsh) which should have been installed by the
+# standard AWS component in the recipe
 name: TEST GitLab Runner Windows Shell Runner for .NET Builds
 description: TEST GitLab Runner Windows Shell Runner for .NET Builds
 schemaVersion: 1.0
@@ -58,7 +60,10 @@ phases
         action: ExecutePowerShell
         inputs:
           commands:
-            - write-host ('git','dotnet','nuget','jq') | foreach { if (-not (Get-Command $psitem -ErrorAction SilentlyContinue)) { echo "$psitem did not install correctly."; exit 5 }}
+            - #Requirements for all GitLab Windows Runners
+            - write-host ('git','pwsh') | foreach { if (-not (Get-Command $psitem -ErrorAction SilentlyContinue)) { echo "$psitem did not install correctly."; exit 5 }}
+            - #Requirements for this .NET 4 Framework Runner
+            - write-host  ('dotnet','nuget','jq') | foreach { if (-not (Get-Command $psitem -ErrorAction SilentlyContinue)) { echo "$psitem did not install correctly."; exit 5 }} 
             - if (-not (test-path "C:\Program Files `(x86`)\MSBuild\Microsoft\VisualStudio\v11.0\Web\Microsoft.Web.Publishing.targets"))  { echo "Webtargets did not install correctly."; exit 5 }
             
 # Troubleshooting:
