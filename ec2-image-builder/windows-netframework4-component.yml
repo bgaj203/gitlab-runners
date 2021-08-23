@@ -1,6 +1,7 @@
 #  From: GitLab HA Scaling Runner Vending Machine for AWS EC2 ASG (https://gitlab.com/guided-explorations/aws/gitlab-runner-autoscaling-aws-asg/)
 #  EC2 Image Builder 'Component' for Windows Shell GitLab Runner
 #   Be sure to configure AWS built in component 'chocolatey' and have it run before this one.
+#   Be sure to configure the AWS prepared component 'PowerShell Core' so that GitLab runner can run PowerShell scripts in .gitlab-ci.yml
 # Use a large disk volume because Visual Studio is large (probably 300-500GB) the default disk size for 
 #   Windows is 30GB and Visual Studio installer does not properly bubble up the error that there is 
 #   insufficient disk space to the chocolately log. Instead chocolatey errors with an exit code of '1'
