@@ -21,6 +21,11 @@ It is a meta-PaaS in that it is a service that completely simplifies building pi
 - The web editors for your components in the AWS EC2 Image Builder console allow smart quotes.  These are death for PowerShell.  Thankfully you can visually distinguish them in the editor and if you watch carefully the syntax editor will not highlight the quoted content when a smart quote is used - a cue that you may have a smart quote.  
 - I have found cases where powershell that I test prospective powershell code in an AMI built by EC2 Image Builder and that code does not work during an EC2 Image Builder build.  For instance, this `` had to be updated to this `copy-item "C:\Users\Public\MSBuild.Microsoft.VisualStudio.Web.targets.11.0.2.1\tools\VSToolsPath\*" “C:\Program Files (x86)\MSBuild\Microsoft\VisualStudio\v11.0” -recurse` to avoid the build choking on `(x86)` as being a command. I've always scratched my head at the parens in that directory name and it's variable reference - but this could happen in other areas as well.  Use single quotes when you can to avoid undesirable attempted expansions.
 - The AWS component for PowerShell Core is using version 6.x, this automation uses chocolatey to install the latest (7.1.x as of this writing)
+- The AWS shutdown process clears out non-default folders from c:\ - so installing software here is not adviseable.
+- Seperate "Test" Components are important in Windows for at least these reasons:
+  1. Sysprep is run by EC2 Image Builder (after "validate" steps of an install component) and there is a small possibility it may affect the operation of some software.
+  2. AWS cleans out any folders at the root of c:\ - a test stage will catch the mistake of installing something there.
+  3. Many software installations that update the system path do not work correctly until after a reboot - the Test components run on a fresh boot off of the Image Builder created AMI - so doing the tests at this time allows proper validation of any configuration requiring a reboot to valudate correctly.
 
 ### GitLab Runner Requirements
 - The EC2 Image Builder recipe must include the AWS prepared "Chocolatey" component and it must be sequenced before the component in this documentation.

@@ -49,13 +49,12 @@ phases:
           commands:
             - |
               # General Requirements for all GitLab Windows Runners installed by this script
-              write-host ('git') | foreach { if (-not (Get-Command $psitem -ErrorAction SilentlyContinue)) { echo "$psitem did not install correctly."; exit 5 }}
-              # Requirements for this .NET 4 Framework Runner
-              write-host  ('dotnet','nuget','jq') | foreach { if (-not (Get-Command $psitem -ErrorAction SilentlyContinue)) { echo "$psitem did not install correctly."; exit 5 }}  
-              if (-not (test-path "C:\Program Files `(x86`)\MSBuild\Microsoft\VisualStudio\v11.0\Web\Microsoft.Web.Publishing.targets"))  { echo "Webtargets did not install correctly."; exit 5 }
+              $cmdchecks=@('git','pwsh'); 
+              $cmdchecks | foreach { if (Get-Command $psitem -ErrorAction SilentlyContinue) {write-host "SUCCEEDED check: $psitem"} else {write-host "FAILED check: $psitem"; $fails++ }} ; exit $fails
 
 #Create and schedule this as a Test component. In addition to what is in the validate script, this script is checking for powershell core (pwsh) which should have been installed by the
 # standard AWS component in the recipe
+
 name: TEST GitLab Runner Windows Shell Runner for .NET Builds
 description: TEST GitLab Runner Windows Shell Runner for .NET Builds
 schemaVersion: 1.0
@@ -68,10 +67,12 @@ phases
         inputs:
           commands:
             - #Requirements for all GitLab Windows Runners
-            - write-host ('git','pwsh') | foreach { if (-not (Get-Command $psitem -ErrorAction SilentlyContinue)) { echo "$psitem did not install correctly."; exit 5 }}
-            - #Requirements for this .NET 4 Framework Runner
-            - write-host  ('dotnet','nuget','jq') | foreach { if (-not (Get-Command $psitem -ErrorAction SilentlyContinue)) { echo "$psitem did not install correctly."; exit 5 }} 
-            - if (-not (test-path "C:\Program Files `(x86`)\MSBuild\Microsoft\VisualStudio\v11.0\Web\Microsoft.Web.Publishing.targets"))  { echo "Webtargets did not install correctly."; exit 5 }
+              # General Requirements for all GitLab Windows Runners installed by this script
+              $cmdchecks=@('git','pwsh'); 
+              $cmdchecks | foreach { if (Get-Command $psitem -ErrorAction SilentlyContinue) {write-host "SUCCEEDED check: $psitem"} else {write-host "FAILED check: $psitem"; $fails++ }} ; exit $fails
+              # Requirements for this .NET 4 Framework Runner
+              $cmdchecks=@('dotnet','nuget','jq'); 
+              $cmdchecks | foreach { if (Get-Command $psitem -ErrorAction SilentlyContinue) {write-host "SUCCEEDED check: $psitem"} else {write-host "FAILED check: $psitem"; $fails++ }} ; exit $fails
             
 # Troubleshooting:
 # Summary of all Chocolatey Installs: get-content $env:ProgramData\chocolatey\logs\chocolatey.log | sls "The install of "

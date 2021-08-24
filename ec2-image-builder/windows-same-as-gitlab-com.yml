@@ -46,12 +46,13 @@ phases:
               reg add HKLM\SYSTEM\CurrentControlSet\Services\Tcpip6\Parameters/v DisabledComponents /t REG_DWORD /d 0x0 /f
               choco install -y docker-compose
               Write-host "`n`nInstalling vcpkg..."
-              git clone https://github.com/microsoft/vcpkg.git c:\vcpkg
-              cd c:\vcpkg
+              $VCPROOT="$env:PROGRAMDATA\vcpkg"
+              git clone https://github.com/microsoft/vcpkg.git $VCPROOT
+              cd $VCPROOT
               git checkout 2019.12
-              . c:\vcpkg\bootstrap-vcpkg.bat
-              . C:\vcpkg\vcpkg integrate install
-              $PathToAdd="c:\vcpkg"; $Scope='Machine'; $PathVariable='PATH'
+              . $VCPROOT\bootstrap-vcpkg.bat
+              . $VCPROOT\vcpkg integrate install
+              $PathToAdd="$VCPROOT"; $Scope='Machine'; $PathVariable='PATH'
               $ExistingPathArray = @([Environment]::GetEnvironmentVariable("$PathVariable","$Scope").split(';'))
               if (($ExistingPathArray -inotcontains $PathToAdd) -AND ($ExistingPathArray -inotcontains "$PathToAdd\"))
               {
@@ -68,7 +69,8 @@ phases:
           commands:
             - |
               # General Requirements for all GitLab Windows Runners installed by this script
-              write-host ('git') | foreach { if (-not (Get-Command $psitem -ErrorAction SilentlyContinue)) { echo "$psitem did not install correctly."; exit 5 }}
+              $cmdchecks=@('git','pwsh'); 
+              $cmdchecks | foreach { if (Get-Command $psitem -ErrorAction SilentlyContinue) {write-host "SUCCEEDED check: $psitem"} else {write-host "FAILED check: $psitem"; $fails++ }} ; exit $fails
 
 #Create and schedule this as a Test component. In addition to what is in the validate script, this script is checking for powershell core (pwsh) which should have been installed by the
 # standard AWS component in the recipe
@@ -84,7 +86,9 @@ phases
         inputs:
           commands:
             - #Requirements for all GitLab Windows Runners
-            - write-host ('git','pwsh') | foreach { if (-not (Get-Command $psitem -ErrorAction SilentlyContinue)) { echo "$psitem did not install correctly."; exit 5 }}
+            - |
+              $cmdchecks=@('git','pwsh','jq','dotnet','go','npm','vcpkg'); 
+              $cmdchecks | foreach { if (Get-Command $psitem -ErrorAction SilentlyContinue) {write-host "SUCCEEDED check: $psitem"} else {write-host "FAILED check: $psitem"; $fails++ }}; exit $fails
             
 # Troubleshooting:
 # Summary of all Chocolatey Installs: get-content $env:ProgramData\chocolatey\logs\chocolatey.log | sls "The install of "
