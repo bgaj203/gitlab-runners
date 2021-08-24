@@ -22,8 +22,10 @@ phases:
           commands:
             - #Must have already installed chocolatey for this script to work.
             - if (-not (Get-Command cinst -ErrorAction SilentlyContinue)) { echo "Chocolatey must be installed before this component runs"; exit 5 }
-            - # Must have git preinstalled for GitLab Runner
+            - Write-host "Installing requirements for all GitLab Runners"
             - choco install -y git --version=2.30.0 -params '"/GitOnlyOnPath"' -force
+            - choco install -y powershell-core
+            - Write-host "Installing requirements this specific runner"
             - choco install -y visualstudio2019buildtools --package-parameters " --allWorkloads --includeRecommended --includeOptional --passive --locale en-US --noUpdateInstaller"
             - #choco install -y visualstudio2017-workload-netcorebuildtools
             - #choco install -y visualstudio2017-workload-nodebuildtools
