@@ -10,8 +10,8 @@
 #   The companion automation ASG automation 
 #   Dynamically installs the runner due to those two reasons.
 
-name: GitLab Runner Windows Shell Runner for .NET Builds
-description: GitLab Runner Windows Shell Runner for .NET Builds
+name: GitLab Runner Windows Shell Runner Just like GitLab.com Shared Runners
+description: GitLab Runner Windows Shell Runner Just like GitLab.com Shared Runners
 schemaVersion: 1.0
 
 phases:

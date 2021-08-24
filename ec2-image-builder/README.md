@@ -29,3 +29,4 @@ It is a meta-PaaS in that it is a service that completely simplifies building pi
 ### EC2 Image Builder Files
 - **windows-netframework4-component.yml** - builds a runner specifically for being able to build a .NET 4.5 version of nopcommerce.
 - **windows-same-as-gitlab-com.yml** - mimics the Windows runner configuration used on GitLab.com. [Configuration information is here.](https://gitlab.com/gitlab-org/ci-cd/shared-runners/images/gcp/windows-containers/-/blob/main/cookbooks/preinstalled-software/README.md)
+- **userdata.ps1** - the userdata snippet required in an EC2 Image Builder Recipe so that EC2 Image Builder can run commands to install software.
