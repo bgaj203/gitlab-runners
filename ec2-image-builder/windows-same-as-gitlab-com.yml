@@ -74,19 +74,19 @@ phases:
 
 #Create and schedule this as a Test component. In addition to what is in the validate script, this script is checking for powershell core (pwsh) which should have been installed by the
 # standard AWS component in the recipe
-name: TEST GitLab Runner Windows Shell Runner for .NET Builds
-description: TEST GitLab Runner Windows Shell Runner for .NET Builds
+name: TEST GitLab Runner Windows Shell Runner Just like GitLab.com Shared Runners
+description: TEST GitLab Runner Windows Shell Runner Just like GitLab.com Shared Runners
 schemaVersion: 1.0
 
-phases
+phases:
   - name: test
     steps:
       - name: NET4BuildAgent
         action: ExecutePowerShell
         inputs:
           commands:
-            - #Requirements for all GitLab Windows Runners
             - |
+              #Requirements for all GitLab Windows Runners
               $cmdchecks=@('git','pwsh','jq','dotnet','go','npm','vcpkg','node'); 
               $cmdchecks | foreach { if (Get-Command $psitem -ErrorAction SilentlyContinue) {write-host "SUCCEEDED check: $psitem $($(get-command $psitem).version)"} else {write-host "FAILED check: $psitem"; $fails++ }}; if ($fails -gt 0) {exit $fails}
             
