@@ -23,11 +23,11 @@ phases:
           commands:
             - #Must have already installed chocolatey for this script to work.
             - if (-not (Get-Command cinst -ErrorAction SilentlyContinue)) { echo "Chocolatey must be installed before this component runs"; exit 5 }
-            - Write-host "Installing requirements for all GitLab Runners"
+            - Write-host "`n`nInstalling requirements for all GitLab Runners"
             - choco install -y git --version=2.30.0 -params '"/GitOnlyOnPath"' -force
             - choco install -y powershell-core
             - |
-              Write-host "Installing requirements this specific runner"
+              Write-host "`n`nInstalling requirements this specific runner"
               choco install -y jq curl wget nuget.commandline 7zip
               choco install -y golang nodejs openjdk 
               choco install -y visualstudio2019buildtools --package-parameters " --allWorkloads --includeRecommended --includeOptional --passive --locale en-US --noUpdateInstaller"
@@ -36,15 +36,29 @@ phases:
               choco install -y visualstudio2017-workload-nodebuildtools
               choco install -y visualstudio2017-workload-vctools
               choco install -y visualstudio2017-workload-manageddesktopbuildtools
-              choco install -y visualstudio2019-workload-netcrossplat
-              choco install -y dotnetfx
-              write-host "Installing Docker..."
+              choco install -y visualstudio2019-workload-xamarinbuildtools
+              choco install -y dotnetfx dotnetcore-sdk
+              write-host "`n`nInstalling Docker..."
               Install-PackageProvider -Name NuGet -MinimumVersion #{nuget_package_provider_version} -Force
               Install-Module -Name DockerMsftProvider -Repository PSGallery -Force -Confirm:$false
               Install-Package -Name docker -ProviderName DockerMsftProvider -Force
               netsh netkvm setparam 0 *RscIPv4 0
               reg add HKLM\SYSTEM\CurrentControlSet\Services\Tcpip6\Parameters/v DisabledComponents /t REG_DWORD /d 0x0 /f
               choco install -y docker-compose
+              Write-host "`n`nInstalling vcpkg..."
+              git clone https://github.com/microsoft/vcpkg.git c:\vcpkg
+              cd c:\vcpkg
+              git checkout 2019.12
+              . c:\vcpkg\bootstrap-vcpkg.bat
+              . C:\vcpkg\vcpkg integrate install
+              $PathToAdd="c:\vcpkg"; $Scope='Machine'; $PathVariable='PATH'
+              $ExistingPathArray = @([Environment]::GetEnvironmentVariable("$PathVariable","$Scope").split(';'))
+              if (($ExistingPathArray -inotcontains $PathToAdd) -AND ($ExistingPathArray -inotcontains "$PathToAdd\"))
+              {
+                $Newpath = $ExistingPathArray + @("$PathToAdd")
+                $AssembledNewPath = ($newpath -join(';')).trimend(';')
+                [Environment]::SetEnvironmentVariable("$PathVariable",$AssembledNewPath,"$Scope")
+              }
 
   - name: validate
     steps:
