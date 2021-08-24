@@ -39,7 +39,7 @@ phases:
               choco install -y visualstudio2019-workload-xamarinbuildtools
               choco install -y dotnetfx dotnetcore-sdk
               write-host "`n`nInstalling Docker..."
-              Install-PackageProvider -Name NuGet -MinimumVersion #{nuget_package_provider_version} -Force
+              Install-PackageProvider -Name NuGet -Force
               Install-Module -Name DockerMsftProvider -Repository PSGallery -Force -Confirm:$false
               Install-Package -Name docker -ProviderName DockerMsftProvider -Force
               netsh netkvm setparam 0 *RscIPv4 0
