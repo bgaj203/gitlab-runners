@@ -9,6 +9,7 @@ EC2 Image Builder is very convenient way to build and distribute and share golde
 - it supports scheduled runs
 - it supports AWS License Manager
 - it logs builds to CloudWatch
+- AWS provides STIG build components for preparing GovCloud images
 
 It is a meta-PaaS in that it is a service that completely simplifies building pipelines for building OS images - which usually have many unique challenges compared to standard software building pipelines.
 
