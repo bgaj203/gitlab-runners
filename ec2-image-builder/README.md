@@ -25,3 +25,7 @@ It is a meta-PaaS in that it is a service that completely simplifies building pi
 - The EC2 Image Builder recipe must include the AWS prepared "Chocolatey" component and it must be sequenced before the component in this documentation.
 - GitLab Runner assumes PowerShell Core (pwsh.exe) is on the path for Windows machines - so the AWS prepared "PowerShell Core" component must be installed (order is not important) for GitLab runner to run PowerShell scripts in gitlab-ci.yml. If you need Windows PowerShell you can call it from an initial PowerShell Core script.
 - Visual studio build tools require a volume much larger than the AWS Windows default of 30GB - but it is hard to diagnose when you run out spaces during EC2 Image Builder builds - so pick a value larger that Visual Studio and with plenty of scratch space - 500-750GB should do it - you might be able to tune that value to be lower depending on your build.
+
+### EC2 Image Builder Files
+- **windows-netframework4-component.yml** - builds a runner specifically for being able to build a .NET 4.5 version of nopcommerce.
+- **windows-same-as-gitlab-com.yml** - mimics the Windows runner configuration used on GitLab.com. [Configuration information is here.](https://gitlab.com/gitlab-org/ci-cd/shared-runners/images/gcp/windows-containers/-/blob/main/cookbooks/preinstalled-software/README.md)

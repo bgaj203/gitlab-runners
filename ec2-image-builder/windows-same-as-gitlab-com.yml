@@ -1,3 +1,4 @@
+
 #  From: GitLab HA Scaling Runner Vending Machine for AWS EC2 ASG (https://gitlab.com/guided-explorations/aws/gitlab-runner-autoscaling-aws-asg/)
 #  EC2 Image Builder 'Component' for Windows Shell GitLab Runner
 #   Be sure to configure AWS built in component 'chocolatey' and have it run before this one.
@@ -27,19 +28,23 @@ phases:
             - choco install -y powershell-core
             - |
               Write-host "Installing requirements this specific runner"
+              choco install -y jq curl wget nuget.commandline 7zip
+              choco install -y golang nodejs openjdk 
               choco install -y visualstudio2019buildtools --package-parameters " --allWorkloads --includeRecommended --includeOptional --passive --locale en-US --noUpdateInstaller"
               choco install -y visualstudio2017-workload-webbuildtools
-              choco install -y jq nuget.commandline
-              #choco install -y visualstudio2017-workload-netcorebuildtools
-              #choco install -y visualstudio2017-workload-nodebuildtools
-              #choco install -y visualstudio2017-workload-vctools
-              #choco install -y visualstudio2017-workload-manageddesktopbuildtools
-              write-host "Put some really old web runtimes down for Nopcommerce"
-              write-host "If these were no longer publicly available or were licensed runtimes, they could be placed in S3 and pulled from there rather than rely on public repositories."
-              nuget install MSBuild.Microsoft.VisualStudio.Web.targets -source https://api.nuget.org/v3/index.json -version 11.0.2.1 -output $env:public
-              Mkdir "${env:ProgramFiles`(x86`)}\MSBuild\Microsoft\VisualStudio\v11.0"
-              copy-item "C:\Users\Public\MSBuild.Microsoft.VisualStudio.Web.targets.11.0.2.1\tools\VSToolsPath\*" "C:\Program Files `(x86`)\MSBuild\Microsoft\VisualStudio\v11.0" -recurse
-
+              choco install -y visualstudio2017-workload-netcorebuildtools
+              choco install -y visualstudio2017-workload-nodebuildtools
+              choco install -y visualstudio2017-workload-vctools
+              choco install -y visualstudio2017-workload-manageddesktopbuildtools
+              choco install -y visualstudio2019-workload-netcrossplat
+              choco install -y dotnetfx
+              write-host "Installing Docker..."
+              Install-PackageProvider -Name NuGet -MinimumVersion #{nuget_package_provider_version} -Force
+              Install-Module -Name DockerMsftProvider -Repository PSGallery -Force -Confirm:$false
+              Install-Package -Name docker -ProviderName DockerMsftProvider -Force
+              netsh netkvm setparam 0 *RscIPv4 0
+              reg add HKLM\SYSTEM\CurrentControlSet\Services\Tcpip6\Parameters/v DisabledComponents /t REG_DWORD /d 0x0 /f
+              choco install -y docker-compose
 
   - name: validate
     steps:
@@ -50,9 +55,6 @@ phases:
             - |
               # General Requirements for all GitLab Windows Runners installed by this script
               write-host ('git') | foreach { if (-not (Get-Command $psitem -ErrorAction SilentlyContinue)) { echo "$psitem did not install correctly."; exit 5 }}
-              # Requirements for this .NET 4 Framework Runner
-              write-host  ('dotnet','nuget','jq') | foreach { if (-not (Get-Command $psitem -ErrorAction SilentlyContinue)) { echo "$psitem did not install correctly."; exit 5 }}  
-              if (-not (test-path "C:\Program Files `(x86`)\MSBuild\Microsoft\VisualStudio\v11.0\Web\Microsoft.Web.Publishing.targets"))  { echo "Webtargets did not install correctly."; exit 5 }
 
 #Create and schedule this as a Test component. In addition to what is in the validate script, this script is checking for powershell core (pwsh) which should have been installed by the
 # standard AWS component in the recipe
@@ -69,9 +71,6 @@ phases
           commands:
             - #Requirements for all GitLab Windows Runners
             - write-host ('git','pwsh') | foreach { if (-not (Get-Command $psitem -ErrorAction SilentlyContinue)) { echo "$psitem did not install correctly."; exit 5 }}
-            - #Requirements for this .NET 4 Framework Runner
-            - write-host  ('dotnet','nuget','jq') | foreach { if (-not (Get-Command $psitem -ErrorAction SilentlyContinue)) { echo "$psitem did not install correctly."; exit 5 }} 
-            - if (-not (test-path "C:\Program Files `(x86`)\MSBuild\Microsoft\VisualStudio\v11.0\Web\Microsoft.Web.Publishing.targets"))  { echo "Webtargets did not install correctly."; exit 5 }
             
 # Troubleshooting:
 # Summary of all Chocolatey Installs: get-content $env:ProgramData\chocolatey\logs\chocolatey.log | sls "The install of "
