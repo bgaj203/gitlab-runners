@@ -49,7 +49,7 @@ phases:
             - |
               # General Requirements for all GitLab Windows Runners installed by this script
               $cmdchecks=@('git','pwsh'); 
-              $cmdchecks | foreach { if (Get-Command $psitem -ErrorAction SilentlyContinue) {write-host "SUCCEEDED check: $psitem"} else {write-host "FAILED check: $psitem"; $fails++ }}; if ($fails -gt 0) {exit $fails}
+              $cmdchecks | foreach { if (Get-Command $psitem -ErrorAction SilentlyContinue) {write-host "SUCCEEDED check: $psitem $($(get-command $psitem).version)"} else {write-host "FAILED check: $psitem"; $fails++ }}; if ($fails -gt 0) {exit $fails}
 
 #Create and schedule this as a Test component. In addition to what is in the validate script, this script is checking for powershell core (pwsh) which should have been installed by the
 # standard AWS component in the recipe
@@ -68,10 +68,10 @@ phases
             - #Requirements for all GitLab Windows Runners
               # General Requirements for all GitLab Windows Runners installed by this script
               $cmdchecks=@('git','pwsh'); 
-              $cmdchecks | foreach { if (Get-Command $psitem -ErrorAction SilentlyContinue) {write-host "SUCCEEDED check: $psitem"} else {write-host "FAILED check: $psitem"; $fails++ }}; if ($fails -gt 0) {exit $fails}
+              $cmdchecks | foreach { if (Get-Command $psitem -ErrorAction SilentlyContinue) {write-host "SUCCEEDED check: $psitem $($(get-command $psitem).version)"} else {write-host "FAILED check: $psitem"; $fails++ }}; if ($fails -gt 0) {exit $fails}
               # Requirements for this .NET 4 Framework Runner
               $cmdchecks=@('dotnet','nuget','jq'); 
-              $cmdchecks | foreach { if (Get-Command $psitem -ErrorAction SilentlyContinue) {write-host "SUCCEEDED check: $psitem"} else {write-host "FAILED check: $psitem"; $fails++ }}; if ($fails -gt 0) {exit $fails}
+              $cmdchecks | foreach { if (Get-Command $psitem -ErrorAction SilentlyContinue) {write-host "SUCCEEDED check: $psitem $($(get-command $psitem).version)"} else {write-host "FAILED check: $psitem"; $fails++ }}; if ($fails -gt 0) {exit $fails}
             
 # Troubleshooting:
 # Summary of all Chocolatey Installs: get-content $env:ProgramData\chocolatey\logs\chocolatey.log | sls "The install of "
