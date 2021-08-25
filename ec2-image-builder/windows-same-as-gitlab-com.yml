@@ -24,8 +24,16 @@ phases:
             - #Must have already installed chocolatey for this script to work.
             - if (-not (Get-Command cinst -ErrorAction SilentlyContinue)) { echo "Chocolatey must be installed before this component runs"; exit 5 }
             - Write-host "`n`nInstalling requirements for all GitLab Runners"
-            - choco install -y git --version=2.30.0 -params '"/GitOnlyOnPath"' -force
-            - choco install -y powershell-core
+            - |
+              choco install -y git --version=2.30.0 -params '"/GitOnlyOnPath"' -force
+              #Enable using git in this process
+              $gitpath = 'C:\Program Files\git\cmd'
+              $CurrentProcessPath = [Environment]::GetEnvironmentVariable("Path", "Process")
+              if (!($CurrentProcessPath -ilike "*\git\cmd*"))
+              {
+                [Environment]::SetEnvironmentVariable("Path", $CurrentProcessPath + ";$gitpath", "Process")
+              }
+              choco install -y powershell-core
             - |
               Write-host "`n`nInstalling requirements this specific runner"
               choco install -y jq curl wget nuget.commandline 7zip
