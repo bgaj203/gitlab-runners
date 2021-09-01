@@ -58,7 +58,7 @@ name: TEST GitLab Runner Windows Shell Runner for .NET Builds
 description: TEST GitLab Runner Windows Shell Runner for .NET Builds
 schemaVersion: 1.0
 
-phases
+phases:
   - name: test
     steps:
       - name: NET4BuildAgent
