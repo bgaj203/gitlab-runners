@@ -20,13 +20,20 @@ phases:
         action: ExecutePowerShell
         inputs:
           commands:
-            - #Must have already installed chocolatey for this script to work.
-            - if (-not (Get-Command cinst -ErrorAction SilentlyContinue)) { echo "Chocolatey must be installed before this component runs"; exit 5 }
-            - Write-host "Installing requirements for all GitLab Runners"
-            - choco install -y git --version=2.30.0 -params '"/GitOnlyOnPath"' -force
-            - choco install -y powershell-core
             - |
-              Write-host "Installing requirements this specific runner"
+              Function logit ($Msg, $MsgType='Information', $ID='1') {
+                If ($script:PSCommandPath -ne '' ) { $SourcePathName = $script:PSCommandPath ; $SourceName = split-path -leaf $SourcePathName } else { $SourceName = "Automation Code"; $SourcePathName = "Unknown" }
+                Write-Host "[$(Get-date -format 'yyyy-MM-dd HH:mm:ss zzz')] $MsgType : From: $SourcePathName : $Msg"
+                $applog = New-Object -TypeName System.Diagnostics.EventLog -argumentlist Application
+                $applog.Source="$SourceName"
+                $applog.WriteEntry("From: $SourcePathName : $Msg", $MsgType, $ID)
+              }
+              #Must have already installed chocolatey for this script to work.
+              if (-not (Get-Command cinst -ErrorAction SilentlyContinue)) { logit "Chocolatey must be installed before this component runs"; exit 5 }
+              logit "Installing requirements for all GitLab Runners"
+              choco install -y git --version=2.30.0 -params '"/GitOnlyOnPath"' -force
+              choco install -y powershell-core
+              logit "Installing requirements this specific runner"
               choco install -y visualstudio2019buildtools --package-parameters " --allWorkloads --includeRecommended --includeOptional --passive --locale en-US --noUpdateInstaller"
               choco install -y visualstudio2017-workload-webbuildtools
               choco install -y jq nuget.commandline
@@ -34,23 +41,12 @@ phases:
               #choco install -y visualstudio2017-workload-nodebuildtools
               #choco install -y visualstudio2017-workload-vctools
               #choco install -y visualstudio2017-workload-manageddesktopbuildtools
-              write-host "Put some really old web runtimes down for Nopcommerce"
-              write-host "If these were no longer publicly available or were licensed runtimes, they could be placed in S3 and pulled from there rather than rely on public repositories."
+              logit "Put some really old web runtimes down for Nopcommerce"
+              logit "If these were no longer publicly available or were licensed runtimes, they could be placed in S3 and pulled from there rather than rely on public repositories."
               nuget install MSBuild.Microsoft.VisualStudio.Web.targets -source https://api.nuget.org/v3/index.json -version 11.0.2.1 -output $env:public
               Mkdir "${env:ProgramFiles`(x86`)}\MSBuild\Microsoft\VisualStudio\v11.0"
               copy-item "C:\Users\Public\MSBuild.Microsoft.VisualStudio.Web.targets.11.0.2.1\tools\VSToolsPath\*" "C:\Program Files `(x86`)\MSBuild\Microsoft\VisualStudio\v11.0" -recurse
 
-  - name: validate
-    steps:
-      - name: NET4BuildAgent
-        action: ExecutePowerShell
-        inputs:
-          commands:
-            - |
-              # General Requirements for all GitLab Windows Runners installed by this script
-              $cmdchecks=@('git','pwsh'); 
-              $cmdchecks | foreach { if (Get-Command $psitem -ErrorAction SilentlyContinue) {write-host "SUCCEEDED check: $psitem $($(get-command $psitem).version)"} else {write-host "FAILED check: $psitem"; $fails++ }}; if ($fails -gt 0) {exit $fails}
-              if (-not (test-path "C:\Program Files `(x86`)\MSBuild\Microsoft\VisualStudio\v11.0\Web\Microsoft.Web.Publishing.targets"))  { echo "Webtargets did not install correctly."; exit 5 }
 #Create and schedule this as a Test component. In addition to what is in the validate script, this script is checking for powershell core (pwsh) which should have been installed by the
 # standard AWS component in the recipe
 
@@ -65,14 +61,22 @@ phases:
         action: ExecutePowerShell
         inputs:
           commands:
-            - #Requirements for all GitLab Windows Runners
+            - |
+              Function logit ($Msg, $MsgType='Information', $ID='1') {
+                If ($script:PSCommandPath -ne '' ) { $SourcePathName = $script:PSCommandPath ; $SourceName = split-path -leaf $SourcePathName } else { $SourceName = "Automation Code"; $SourcePathName = "Unknown" }
+                Write-Host "[$(Get-date -format 'yyyy-MM-dd HH:mm:ss zzz')] $MsgType : From: $SourcePathName : $Msg"
+                $applog = New-Object -TypeName System.Diagnostics.EventLog -argumentlist Application
+                $applog.Source="$SourceName"
+                $applog.WriteEntry("From: $SourcePathName : $Msg", $MsgType, $ID)
+              }
+              #Requirements for all GitLab Windows Runners
               # General Requirements for all GitLab Windows Runners installed by this script
               $cmdchecks=@('git','pwsh'); 
               $cmdchecks | foreach { if (Get-Command $psitem -ErrorAction SilentlyContinue) {write-host "SUCCEEDED check: $psitem $($(get-command $psitem).version)"} else {write-host "FAILED check: $psitem"; $fails++ }}; if ($fails -gt 0) {exit $fails}
               # Requirements for this .NET 4 Framework Runner
               $cmdchecks=@('dotnet','nuget','jq'); 
               $cmdchecks | foreach { if (Get-Command $psitem -ErrorAction SilentlyContinue) {write-host "SUCCEEDED check: $psitem $($(get-command $psitem).version)"} else {write-host "FAILED check: $psitem"; $fails++ }}; if ($fails -gt 0) {exit $fails}
-              if (-not (test-path "C:\Program Files `(x86`)\MSBuild\Microsoft\VisualStudio\v11.0\Web\Microsoft.Web.Publishing.targets"))  { echo "Webtargets did not install correctly."; exit 5 }
+              if (-not (test-path "C:\Program Files `(x86`)\MSBuild\Microsoft\VisualStudio\v11.0\Web\Microsoft.Web.Publishing.targets"))  { logit "Webtargets did not install correctly."; exit 5 }
 # Troubleshooting:
 # Summary of all Chocolatey Installs: get-content $env:ProgramData\chocolatey\logs\chocolatey.log | sls "The install of "
 # Location of logs from installers within chocolatey: dir $env:windir\temp\chocolatey\

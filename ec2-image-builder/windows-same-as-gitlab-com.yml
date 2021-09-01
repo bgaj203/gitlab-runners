@@ -21,10 +21,17 @@ phases:
         action: ExecutePowerShell
         inputs:
           commands:
-            - #Must have already installed chocolatey for this script to work.
-            - if (-not (Get-Command cinst -ErrorAction SilentlyContinue)) { echo "Chocolatey must be installed before this component runs"; exit 5 }
-            - Write-host "`n`nInstalling requirements for all GitLab Runners"
             - |
+              Function logit ($Msg, $MsgType='Information', $ID='1') {
+                If ($script:PSCommandPath -ne '' ) { $SourcePathName = $script:PSCommandPath ; $SourceName = split-path -leaf $SourcePathName } else { $SourceName = "Automation Code"; $SourcePathName = "Unknown" }
+                Write-Host "[$(Get-date -format 'yyyy-MM-dd HH:mm:ss zzz')] $MsgType : From: $SourcePathName : $Msg"
+                $applog = New-Object -TypeName System.Diagnostics.EventLog -argumentlist Application
+                $applog.Source="$SourceName"
+                $applog.WriteEntry("From: $SourcePathName : $Msg", $MsgType, $ID)
+              }
+              #Must have already installed chocolatey for this script to work.
+              if (-not (Get-Command cinst -ErrorAction SilentlyContinue)) { echo "Chocolatey must be installed before this component runs"; exit 5 }
+              logit "`n`nInstalling requirements for all GitLab Runners"
               choco install -y git --version=2.30.0 -params '"/GitOnlyOnPath"' -force
               #Enable using git in this process
               $gitpath = 'C:\Program Files\git\cmd'
@@ -35,7 +42,7 @@ phases:
               }
               choco install -y powershell-core
             - |
-              Write-host "`n`nInstalling requirements this specific runner"
+              logit "`n`nInstalling requirements this specific runner"
               choco install -y jq curl wget nuget.commandline 7zip
               choco install -y golang nodejs openjdk 
               choco install -y visualstudio2019buildtools --package-parameters " --allWorkloads --includeRecommended --includeOptional --passive --locale en-US --noUpdateInstaller"
@@ -46,14 +53,14 @@ phases:
               choco install -y visualstudio2017-workload-manageddesktopbuildtools
               choco install -y visualstudio2019-workload-xamarinbuildtools
               choco install -y dotnetfx dotnetcore-sdk
-              write-host "`n`nInstalling Docker..."
+              logit "`n`nInstalling Docker..."
               Install-PackageProvider -Name NuGet -Force
               Install-Module -Name DockerMsftProvider -Repository PSGallery -Force -Confirm:$false
               Install-Package -Name docker -ProviderName DockerMsftProvider -Force
               netsh netkvm setparam 0 *RscIPv4 0
               reg add HKLM\SYSTEM\CurrentControlSet\Services\Tcpip6\Parameters/v DisabledComponents /t REG_DWORD /d 0x0 /f
               choco install -y docker-compose
-              Write-host "`n`nInstalling vcpkg..."
+              logit "`n`nInstalling vcpkg..."
               $VCPROOT="$env:PROGRAMDATA\vcpkg"
               git clone https://github.com/microsoft/vcpkg.git $VCPROOT
               cd $VCPROOT
@@ -69,17 +76,6 @@ phases:
                 [Environment]::SetEnvironmentVariable("$PathVariable",$AssembledNewPath,"$Scope")
               }
 
-  - name: validate
-    steps:
-      - name: NET4BuildAgent
-        action: ExecutePowerShell
-        inputs:
-          commands:
-            - |
-              # General Requirements for all GitLab Windows Runners installed by this script
-              $cmdchecks=@('git','pwsh'); 
-              $cmdchecks | foreach { if (Get-Command $psitem -ErrorAction SilentlyContinue) {write-host "SUCCEEDED check: $psitem $($(get-command $psitem).version)"} else {write-host "FAILED check: $psitem"; $fails++ }}; if ($fails -gt 0) {exit $fails} else {exit 0}
-
 #Create and schedule this as a Test component. In addition to what is in the validate script, this script is checking for powershell core (pwsh) which should have been installed by the
 # standard AWS component in the recipe
 name: TEST GitLab Runner Windows Shell Runner Just like GitLab.com Shared Runners
@@ -94,9 +90,16 @@ phases:
         inputs:
           commands:
             - |
+              Function logit ($Msg, $MsgType='Information', $ID='1') {
+                If ($script:PSCommandPath -ne '' ) { $SourcePathName = $script:PSCommandPath ; $SourceName = split-path -leaf $SourcePathName } else { $SourceName = "Automation Code"; $SourcePathName = "Unknown" }
+                Write-Host "[$(Get-date -format 'yyyy-MM-dd HH:mm:ss zzz')] $MsgType : From: $SourcePathName : $Msg"
+                $applog = New-Object -TypeName System.Diagnostics.EventLog -argumentlist Application
+                $applog.Source="$SourceName"
+                $applog.WriteEntry("From: $SourcePathName : $Msg", $MsgType, $ID)
+              }
               #Requirements for all GitLab Windows Runners
               $cmdchecks=@('git','pwsh','jq','dotnet','go','npm','vcpkg','node'); 
-              $cmdchecks | foreach { if (Get-Command $psitem -ErrorAction SilentlyContinue) {write-host "SUCCEEDED check: $psitem $($(get-command $psitem).version)"} else {write-host "FAILED check: $psitem"; $fails++ }}; if ($fails -gt 0) {exit $fails} else {exit 0}
+              $cmdchecks | foreach { if (Get-Command $psitem -ErrorAction SilentlyContinue) {logit "SUCCEEDED check: $psitem $($(get-command $psitem).version)"} else {logit "FAILED check: $psitem"; $fails++ }}; if ($fails -gt 0) {exit $fails} else {exit 0}
             
 # Troubleshooting:
 # Summary of all Chocolatey Installs: get-content $env:ProgramData\chocolatey\logs\chocolatey.log | sls "The install of "
