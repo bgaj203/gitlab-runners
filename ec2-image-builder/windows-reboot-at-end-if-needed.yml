@@ -37,6 +37,6 @@ phases:
               logit "EC2 Image Build Component: Reboot If Needed"
               If (Test-PendingReboot)
               { logit "A reboot is pending..."
-                logit "Shutting down in 10 seconds (giving time for orchestrating automation to close out)..."
-                shutdown.exe /r /t 10 }
+                logit "Exiting so that EC2 Image Builder knows to trigger a restart..."
+                [Environment]::Exit(3010) }
               Else {logit "A reboot is not pending, no action taken"}
