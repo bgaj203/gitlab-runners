@@ -2,8 +2,8 @@
 EC2 Image Builder is very convenient way to build and distribute and share golden AMI images.
 
 ### Advantages
-- It is much less work that getting packer running (which this author has done on and off Amazon)
-- It does not open up WinRM which is frequently left in a wide-open state just because it was used to provision a golden image. Read more about the problem and a chocolatey package that solves it [WinRM For Provisioning - Close The Door On The Way Out Eh!](https://missionimpossiblecode.io/post/winrm-for-provisioning-close-the-door-on-the-way-out-eh/) and 
+- It is much less work that getting packer running (which this author has done on and off Amazon) - packer requires that the build agent and the instance being built are network routable, have security groups configured and that the receiving instance have winrm configured.
+- It does not open up WinRM which is frequently left in a wide-open state just because it was used to provision a golden image with Packer. WinRM has not API call to return it to a pristine state (not a disabled state, an "as if never used" state). Read more about the problem and a chocolatey package that tries to solve it [WinRM For Provisioning - Close The Door On The Way Out Eh!](https://missionimpossiblecode.io/post/winrm-for-provisioning-close-the-door-on-the-way-out-eh/) and 
 - it has automation for deploying the AMI to regions and permissioning it to accounts.
 - it supports revisions of all it's objects
 - it supports scheduled runs
@@ -29,7 +29,7 @@ It is a meta-PaaS in that it is a service that completely simplifies building pi
   3. Many software installations that update the system path do not work correctly until after a reboot - the Test components run on a fresh boot off of the Image Builder created AMI - so doing the tests at this time allows proper validation of any configuration requiring a reboot to valudate correctly.
 
 ### Bigger Gotcha: Hanging Sysprep
-AWS does not provide a reboot component during BUILD, yet SYSPREP will hang if the system is "reboot pending DUE TO windows updates".  With complex CI build agent dependencies like those in [ec2-image-builder/windows-same-as-gitlab-com.yml](ec2-image-builder/windows-same-as-gitlab-com.yml), the situation of having run Windows updates that cause a pending reboot will be frequent.
+AWS does not provide a reboot component during BUILD, yet SYSPREP will hang if the system is "reboot pending DUE TO windows updates".  With complex CI build agent dependencies like those in [windows-same-as-gitlab-com.yml](windows-same-as-gitlab-com.yml), the situation of having run Windows updates that cause a pending reboot will be frequent.
 
 To diagnose this situation (or other sysprep hangs), 
 1. SSM into the machine being built (it will be hanging in "Building" mode for way longer than expected)
@@ -37,6 +37,10 @@ To diagnose this situation (or other sysprep hangs),
 3. Even if Sysprep is not still running, review the contents of `C:\Windows\system32\sysprep\panther\setupact.log`
 
 The root cause error for the common condition of a windows update pending reboot says "Sysprep_Clean_Validate_0pk:There are one or more Windows updates that require a reboot. To run Sysprep, reboot the computer and restart the application.[gle=0x000036b7]
+
+**IMPORTANT**: The biggest challenge to this problem is that it's emergence will be completely dynamic.  It can happen on Windows 2016 on month and 2019 the next. This is because of the patch level of the AMI when you get it and the fact that Visual Studio and DotNet SDKs and runtimes *dynamically* apply patches that are relvant to the *current situation**.  Therefore, creating a stable build that also uses the latest of the build tools and SDK requires **dynamic**, **only if needed** reboots.
+
+To help with this you can use the enclosed component [windows-reboot-at-end-if-needed.yml](windows-reboot-at-end-if-needed.yml). This experimental component can detect if a reboot is pending for any one of six different "reboot pending" markers in Windows and do a delayed one **only if needed*. It should only be used at the very end of the build phase.  EC2 Image Builder seems to tolerate this reboot well. The reboot wait time is in place to allow the "component runner" to mark this component as complete. Extending the wait tim might cause it to not tolerate the reboot or you may even need to shorten it to prevent EC2 Image Builder from starting the AMI creation phase.
 
 **NOTE:** Sysprep has this odd non-exiting error hang for other reasons as well - so this troubleshooting information may apply to other situations.
 
@@ -46,7 +50,7 @@ The root cause error for the common condition of a windows update pending reboot
 - Visual studio build tools require a volume much larger than the AWS Windows default of 30GB - but it is hard to diagnose when you run out spaces during EC2 Image Builder builds - so pick a value larger that Visual Studio and with plenty of scratch space - 500-750GB should do it - you might be able to tune that value to be lower depending on your build.
 
 ### EC2 Image Builder Files
-- **windows-netframework4-component.yml** - builds a runner specifically for being able to build a .NET 4.5 version of nopcommerce.
-- **windows-same-as-gitlab-com.yml** - mimics the Windows runner configuration used on GitLab.com. [Configuration information is here.](https://gitlab.com/gitlab-org/ci-cd/shared-runners/images/gcp/windows-containers/-/blob/main/cookbooks/preinstalled-software/README.md)
-- **windows-reboot-at-end-if-needed.yml** - experimental -  This component can detect if, at the end 
-- **userdata.ps1** - the userdata snippet required in an EC2 Image Builder Recipe so that EC2 Image Builder can run commands to install software.
+- **[windows-netframework4-component.yml](windows-netframework4-component.yml)** - builds a runner specifically for being able to build a .NET 4.5 version of nopcommerce.
+- **[windows-same-as-gitlab-com.yml](windows-same-as-gitlab-com.yml)** - mimics the Windows runner configuration used on GitLab.com. [Configuration information is here.](https://gitlab.com/gitlab-org/ci-cd/shared-runners/images/gcp/windows-containers/-/blob/main/cookbooks/preinstalled-software/README.md)
+- **[windows-reboot-at-end-if-needed.yml](windows-reboot-at-end-if-needed.yml)** - This experimental component can detect if a reboot is pending for any one of six different "reboot pending" markers in Windows and do a delayed one **only if needed*. It should only be used at the very end of the build phase.  EC2 Image Builder seems to tolerate this reboot well. The reboot wait time is in place to allow the "component runner" to mark this component as complete. Extending the wait tim might cause it to not tolerate the reboot or you may even need to shorten it to prevent EC2 Image Builder from starting the AMI creation phase.
+- **[userdata.ps1](userdata.ps1)** - the userdata snippet required in an EC2 Image Builder Recipe so that EC2 Image Builder can run commands to install software.

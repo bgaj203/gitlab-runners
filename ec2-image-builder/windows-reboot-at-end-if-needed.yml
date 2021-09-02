@@ -10,9 +10,9 @@ phases:
         inputs:
           commands:
             - |
-              #This should only ever be the last component.
+              #This should only ever be the last component in the build phase.
               #The 10 second timer is arbitrary - although unlikely, this may not be enough time for TOE to close out in some cases
-              # In some cases the next part of the process may trigger 
+              # In some cases the next part of the process may trigger in which case the wait time will need to increase.
               Function logit ($Msg, $MsgType='Information', $ID='1') {
                 If ($script:PSCommandPath -ne '' ) { $SourcePathName = $script:PSCommandPath ; $SourceName = split-path -leaf $SourcePathName } else { $SourceName = "Automation Code"; $SourcePathName = "Unknown" }
                 Write-Host "[$(Get-date -format 'yyyy-MM-dd HH:mm:ss zzz')] $MsgType : From: $SourcePathName : $Msg"
