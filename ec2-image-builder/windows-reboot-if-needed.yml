@@ -1,5 +1,5 @@
-name: Reboot At End If Needed (Only Set as Last)
-description: Reboot At End If Needed (Only Set as Last)
+name: Reboot If Needed
+description: Reboot If Needed
 schemaVersion: 1.0
 
 phases:
