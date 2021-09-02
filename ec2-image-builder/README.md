@@ -28,6 +28,18 @@ It is a meta-PaaS in that it is a service that completely simplifies building pi
   2. AWS cleans out any folders at the root of c:\ - a test stage will catch the mistake of installing something there.
   3. Many software installations that update the system path do not work correctly until after a reboot - the Test components run on a fresh boot off of the Image Builder created AMI - so doing the tests at this time allows proper validation of any configuration requiring a reboot to valudate correctly.
 
+### Bigger Gotcha: Hanging Sysprep
+AWS does not provide a reboot component during BUILD, yet SYSPREP will hang if the system is "reboot pending DUE TO windows updates".  With complex CI build agent dependencies like those in [ec2-image-builder/windows-same-as-gitlab-com.yml](ec2-image-builder/windows-same-as-gitlab-com.yml), the situation of having run Windows updates that cause a pending reboot will be frequent.
+
+To diagnose this situation (or other sysprep hangs), 
+1. SSM into the machine being built (it will be hanging in "Building" mode for way longer than expected)
+2. Do `get-process sysprep` to see if sysprep is still running
+3. If yes, review the contents of  C:\Windows\system32\sysprep\panther\setupact.log
+
+The root cause error for the common condition of a windows update pending reboot says "Sysprep_Clean_Validate_0pk:There are one or more Windows updates that require a reboot. To run Sysprep, reboot the computer and restart the application.[gle=0x000036b7]
+
+**NOTE:** Sysprep has this odd non-exiting error hang for other reasons as well - so this troubleshooting information may apply to other situations.
+
 ### GitLab Runner Requirements
 - The EC2 Image Builder recipe must include the AWS prepared "Chocolatey" component and it must be sequenced before the component in this documentation.
 - GitLab Runner assumes PowerShell Core (pwsh.exe) is on the path for Windows machines - so the AWS prepared "PowerShell Core" component must be installed (order is not important) for GitLab runner to run PowerShell scripts in gitlab-ci.yml. If you need Windows PowerShell you can call it from an initial PowerShell Core script.
@@ -36,4 +48,5 @@ It is a meta-PaaS in that it is a service that completely simplifies building pi
 ### EC2 Image Builder Files
 - **windows-netframework4-component.yml** - builds a runner specifically for being able to build a .NET 4.5 version of nopcommerce.
 - **windows-same-as-gitlab-com.yml** - mimics the Windows runner configuration used on GitLab.com. [Configuration information is here.](https://gitlab.com/gitlab-org/ci-cd/shared-runners/images/gcp/windows-containers/-/blob/main/cookbooks/preinstalled-software/README.md)
+- **windows-reboot-at-end-if-needed.yml** - experimental -  This component can detect if, at the end 
 - **userdata.ps1** - the userdata snippet required in an EC2 Image Builder Recipe so that EC2 Image Builder can run commands to install software.

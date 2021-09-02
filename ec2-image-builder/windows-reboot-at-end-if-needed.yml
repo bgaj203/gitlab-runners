@@ -1,5 +1,5 @@
-name: Reboot If Needed
-description: Reboot If Needed
+name: Reboot At End If Needed (Only Set as Last)
+description: Reboot At End If Needed (Only Set as Last)
 schemaVersion: 1.0
 
 phases:
@@ -10,6 +10,9 @@ phases:
         inputs:
           commands:
             - |
+              #This should only ever be the last component.
+              #The 10 second timer is arbitrary - although unlikely, this may not be enough time for TOE to close out in some cases
+              # In some cases the next part of the process may trigger 
               Function logit ($Msg, $MsgType='Information', $ID='1') {
                 If ($script:PSCommandPath -ne '' ) { $SourcePathName = $script:PSCommandPath ; $SourceName = split-path -leaf $SourcePathName } else { $SourceName = "Automation Code"; $SourcePathName = "Unknown" }
                 Write-Host "[$(Get-date -format 'yyyy-MM-dd HH:mm:ss zzz')] $MsgType : From: $SourcePathName : $Msg"
