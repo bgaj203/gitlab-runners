@@ -34,7 +34,7 @@ AWS does not provide a reboot component during BUILD, yet SYSPREP will hang if t
 To diagnose this situation (or other sysprep hangs), 
 1. SSM into the machine being built (it will be hanging in "Building" mode for way longer than expected)
 2. Do `get-process sysprep` to see if sysprep is still running
-3. If yes, review the contents of  C:\Windows\system32\sysprep\panther\setupact.log
+3. Even if Sysprep is not still running, review the contents of `C:\Windows\system32\sysprep\panther\setupact.log`
 
 The root cause error for the common condition of a windows update pending reboot says "Sysprep_Clean_Validate_0pk:There are one or more Windows updates that require a reboot. To run Sysprep, reboot the computer and restart the application.[gle=0x000036b7]
 
