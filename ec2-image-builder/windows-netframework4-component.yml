@@ -35,7 +35,7 @@ phases:
               choco install -y powershell-core
               logit "Installing requirements this specific runner"
               choco install -y visualstudio2019buildtools --package-parameters " --allWorkloads --includeRecommended --includeOptional --passive --locale en-US --noUpdateInstaller"
-              choco install -y visualstudio2017-workload-webbuildtools
+              choco install -y visualstudio2019-workload-webbuildtools
               choco install -y jq nuget.commandline
               logit "Put some really old web runtimes down for Nopcommerce"
               logit "If these were no longer publicly available or were licensed runtimes, they could be placed in S3 and pulled from there rather than rely on public repositories."
