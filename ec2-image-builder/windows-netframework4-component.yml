@@ -37,10 +37,6 @@ phases:
               choco install -y visualstudio2019buildtools --package-parameters " --allWorkloads --includeRecommended --includeOptional --passive --locale en-US --noUpdateInstaller"
               choco install -y visualstudio2017-workload-webbuildtools
               choco install -y jq nuget.commandline
-              #choco install -y visualstudio2017-workload-netcorebuildtools
-              #choco install -y visualstudio2017-workload-nodebuildtools
-              #choco install -y visualstudio2017-workload-vctools
-              #choco install -y visualstudio2017-workload-manageddesktopbuildtools
               logit "Put some really old web runtimes down for Nopcommerce"
               logit "If these were no longer publicly available or were licensed runtimes, they could be placed in S3 and pulled from there rather than rely on public repositories."
               nuget install MSBuild.Microsoft.VisualStudio.Web.targets -source https://api.nuget.org/v3/index.json -version 11.0.2.1 -output $env:public
