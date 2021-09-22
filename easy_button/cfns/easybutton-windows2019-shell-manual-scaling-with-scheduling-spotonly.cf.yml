@@ -51,6 +51,7 @@ Metadata:
           - 5ASGInstanceType2
           - 5ASGInstanceType3
           - 5ASGInstanceType4
+          - 3INSTEbsVolumeSize
           - 8DBGKeypairName
       - 
         Label: 
@@ -149,6 +150,8 @@ Metadata:
         default: "Third priority instance type to be used - if previous priorities are exhausted. Used for Ec2 Fleet when not using spot."
       5ASGInstanceType4:
         default: "Fourth priority instance type to be used - if previous priorities are exhausted. Used for Ec2 Fleet when not using spot."
+      3INSTEbsVolumeSize:
+        default: "EBS Volume size in GiB."
       5SPOTSpotAllocationStrategy:
         default: "Focus spot request strategy on price or lower terminations."  
       5SPOTOnDemandBaseCapacity:
@@ -243,6 +246,11 @@ Parameters:
     Type: String
     Default: "c5.large"
     AllowedPattern: ^[A-Za-z0-9.]+$
+  3INSTEbsVolumeSize:
+    Description: >
+      Specify the volume size of the EBS volume attached to the instance in GiB. Must be between 1 and 16384.
+    Type: Number
+    Default: 30
 Resources:
   RnrASG:
     Type: AWS::CloudFormation::Stack
@@ -261,6 +269,7 @@ Resources:
         3GITLABRunnerRegTokenList: !Ref 3GITLABRunnerRegTokenList
         3INSTConfigurationScript: https://gitlab.com/guided-explorations/aws/gitlab-runner-autoscaling-aws-asg/-/raw/main/runner_configs/windows-shell.ps1
         3GITLABRunnerTagList: !Ref 3GITLABRunnerTagList
+        3INSTEbsVolumeSize: !Ref 3INSTEbsVolumeSize
         5ASGSelfMonitorTerminationInterval: 1 #Should always be the lowest possible value for spot
         4ASGSpecifyVPC: !Ref 4ASGSpecifyVPC
         4ASGDesiredCapacity: !Ref 4ASGDesiredCapacity

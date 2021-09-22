@@ -50,6 +50,7 @@ Metadata:
           - 5ASGInstanceType2
           - 5ASGInstanceType3
           - 5ASGInstanceType4
+          - 3INSTEbsVolumeSize
           - 8DBGKeypairName
       - 
         Label: 
@@ -152,6 +153,8 @@ Metadata:
         default: "Third priority instance type to be used - if previous priorities are exhausted. Used for Ec2 Fleet when not using spot."
       5ASGInstanceType4:
         default: "Fourth priority instance type to be used - if previous priorities are exhausted. Used for Ec2 Fleet when not using spot."
+      3INSTEbsVolumeSize:
+        default: "EBS Volume size in GiB."
       5SPOTSpotAllocationStrategy:
         default: "Focus spot request strategy on price or lower terminations."  
       5SPOTOnDemandBaseCapacity:
@@ -419,6 +422,11 @@ Parameters:
       spot configuration to avoid rebalancing churn. Selecting instances that all have the same size name will ensure similar costs.
       More information: https://docs.aws.amazon.com/autoscaling/ec2/APIReference/API_InstancesDistribution.html
     Type: String
+  3INSTEbsVolumeSize:
+    Description: >
+      Specify the volume size of the EBS volume attached to the instance in GiB. Must be between 1 and 16384.
+    Type: Number
+    Default: 30
   5SPOTSpotAllocationStrategy:
     Description: >
       Determines which allocation strategy to use. 'capacity-optimized' helps reduce spot terminations.
@@ -808,7 +816,7 @@ Resources:
         - DeviceName: "/dev/xvda"
           Ebs:
             VolumeType: 'gp2'
-            VolumeSize: 30
+            VolumeSize: !Ref 3INSTEbsVolumeSize
         Placement:
           Tenancy: default
         UserData:
