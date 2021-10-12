@@ -128,6 +128,8 @@ Metadata:
         default: "Number of instances to start for startup schedule."
       4ASGSpecifyVPC:
         default: "The VPC in the account and region should be used."
+      4ASGSpecifySecurityGroups:
+        default: "The security groups to be used in the ASG launch template."
       4ASGSpecifySubnets:
         default: "The subnets in the specified VPC that should be used."
       5ASGAutoScalingEnabled:
@@ -345,6 +347,12 @@ Parameters:
     Type: String
     Default: DefaultVPC
     #While it is tempting to make the above parameter of type "AWS::EC2::VPC::Id" this prevents automatic discovery and usage of the DefaultVPC.
+  4ASGSpecifySecurityGroups:
+    Description: >
+      DefaultSG - Use the default security group that belongs to the VPC specified in 4ASGSpecifyVPC. 
+      Otherwise type in the security group ids (comma delimited) of the SGs that belong to the VPC specified in 4ASGSpecifyVPC. 
+    Type: String
+    Default: DefaultSG  
   4ASGSpecifySubnets:
     Description: >
       AllSubnets - finds and configures all of the specified VPC subnets for you. Otherwise type in the subnet ids (comma delimited) of the subnets that belong to the VPC specified in 4ASGSpecifyVPC. 
@@ -808,6 +816,7 @@ Resources:
         #InstanceType is overridden by spot parameters
         InstanceType: t2.micro
         KeyName: !If [UseKeypair,!Ref 8DBGKeypairName,!Ref "AWS::NoValue"]
+        SecurityGroupIds: !Split [",",!GetAtt LookupVPCInfo.SgIdList]
         IamInstanceProfile:
           !If
             - BuildInstanceRoleToUse
@@ -1469,11 +1478,26 @@ Resources:
                         LOGGER.info('subnet ids are: %s', subidOutput)
                         LOGGER.info('zone ids are: %s', zoneidOutput)
 
+                        SgsToGet = event['ResourceProperties'].get('SgsToGet', '')
+                        sgs = list(TargetVPC.security_groups.all())
+                        if SgsToGet == 'DefaultSG':
+                          for sg in sgs:
+                            if sg.group_name == 'default':
+                              sgIds = [sg.id]
+                              break
+                        else:
+                          sgidfilterlist = [sgid.strip() for sgid in SgsToGet.split(',')]
+                          sgIds = [sg.id for sg in sgs if sg.id in sgidfilterlist]
+                          if len(sgIds) != len(sgidfilterlist):
+                            raise Exception(f'Expected to find the {len(sgidfilterlist)} provided security groups ({", ".join(sgidfilterlist)}) in VPC {VpcToGet}, but found {len(sgIds)} ({", ".join(sgIds)})')
+                        sgOutput = ",".join(sgIds)
+
                       responseData = {}
                       responseData['VPC_id'] = VPCOutput
                       responseData['OrderedSubnetIdList'] = subidOutput
                       responseData['OrderedZoneIdList'] = zoneidOutput
                       responseData['SubnetCount'] = len(subidlist)
+                      responseData['SgIdList'] = sgOutput
                       cfnresponse.send(event, context, cfnresponse.SUCCESS, responseData)                                  
               
               except Exception as err:
@@ -1521,6 +1545,7 @@ Resources:
                 Action:
                   - "ec2:DescribeVpcs"
                   - "ec2:DescribeSubnets"
+                  - "ec2:DescribeSecurityGroups"
                 Resource: "*"
 
   LookupVPCInfo:
@@ -1528,6 +1553,7 @@ Resources:
     Properties:
       ServiceToken: !GetAtt VPCInfoLambda.Arn
       VpcToGet: !Ref 4ASGSpecifyVPC
+      SgsToGet: !Ref 4ASGSpecifySecurityGroups
       SubnetsToGet: !Ref 4ASGSpecifySubnets
 
   S3BucketNameLower:
