@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v1.4.9-alpha14] - 2021-10-13
+
+- Fix VPCInfo get's an error on stack update - #49 (Contribution by @dan-lind !)
+- Allow subnets to be specified via 4ASGSpecifySubnets. Also enables control over public versus private subnets when both exist. Auto lookup of AZs for Subnets #46 (Contribution by @dan-lind !)
+- Fix VPCInfo get's an error on stack update (Contribution by @dan-lind)
+- Added s3:DeleteObject permission to S3 cache bucket so that runner cleanup can be done by runners #42
+- Clearer description for parameter 5SPOTOnDemandPercentageAboveBaseCapacity #45
+
 ## [v1.4.8-alpha13] - 2021-08-20
 
 - This is ancilliary sample code, so I did not increment the version (I know, I know)
