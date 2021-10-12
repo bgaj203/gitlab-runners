@@ -575,6 +575,7 @@ Resources:
             - 's3:GetObjectVersion'
             - 's3:GetBucketVersioning'
             - 's3:PutObject'
+            - 's3:DeleteObject' #needed for runner cache cleanup
           Resource:
             !If
               - CreateS3BucketAndPermissions
