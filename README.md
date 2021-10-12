@@ -71,11 +71,11 @@ Note that you can override parameter file values on the command line - which is 
 1. Install aws cli and or use the container
 2. Setup your local credentials or use them on the command line (or however your security or IT department requires you to use them locally)
 3. Clone the repository locally and change to it's directory
-4. Examine the subdirectory easy_button/params to find the parameter set name you want to use (should be ones to correlate to each of the above easy button setups) and select it and substitute the name for `amazon-linux-2-docker-simple-hot-ha.cfparameters.json` in the below.
+4. Examine the subdirectory [easy_button/cfns](easy_button/cfns) to find the easy button template you want to use (should be ones to correlate to each of the above easy button setups) and select it and substitute the name for `easybutton-amazon-linux-2-arm64-docker-manual-scaling-with-schedule-ondemandonly.cf.yml` in the below.
 5. Before submitting, customize the following command with your values for "3GITLABRunnerInstanceURL" and "3GITLABRunnerRegTokenList"
 
 ```
-aws cloudformation create-stack --stack-name "mynewrunner" --template-url https://s3.us-west-2.amazonaws.com/gl-public-templates/cfn/GitLabElasticScalingRunner.cf.yml --capabilities CAPABILITY_NAMED_IAM --parameters $(cat easy-button-parameter-sets/amazon-linux-2-docker-simple-hot-ha.cfparameters.json | jq -r '.[] | "ParameterKey=" + .ParameterKey + ",ParameterValue=" + .ParameterValue') ParameterKey="5ASGInstanceType1",ParameterValue="m5.xlarge" ParameterKey="3GITLABRunnerInstanceURL",ParameterValue="https://gitlab.com"  ParameterKey="3GITLABRunnerRegTokenList",ParameterValue="your-list-of-comma-seperated-tokens"
+aws cloudformation create-stack --stack-name "mynewrunner" --template-url https://s3.us-west-2.amazonaws.com/gl-public-templates/cfn/easybutton-amazon-linux-2-arm64-docker-manual-scaling-with-schedule-ondemandonly.cf.yml --capabilities CAPABILITY_NAMED_IAM --parameters ParameterKey="3GITLABRunnerInstanceURL",ParameterValue="https://gitlab.com"  ParameterKey="3GITLABRunnerRegTokenList",ParameterValue="your-list-of-comma-seperated-tokens"
 ```
 
 ### Walk Through Videos

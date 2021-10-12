@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file.
 - Fix VPCInfo get's an error on stack update (Contribution by @dan-lind)
 - Added s3:DeleteObject permission to S3 cache bucket so that runner cleanup can be done by runners #42
 - Clearer description for parameter 5SPOTOnDemandPercentageAboveBaseCapacity #45
+- Easy button CLI option now directly reuses the CloudFormation templates to eliminate parameter file maintenance.
 
 ## [v1.4.8-alpha13] - 2021-08-20
 
