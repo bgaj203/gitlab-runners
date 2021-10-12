@@ -1381,8 +1381,8 @@ Resources:
               try:
                   LOGGER.info('REQUEST RECEIVED:\n %s', event)
                   LOGGER.info('REQUEST RECEIVED:\n %s', context)
-                  if event['RequestType'] == 'Create':
-                      LOGGER.info('CREATE!')
+                  if event['RequestType'] == 'Create' or event['RequestType'] == 'Update':
+                      LOGGER.info(event['RequestType'])
                       randstring = ''.join(random.SystemRandom().choice(string.ascii_lowercase + string.digits) for _ in range(5))
                       output = event['ResourceProperties'].get('InputString', '').lower() + '-' + randstring
                       responseData = {'OutputString': output}
