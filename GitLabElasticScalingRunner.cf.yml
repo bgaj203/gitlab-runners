@@ -128,6 +128,8 @@ Metadata:
         default: "Number of instances to start for startup schedule."
       4ASGSpecifyVPC:
         default: "The VPC in the account and region should be used."
+      4ASGSpecifySubnets:
+        default: "The subnets in the specified VPC that should be used."
       5ASGAutoScalingEnabled:
         default: "Whether to AutoScale the Scaling Group."
       5ASGAutoScalingMaxSize:
@@ -336,13 +338,20 @@ Parameters:
     Default: 1
   4ASGSpecifyVPC:
     Description: >
-      DefaultVPC - finds the VPC and configures all of its subnets for you. Otherwise type in the VPC id of a VPC in the same region where you run the template. 
-      All subnets and azs of the chosen vpc will be used.
+      DefaultVPC - finds the VPC and by default configures all of its subnets for you (See 4ASGSpecifySubnets). Otherwise type in the VPC id of a VPC in the same region where you run the template. 
+      By default, all subnets and AZs of the chosen vpc will be used.
       The VPC and chosen subnets must be setup in a way that allows the runner instances to resolve the DNS name and connect
       to port 443 on the GitLab instance URL you provide.
     Type: String
     Default: DefaultVPC
     #While it is tempting to make the above parameter of type "AWS::EC2::VPC::Id" this prevents automatic discovery and usage of the DefaultVPC.
+  4ASGSpecifySubnets:
+    Description: >
+      AllSubnets - finds and configures all of the specified VPC subnets for you. Otherwise type in the subnet ids (comma delimited) of the subnets that belong to the VPC specified in 4ASGSpecifyVPC. 
+      The chosen subnets must be setup in a way that allows the runner instances to resolve the DNS name and connect
+      to port 443 on the GitLab instance URL you provide.
+    Type: String
+    Default: AllSubnets
   5ASGAutoScalingEnabled:
     Description: >
       Setting to false still allows for High Availability - either HOT/Warm HA with 1 instance or HOT/HOT HA for 2 or more instances.
@@ -1441,13 +1450,22 @@ Resources:
                         subidlist = []
                         zoneidlist = []
                         subnets = list(TargetVPC.subnets.all())
+
+                        SubnetsToGet = event['ResourceProperties'].get('SubnetsToGet', '')
+                        subidfilterlist = []
+                        if SubnetsToGet != 'AllSubnets':
+                           subidfilterlist = [subid.strip() for subid in SubnetsToGet.split(',')]
+                           subnets = [subnet for subnet in subnets if subnet.id in subidfilterlist]
+                           if len(subnets) != len(subidfilterlist):
+                             raise Exception(f'Expected to find the {len(subidfilterlist)} provided subnets ({", ".join(subidfilterlist)}) in VPC {VpcToGet}, but found {len(subnets)} ({", ".join(subnets)})')
+                        
                         for subnet in subnets:
                           subidlist.append(subnet.id)
                           zoneidlist.append(subnet.availability_zone)
                         subidOutput = ",".join(subidlist)
                         zoneidOutput = ",".join(zoneidlist)
                         if not subnets:
-                          raise Exception(f'There are no subnets in VPC: {VpcToGet}')
+                          raise Exception(f'There are no subnets in VPC: {VpcToGet}, or the subnets provided {SubnetsToGet} do not belong to this VPC')
                         LOGGER.info('subnet ids are: %s', subidOutput)
                         LOGGER.info('zone ids are: %s', zoneidOutput)
 
@@ -1510,6 +1528,7 @@ Resources:
     Properties:
       ServiceToken: !GetAtt VPCInfoLambda.Arn
       VpcToGet: !Ref 4ASGSpecifyVPC
+      SubnetsToGet: !Ref 4ASGSpecifySubnets
 
   S3BucketNameLower:
     Type: Custom::Lowercase
