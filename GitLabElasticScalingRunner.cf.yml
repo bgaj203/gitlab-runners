@@ -452,14 +452,12 @@ Parameters:
       exhaustion, but not spot pricing. Set to 0 for a 100% spot cluster.
     Type: Number
     Default: 0
-  5SPOTOnDemandPercentageAboveBaseCapacity:
+5SPOTOnDemandPercentageAboveBaseCapacity:
     Description: >
-      ATTENTION: Brand new AWS accounts have a spot quota of zero - request a limit increase before testing this.
-      ATTENTION: DISABLING SPOT *instance usage* is achieved by setting this value to 100 (zero). It still results in a spot setup, but none of
-      the instances will be spot instances.
-      What percent of the cluster should be Spot (with the remainder being on demand).  Percentage only applied to instances started after
-      count in 5SPOTOnDemandBaseCapacity.
-      Set to 0 for a 100% spot cluster.
+      The percent of the cluster instances that should be on-demand instances (with the remainder being spot). This parameter also used to control whether an ASG is 
+      completely spot (set to 0%) or completely on-demand (set to 100%). A completely on-demand ASG gives "instance type exhaustion protection" in AZs because 
+      the provided set of instance types is still used as a selection list when spinning up new instances. Specify your instance type list in the
+      parameters starting with "5ASGInstanceType"
     Type: Number
     Default: 100
   8DBGKeypairName:
