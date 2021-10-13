@@ -6,6 +6,8 @@
 
 > **Note:** The automation that underlies the Easy Buttons complies with Amazon Well Architected and is capable of being used directly or as a template starting point for creating very advanced Runner ASGs.  Learn more here: https://gitlab.com/guided-explorations/aws/gitlab-runner-autoscaling-aws-asg
 
+> **Note:** The easy buttons use default VPC, default subnets and default security groups. Once you've explored using an easy button, you will need to use the full template to specify these elements. See "**Not An Easy Button Person?**" below.
+
 | Easy Buttons                                                 | Name                                                         | Description                                                  |
 | ------------------------------------------------------------ | ------------------------------------------------------------ | ------------------------------------------------------------ |
 | [![Arch_AWS-CloudFormation_32](./images/Arch_AWS-CloudFormation_32.png)](https://us-west-2.console.aws.amazon.com/cloudformation/home?region=us-west-2#/stacks/create/review?templateURL=https://gl-public-templates.s3.amazonaws.com/cfn/v1.4.9-alpha14/easybutton-amazon-linux-2-docker-manual-scaling-with-schedule-ondemandonly.cf.yml&stackName=linux-docker-nonspot) | Amazon Linux 2 Docker HA with Manual Scaling and Optional Scheduling. Non-spot. | Desired capacity of 1 enables WARM HA through ASG Respawn.<br />Desired capacity of 2 enables HOT HA since loss of a node does not make the service unavailable. <br />Desired capacity of 3 or more enables HOT HA and manual scaling of runner fleet. No Spot.<br />**Default choice for Linux Docker executor.** |

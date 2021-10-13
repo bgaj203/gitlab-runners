@@ -39,6 +39,7 @@ You will need your GitLab Instance URL and one or more Runner Registration Token
 
 **Note:** The easy button code in this project is easy to reuse as a pattern to create your own easy button setups for the CloudFormation Console UI or the CLI.
 **Note:** that you can deploy as many of these as you wish as many times as you wish to build runner clusters with the appropriate attributes.
+**Note:** The easy buttons use default VPC, default subnets and the default VPC security group. Once you've explored using an easy button, you will need to use the full template to specify these elements. See "**Not An Easy Button Person?**" below.
 
 | Easy Buttons                                                 | Name                                                         | Description                                                  |
 | ------------------------------------------------------------ | ------------------------------------------------------------ | ------------------------------------------------------------ |
@@ -164,6 +165,12 @@ Things you can do include:
 5. If you picked simplified parameters to get going and now want to do something advanced like enable autoscaling.
 
 Essentially anything that is parameter can be changed and an update will be pushed.
+
+### Cross References and Helps for This Automation
+
+- Blog post on savings using spot, arm and scheduling: [How to provision 100 AWS Graviton GitLab Spot Runners in 10 Minutes for $2/hour](https://about.gitlab.com/blog/2021/08/17/100-runners-in-less-than-10mins-and-less-than-10-clicks/)
+- [Walkthrough Video of the Easy Button Capability](https://youtu.be/2dXw8Dx6ENw)
+- Easy Button: [Provisioning 100 GitLab Spot Runners on AWS in Less Than 10 Minutes Using Less Than 10 Clicks + Updating 100 Spot Runners in 10 Minutes](https://youtu.be/EW4RJv5zW4U)
 
 ### TroubleShooting Guide For All The IaC Parts
 

@@ -349,16 +349,18 @@ Parameters:
     #While it is tempting to make the above parameter of type "AWS::EC2::VPC::Id" this prevents automatic discovery and usage of the DefaultVPC.
   4ASGSpecifySecurityGroups:
     Description: >
-      DefaultSG - Use the default security group that belongs to the VPC specified in 4ASGSpecifyVPC. 
-      Otherwise type in the security group ids (comma delimited) of the SGs that belong to the VPC specified in 4ASGSpecifyVPC. 
+      DefaultSG - Use the default security group that belongs to the VPC specified in 4ASGSpecifyVPC.
+      Otherwise type in the security group ids (comma delimited) of the SGs that belong to the VPC specified in 4ASGSpecifyVPC.
+      Due to dynamic installations during scaling, runner instances must be able to access the internet when using AWS AMIs.
     Type: String
     Default: DefaultSG
   4ASGSpecifySubnets:
     Description: >
-      AllSubnets - finds and configures all of the specified VPC subnets for you. Otherwise type in the subnet ids (comma delimited) of 
-      the subnets that belong to the VPC specified in 4ASGSpecifyVPC. The chosen subnets must be setup in a way that allows the runner 
+      AllSubnets - finds and configures all of the specified VPC subnets for you. Otherwise type in the subnet ids (comma delimited) of
+      the subnets that belong to the VPC specified in 4ASGSpecifyVPC. The chosen subnets must be setup in a way that allows the runner
       instances to resolve the DNS name and connect to port 443 on the GitLab instance URL you provide. This is how you select less than
       all subnets and how you specify public or only private subnets if both exist in the target VPC.
+      Due to dynamic installations during scaling, runner instances must be able to access the internet when using AWS AMIs.
     Type: String
     Default: AllSubnets
   5ASGAutoScalingEnabled:
