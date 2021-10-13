@@ -452,7 +452,7 @@ Parameters:
       exhaustion, but not spot pricing. Set to 0 for a 100% spot cluster.
     Type: Number
     Default: 0
-5SPOTOnDemandPercentageAboveBaseCapacity:
+  5SPOTOnDemandPercentageAboveBaseCapacity:
     Description: >
       The percent of the cluster instances that should be on-demand instances (with the remainder being spot). This parameter also used to control whether an ASG is 
       completely spot (set to 0%) or completely on-demand (set to 100%). A completely on-demand ASG gives "instance type exhaustion protection" in AZs because 
