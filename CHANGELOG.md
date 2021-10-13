@@ -5,16 +5,17 @@ All notable changes to this project will be documented in this file.
 ## [v1.4.9-alpha14] - 2021-10-13
 
 - Fix VPCInfo get's an error on stack update - #49 (Contribution by @dan-lind !)
-- Allow subnets to be specified via 4ASGSpecifySubnets. Also enables control over public versus private subnets when both exist. Auto lookup of AZs for Subnets #46 (Contribution by @dan-lind !)
-- Fix VPCInfo get's an error on stack update (Contribution by @dan-lind)
-- Added s3:DeleteObject permission to S3 cache bucket so that runner cleanup can be done by runners #42
-- Clearer description for parameter 5SPOTOnDemandPercentageAboveBaseCapacity #45
-- Easy button CLI option now directly reuses the CloudFormation templates to eliminate parameter file maintenance.
+- ADDED: Allow subnets to be specified via 4ASGSpecifySubnets. Also enables control over public versus private subnets when both exist. Auto lookup of AZs for Subnets #46 (Contribution by @dan-lind !)
+- FIXED: VPCInfo get's an error on stack update (Contribution by @dan-lind)
+- ADDED: Added s3:DeleteObject permission to S3 cache bucket so that runner cleanup can be done by runners #42
+- UPDATED: Clearer description for parameter 5SPOTOnDemandPercentageAboveBaseCapacity #45
+- UPDATED/REMOVED: Easy button CLI option now directly reuses the CloudFormation templates to eliminate parameter file maintenance.
+- ADDED: new runner configuration script for building any image architecture using [docker buildx](https://docs.docker.com/buildx/working-with-buildx/) : [amazon-linux-2-shell-docker-buildx.sh](runner_configs/amazon-linux-2-shell-docker-buildx.sh) (Contribution by @jeffersonj !)
 
 ## [v1.4.8-alpha13] - 2021-08-20
 
 - This is ancilliary sample code, so I did not increment the version (I know, I know)
-- Added EC2 Image Builder components for building Windows Shell Runners AMIs - can be found here: [ec2-image-builder](ec2-image-builder)
+- Added EC2 Image Builder components for building Windows Shell Runners AMIs - can be found here: [ec2-image-builder](ec2-image-builder) and information on them can be found in the [README.md](ec2-image-builder/README.md)
 
 ## [v1.4.8-alpha13] - 2021-09-18
 
