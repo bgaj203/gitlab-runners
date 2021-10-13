@@ -2,44 +2,44 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Description: >
   Creates a GitLab Runner Scaling Group / Cluster.
-Metadata: 
-  AWS::CloudFormation::Interface: 
-    ParameterGroups: 
-      - 
-        Label: 
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      -
+        Label:
           default: "Template Information"
-        Parameters: 
+        Parameters:
           - 1AAASourceProject
           - 1AAAATemplateVersion
-      - 
-        Label: 
+      -
+        Label:
           default: "Runner Base Platform"
-        Parameters: 
+        Parameters:
           - 1OSInstanceOSPlatform
           - 1OSInstanceLinuxArch
           - 1OSPeggedAMIID
           - 9AWSRetrieveLatestAWSOSAmiIdFromSSM
-      - 
-        Label: 
+      -
+        Label:
           default: "GitLab Instance Registration Details"
-        Parameters: 
+        Parameters:
           - 3GITLABRunnerInstanceURL
           - 3GITLABRunnerRegTokenList
-      - 
-        Label: 
+      -
+        Label:
           default: "GitLab Runner Configuration Details"
-        Parameters: 
+        Parameters:
           - 3GITLABRunnerVersion
           - 3GITLABRunnerTagList
           - 3INSTConfigurationScript
           - 3GITLABRunnerS3CacheBucket
-          - 3GITLABRunnerConcurrentJobs          
-      - 
-        Label: 
+          - 3GITLABRunnerConcurrentJobs
+      -
+        Label:
           default: "Scaling Group / Cluster Size, HA Type, Instance Type, VPC Location, Security and Scheduling"
-        Parameters: 
+        Parameters:
           - 4ASGDesiredCapacity
-          - 3GITLABRunnerConcurrentJobs           
+          - 3GITLABRunnerConcurrentJobs
           - 3GITLABRunnerS3CacheBucket
           - 9AWSSpecifiedIAMRoleNAME
           - 4ASGSpecifyVPC
@@ -51,10 +51,10 @@ Metadata:
           - 5ASGInstanceType3
           - 5ASGInstanceType4
           - 8DBGKeypairName
-      - 
-        Label: 
+      -
+        Label:
           default: "Scaling Group / Cluster Optional AutoScaling Parameters"
-        Parameters: 
+        Parameters:
           - 5ASGAutoScalingEnabled
           - 5ASGAutoScalingMaxSize
           - 5ASGAutoScalingMetricTypeToMonitor
@@ -63,24 +63,24 @@ Metadata:
           - 5ASGAutoScalingSetScaleOutUtilizationThreshold
           - 5ASGAutoScalingSetScaleOutUtilizationThresholdSeconds
           - 5ASGSelfMonitorTerminationInterval
-      - 
-        Label: 
+      -
+        Label:
           default: "Scaling Group / Cluster Optional Spot Configuration"
-        Parameters: 
+        Parameters:
           - 5SPOTOnDemandBaseCapacity
           - 5SPOTOnDemandPercentageAboveBaseCapacity
           - 5SPOTSpotAllocationStrategy
-      - 
-        Label: 
+      -
+        Label:
           default: "Maintenance Built-In"
-        Parameters: 
+        Parameters:
           - 1OSLastManagedUpdate
           - 1OSPatchScope
           - 4ASGUpdateType
-    ParameterLabels: 
-      1AAASourceProject: 
+    ParameterLabels:
+      1AAASourceProject:
         default: "Location of the source for this project."
-      1AAAATemplateVersion: 
+      1AAAATemplateVersion:
         default: "Version of this template."
       1OSPeggedAMIID:
         default: "Peg the AMI ID to a specific one or use the latest AWS prepared AMI?"
@@ -157,7 +157,7 @@ Metadata:
       5ASGInstanceType4:
         default: "Fourth priority instance type to be used - if previous priorities are exhausted. Used for Ec2 Fleet when not using spot."
       5SPOTSpotAllocationStrategy:
-        default: "Focus spot request strategy on price or lower terminations."  
+        default: "Focus spot request strategy on price or lower terminations."
       5SPOTOnDemandBaseCapacity:
         default: "OnDemandBaseCapacity - Number of non-spot instances to always start with."
       5SPOTOnDemandPercentageAboveBaseCapacity:
@@ -207,7 +207,7 @@ Parameters:
     Default: amd64
     AllowedValues:
       - amd64
-      - arm64      
+      - arm64
   1OSLastManagedUpdate:
     Description: >
       Enter update date - changing this is required to force a rolling replacement for patching.
@@ -301,16 +301,16 @@ Parameters:
       - RollingThroughInstances
   4ASGUpdateMinInstancesInService:
     Description: >
-      (Only Applies To Updates) Minimum number of instances that should be available during an update. 
+      (Only Applies To Updates) Minimum number of instances that should be available during an update.
       Consider about 75% of full capacity as a guideline.
     Type: Number
     Default: 1
   4ASGUpdateMaxBatchSize:
     Description: >
-      (Only Applies To Updates) Maximum number of instances to update at one time. 
+      (Only Applies To Updates) Maximum number of instances to update at one time.
       Consider about 25% of full capacity as a guideline.
     Type: Number
-    Default: 2  
+    Default: 2
   4ASGScheduledShutdownCron:
     Description: >
       Cron format when ASG should scale to 0 for Min and Desired. to completely stop all instances. This is UTC, so adjust for your timezone.
@@ -352,12 +352,13 @@ Parameters:
       DefaultSG - Use the default security group that belongs to the VPC specified in 4ASGSpecifyVPC. 
       Otherwise type in the security group ids (comma delimited) of the SGs that belong to the VPC specified in 4ASGSpecifyVPC. 
     Type: String
-    Default: DefaultSG  
+    Default: DefaultSG
   4ASGSpecifySubnets:
     Description: >
-      AllSubnets - finds and configures all of the specified VPC subnets for you. Otherwise type in the subnet ids (comma delimited) of the subnets that belong to the VPC specified in 4ASGSpecifyVPC. 
-      The chosen subnets must be setup in a way that allows the runner instances to resolve the DNS name and connect
-      to port 443 on the GitLab instance URL you provide.
+      AllSubnets - finds and configures all of the specified VPC subnets for you. Otherwise type in the subnet ids (comma delimited) of 
+      the subnets that belong to the VPC specified in 4ASGSpecifyVPC. The chosen subnets must be setup in a way that allows the runner 
+      instances to resolve the DNS name and connect to port 443 on the GitLab instance URL you provide. This is how you select less than
+      all subnets and how you specify public or only private subnets if both exist in the target VPC.
     Type: String
     Default: AllSubnets
   5ASGAutoScalingEnabled:
@@ -420,19 +421,19 @@ Parameters:
     ConstraintDescription: At least one instancetype is required, use at least 2 to demonstrate spot.
   5ASGInstanceType2:
     Description: >
-      Specify the instance type to be used.  Do not use bursty instance types like t2 or t3. Four types required for 
+      Specify the instance type to be used.  Do not use bursty instance types like t2 or t3. Four types required for
       spot configuration to avoid rebalancing churn. Selecting instances that all have the same size name will ensure similar costs.
       More information: https://docs.aws.amazon.com/autoscaling/ec2/APIReference/API_InstancesDistribution.html
     Type: String
   5ASGInstanceType3:
     Description: >
-      Specify the instance type to be used.  Do not use bursty instance types like t2 or t3. Four types required for 
+      Specify the instance type to be used.  Do not use bursty instance types like t2 or t3. Four types required for
       spot configuration to avoid rebalancing churn. Selecting instances that all have the same size name will ensure similar costs.
       More information: https://docs.aws.amazon.com/autoscaling/ec2/APIReference/API_InstancesDistribution.html
     Type: String
   5ASGInstanceType4:
     Description: >
-      Specify the instance type to be used.  Do not use bursty instance types like t2 or t3. Four types required for 
+      Specify the instance type to be used.  Do not use bursty instance types like t2 or t3. Four types required for
       spot configuration to avoid rebalancing churn. Selecting instances that all have the same size name will ensure similar costs.
       More information: https://docs.aws.amazon.com/autoscaling/ec2/APIReference/API_InstancesDistribution.html
     Type: String
@@ -1399,10 +1400,10 @@ Resources:
               '''Handle SIGALRM'''
               raise Exception('Time exceeded')
 
-          signal.signal(signal.SIGALRM, timeout_handler)               
+          signal.signal(signal.SIGALRM, timeout_handler)
 
   #Arguments: Vpc-id or "DefaultVPC"
-  #Returns: vpc-id, number of subnets and ordered list of subnetids and az ids.  
+  #Returns: vpc-id, number of subnets and ordered list of subnetids and az ids.
   # The index of these two return lists are correlated if it is desirable to choose less than the whole list.
   VPCInfoLambda:
     Type: 'AWS::Lambda::Function'
@@ -1466,7 +1467,7 @@ Resources:
                            subnets = [subnet for subnet in subnets if subnet.id in subidfilterlist]
                            if len(subnets) != len(subidfilterlist):
                              raise Exception(f'Expected to find the {len(subidfilterlist)} provided subnets ({", ".join(subidfilterlist)}) in VPC {VpcToGet}, but found {len(subnets)} ({", ".join(subnets)})')
-                        
+
                         for subnet in subnets:
                           subidlist.append(subnet.id)
                           zoneidlist.append(subnet.availability_zone)
@@ -1497,8 +1498,8 @@ Resources:
                       responseData['OrderedZoneIdList'] = zoneidOutput
                       responseData['SubnetCount'] = len(subidlist)
                       responseData['SgIdList'] = sgOutput
-                      cfnresponse.send(event, context, cfnresponse.SUCCESS, responseData)                                  
-              
+                      cfnresponse.send(event, context, cfnresponse.SUCCESS, responseData)
+
               except Exception as err:
                   AccountRegionInfo=f'Occured in Account {context.invoked_function_arn.split(":")[4]} in region {context.invoked_function_arn.split(":")[3]}'
                   FinalMsg=str(err) + ' ' + AccountRegionInfo
@@ -1533,7 +1534,7 @@ Resources:
               - Effect: "Allow"
                 Action:
                   - "logs:CreateLogGroup"
-                  - "logs:CreateLogStream"  
+                  - "logs:CreateLogStream"
                   - "logs:PutLogEvents"
                 Resource: "arn:aws:logs:*:*"
         - PolicyName: "describe-vpcs-and-subnets"
