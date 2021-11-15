@@ -100,6 +100,11 @@ foreach ($RunnerRegToken in $GITLABRunnerRegTokenList.split(';')) {
 
 (Get-Content $RunnerConfigToml -raw) -replace '(?m)^\s*concurrent.*', "concurrent = $GITLABRunnerConcurrentJobs" | Set-Content $RunnerConfigToml
 
+if (!(Get-Command "pwsh" -ErrorAction 0) -AND (Get-Content $RunnerConfigToml -raw) -notmatch '(?m)shell\s*=\s*"powershell".*') {
+  logit "PowerShell Core/7 or later not found, updating default shell to Windows PowerShell"
+  (Get-Content $RunnerConfigToml -raw) -replace '(?m)shell\s*=.*', 'shell = "powershell"' | Set-Content $RunnerConfigToml
+}
+
 aws ec2 create-tags --region $AWS_REGION --resources $MYINSTANCEID --tags "Key=`"GitLabRunnerName`",Value=$RunnerName" "Key=`"GitLabURL`",Value=$GITLABRunnerInstanceURL" "Key=`"GitLabRunnerTags`",`"Value=$($RunnerCompleteTagList.split(',') -join ('\,'))`""
 
 .\gitlab-runner.exe start
