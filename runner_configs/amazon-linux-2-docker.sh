@@ -42,7 +42,8 @@ elif [[ -n "$(command -v apt-get)" ]] ; then
   PKGMGR='apt-get'
 fi
 
-set -ex
+set -e
+
 if [[ -z "$(command -v docker)" ]] ; then
   echo "Docker not present, installing..."
   amazon-linux-extras install docker
