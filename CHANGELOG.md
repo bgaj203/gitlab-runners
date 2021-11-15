@@ -18,7 +18,7 @@ All notable changes to this project will be documented in this file.
 - ADDED: add block public access and default encryption to s3 bucket (THANKS for this Community Code Contribution from @matthias-pichler !)
 - ADDED: #48 - Set EBS volume size via parameter (THANKS for this Community Code Contribution from @svenmilewski !)
 
-Thanks to all contributors to this release!
+Thanks to all community contributors to this release!
 - @dan-lind
 - @matthias-pichler
 - @JBert
