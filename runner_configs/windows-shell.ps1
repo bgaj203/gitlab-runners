@@ -79,7 +79,6 @@ foreach ($RunnerRegToken in $GITLABRunnerRegTokenList.split(';')) {
   --non-interactive `
   --url $GITLABRunnerInstanceURL `
   --registration-token $RunnerRegToken `
-  --request-concurrency $GITLABRunnerConcurrentJobs `
   --tag-list $RunnerCompleteTagList `
   --executor $GITLABRunnerExecutor `
   --locked="false" `
@@ -91,6 +90,8 @@ foreach ($RunnerRegToken in $GITLABRunnerRegTokenList.split(';')) {
   --cache-s3-bucket-name $GITLABRunnerS3CacheBucket `
   --cache-s3-bucket-location $AWS_REGION
 }
+
+(Get-Content $RunnerConfigToml -raw) -replace '(?m)^\s*concurrent.*', "concurrent = $GITLABRunnerConcurrentJobs" | Set-Content $RunnerConfigToml
 
 aws ec2 create-tags --region $AWS_REGION --resources $MYINSTANCEID --tags "Key=`"GitLabRunnerName`",Value=$RunnerName" "Key=`"GitLabURL`",Value=$GITLABRunnerInstanceURL" "Key=`"GitLabRunnerTags`",`"Value=$($RunnerCompleteTagList.split(',') -join ('\,'))`""
 

@@ -75,7 +75,6 @@ do
     --config $RunnerConfigToml \
     --url "$GITLABRunnerInstanceURL" \
     --registration-token "$RunnerRegToken" \
-    --request-concurrency "$GITLABRunnerConcurrentJobs" \
     --executor "$GITLABRunnerExecutor" \
     --run-untagged="true" \
     --tag-list "$RunnerCompleteTagList" \
@@ -93,6 +92,8 @@ do
     --docker-disable-cache="false" \
     --docker-shm-size 0
 done
+
+sed -i "s/^\s*concurrent.*/concurrent = $GITLABRunnerConcurrentJobs/g" $RunnerConfigToml
 
 $RunnerInstallRoot/gitlab-runner start
 

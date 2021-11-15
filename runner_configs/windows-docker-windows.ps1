@@ -79,7 +79,6 @@ foreach ($RunnerRegToken in $GITLABRunnerRegTokenList.split(';')) {
      --non-interactive `
      --url $GITLABRunnerInstanceURL `
      --registration-token $RunnerRegToken `
-     --request-concurrency $GITLABRunnerConcurrentJobs `
      --tag-list $RunnerCompleteTagList `
      --executor $GITLABRunnerExecutor `
      --locked="false" `
@@ -98,6 +97,8 @@ foreach ($RunnerRegToken in $GITLABRunnerRegTokenList.split(';')) {
      --docker-privileged
     }
      #--docker-volumes "/var/run/docker.sock:/var/run/docker.sock" `
+
+(Get-Content $RunnerConfigToml -raw) -replace '(?m)^\s*concurrent.*', "concurrent = $GITLABRunnerConcurrentJobs" | Set-Content $RunnerConfigToml
 
 aws ec2 create-tags --region $AWS_REGION --resources $MYINSTANCEID --tags "Key=`"GitLabRunnerName`",Value=$RunnerName" "Key=`"GitLabURL`",Value=$GITLABRunnerInstanceURL" "Key=`"GitLabRunnerTags`",`"Value=$($RunnerCompleteTagList.split(',') -join ('\,'))`""
 

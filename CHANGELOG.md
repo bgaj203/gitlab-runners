@@ -11,6 +11,7 @@ All notable changes to this project will be documented in this file.
 - UPDATED: Clearer description for parameter 5SPOTOnDemandPercentageAboveBaseCapacity #45
 - UPDATED/REMOVED: Easy button CLI option now directly reuses the CloudFormation templates to eliminate parameter file maintenance.
 - ADDED: new runner configuration script for building any image architecture using [docker buildx](https://docs.docker.com/buildx/working-with-buildx/) : [amazon-linux-2-shell-docker-buildx.sh](runner_configs/amazon-linux-2-shell-docker-buildx.sh) (Contribution by @jeffersonj !)
+- FIXED: #44 Jobs are not beeing picked up concurrently on the same machine
 
 ## [v1.4.8-alpha13] - 2021-08-20
 
