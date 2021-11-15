@@ -624,6 +624,15 @@ Resources:
       BucketName: !GetAtt S3BucketNameLower.OutputString
       VersioningConfiguration:
         Status: Suspended
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
 
   InstanceASG:
     Type: AWS::AutoScaling::AutoScalingGroup
