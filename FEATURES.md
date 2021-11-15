@@ -66,6 +66,13 @@
 - Mixed Instances Policy support.
 - These templates can be loaded into AWS Service Catalog to be a part of your internal self-service cloud automation.
 - Stackname is used in all created resources so that all related resources can be quickly identified as related.
+- Compatible with the following AWS Services and Offerings
+    - [AWS Quick Starts](https://aws.amazon.com/quickstart/)
+    - [AWS Service Catalog](https://aws.amazon.com/servicecatalog/) (Direct Import)
+        - [ServiceNow via an AWS Service Catalog Connector](https://docs.aws.amazon.com/servicecatalog/latest/adminguide/integrations-servicenow.html#integrations-servicenow)
+        - [Jira Service Manager via an AWS Service Catalog Connector](https://docs.aws.amazon.com/servicecatalog/latest/adminguide/integrations-jiraservicedesk.html#integrations-jiraservicedesk)
+    - [AWS Control Tower](https://docs.aws.amazon.com/controltower/)
+    - [AWS SaaS Factory](https://aws.amazon.com/partners/programs/saas-factory/)
 
 ## Extensibility, Reusability and Troubleshooting
 

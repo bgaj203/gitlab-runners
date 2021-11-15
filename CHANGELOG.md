@@ -13,6 +13,7 @@ All notable changes to this project will be documented in this file.
 - ADDED: new runner configuration script for building any image architecture using [docker buildx](https://docs.docker.com/buildx/working-with-buildx/) : [amazon-linux-2-shell-docker-buildx.sh](runner_configs/amazon-linux-2-shell-docker-buildx.sh) (Contribution by @jeffersonj !)
 - FIXED: #44 Jobs are not beeing picked up concurrently on the same machine
 - UPDATED: #52 `pwsh` in shell value specified in config.toml for Windows Server 2019 does not work, must use `powershell` - it is a known behavior that GitLab Runner v14 and later will default to and require a preinstall of PowerShell Core / 7. See the first sentence under [this documentation heading](https://docs.gitlab.com/runner/shells/#powershell). This IaC is being updated to enable transparent backward compatibility to before v14.  If the machine has pwsh preinstalled, it will use the new default. However, if pwsh is not found, the configuration file will be updated to point to Windows PowerShell (`shell = "powershell"`).
+- ADDED: List of compatible AWS Service and Offerings added to [Features Documentation](FEATURES.md)
 
 ## [v1.4.8-alpha13] - 2021-08-20
 
