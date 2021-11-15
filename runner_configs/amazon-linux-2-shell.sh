@@ -42,7 +42,7 @@ elif [[ -n "$(command -v apt-get)" ]] ; then
   PKGMGR='apt-get'
 fi
 
-set -ex
+set -e
 
 RunnerCompleteTagList="$RunnerOSTags,glexecutor-$GITLABRunnerExecutor,${OSInstanceLinuxArch,,}"
 

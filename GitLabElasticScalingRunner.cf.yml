@@ -1068,8 +1068,9 @@ Resources:
                 # END OF "RUNNING CUSTOM INSTANCE CONFIGURATION CODE"
                 # ###################################################
 
-                needs-restarting -r
-                if [ $? -gt 0 ]; then
+                NEEDS_RESTART=0
+                needs-restarting -r || NEEDS_RESTART=$?
+                if [ $NEEDS_RESTART -gt 0 ]; then
                   logit "Detected that a reboot is required, rebooting..."
                   logit "Resetting userdata semaphore..."
                   rm /var/lib/cloud/instances/*/sem/config_scripts_user
