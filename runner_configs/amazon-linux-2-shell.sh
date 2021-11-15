@@ -69,7 +69,6 @@ do
     --config $RunnerConfigToml \
     --url "$GITLABRunnerInstanceURL" \
     --registration-token "$RunnerRegToken" \
-    --request-concurrency "$GITLABRunnerConcurrentJobs" \
     --executor "$GITLABRunnerExecutor" \
     --run-untagged="true" \
     --tag-list "$RunnerCompleteTagList" \
@@ -81,6 +80,8 @@ do
     --cache-s3-bucket-name $GITLABRunnerS3CacheBucket \
     --cache-s3-bucket-location $AWS_REGION
 done
+
+sed -i "s/^\s*concurrent.*/concurrent = $GITLABRunnerConcurrentJobs/g" $RunnerConfigToml
 
 $RunnerInstallRoot/gitlab-runner start
 
