@@ -832,6 +832,9 @@ Resources:
                 Ref: 9AWSRetrieveLatestAWSOSAmiIdFromSSM
             -
                 Ref: 1OSPeggedAMIID
+        MetadataOptions:
+          HttpPutResponseHopLimit: 2
+          HttpTokens: required
         #InstanceType is overridden by spot parameters
         InstanceType: t2.micro
         KeyName: !If [UseKeypair,!Ref 8DBGKeypairName,!Ref "AWS::NoValue"]
@@ -896,8 +899,9 @@ Resources:
                   yum install -y https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-latest.amzn1.noarch.rpm
                   sudo ln -s /usr/local/lib/python2.7/site-packages/cfnbootstrap /usr/lib/python2.7/site-packages/cfnbootstrap
                 fi
-                AWS_REGION="$(curl -s 169.254.169.254/latest/meta-data/placement/availability-zone | sed 's/.$//')"
-                MYINSTANCEID="$(curl http://169.254.169.254/latest/meta-data/instance-id)"
+                IMDS_TOKEN="$(curl -X PUT http://169.254.169.254/latest/api/token -H X-aws-ec2-metadata-token-ttl-seconds:21600)"
+                AWS_REGION="$(curl -s -H X-aws-ec2-metadata-token:$IMDS_TOKEN 169.254.169.254/latest/meta-data/placement/availability-zone | sed 's/.$//')"
+                MYINSTANCEID="$(curl -H X-aws-ec2-metadata-token:$IMDS_TOKEN http://169.254.169.254/latest/meta-data/instance-id)"
                 NAMEOFASG=$(aws ec2 describe-tags --region $AWS_REGION --filters {"Name=resource-id,Values=$MYINSTANCEID","Name=key,Values=aws:autoscaling:groupName"} --output=text | cut -f5)
                 NAMEOFSTACK=${AWS::StackName}
                 REBOOTWASDONEFLAG=/root/finishuprebootwasdone.flg
@@ -1168,8 +1172,9 @@ Resources:
                   ((get-itemproperty 'HKLM:SYSTEM\CurrentControlSet\Control\ComputerName\ComputerName\' | Select-Object -Expand 'ComputerName') -ine (get-itemproperty 'HKLM:SYSTEM\CurrentControlSet\Control\ComputerName\ComputerName\' | Select-Object -Expand 'ComputerName')) -OR
                   ((Test-Path "HKLM:SYSTEM\CurrentControlSet\Services\Netlogon\JoinDomain") -OR (Test-Path "HKLM:SYSTEM\CurrentControlSet\Services\Netlogon\AvoidSpnSet")))
                 }
-                $AWS_REGION="$($(invoke-restmethod 169.254.169.254/latest/meta-data/placement/availability-zone) -replace '.$')"
-                $MYINSTANCEID="$(invoke-restmethod http://169.254.169.254/latest/meta-data/instance-id)"
+                $IMDS_TOKEN="$(invoke-restmethod -method PUT -headers @{'X-aws-ec2-metadata-token-ttl-seconds'=21600} http://169.254.169.254/latest/api/token)"
+                $AWS_REGION="$($(invoke-restmethod -headers @{'X-aws-ec2-metadata-token'=$IMDS_TOKEN} 169.254.169.254/latest/meta-data/placement/availability-zone) -replace '.$')"
+                $MYINSTANCEID="$(invoke-restmethod -headers @{'X-aws-ec2-metadata-token'=$IMDS_TOKEN} http://169.254.169.254/latest/meta-data/instance-id)"
                 $NAMEOFASG=$(aws ec2 describe-tags --region $AWS_REGION --filters Name=resource-id,Values=$MYINSTANCEID Name=key,Values=aws:autoscaling:groupName | convertfrom-json).tags.value
                 $NAMEOFSTACK="${AWS::StackName}"
                 if (Test-Path $REBOOTWASDONEFLAG) {

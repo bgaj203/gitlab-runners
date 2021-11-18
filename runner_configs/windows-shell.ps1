@@ -14,8 +14,9 @@ $RunnerCompleteTagList = $RunnerOSTags, "glexecutor-$GITLABRunnerExecutor", $GIT
 if (Test-Path variable:GITLABRunnerTagList) {$RunnerCompleteTagList = $RunnerCompleteTagList, "computetype-$($GITLABRunnerTagList.ToLower())" -join ','}
 if (Test-Path variable:COMPUTETYPE) {$RunnerCompleteTagList = $RunnerCompleteTagList, "computetype-$($COMPUTETYPE.ToLower())" -join ','}
 
-$MYIP="$(invoke-restmethod http://169.254.169.254/latest/meta-data/local-ipv4)"
-$MYACCOUNTID="$((invoke-restmethod http://169.254.169.254/latest/dynamic/instance-identity/document).accountId)"
+$IMDS_TOKEN="$(invoke-restmethod -method PUT -headers @{'X-aws-ec2-metadata-token-ttl-seconds'=21600} http://169.254.169.254/latest/api/token)"
+$MYIP="$(invoke-restmethod -headers @{'X-aws-ec2-metadata-token'=$IMDS_TOKEN} http://169.254.169.254/latest/meta-data/local-ipv4)"
+$MYACCOUNTID="$((invoke-restmethod -headers @{'X-aws-ec2-metadata-token'=$IMDS_TOKEN} http://169.254.169.254/latest/dynamic/instance-identity/document).accountId)"
 $RunnerName="$MYINSTANCEID-in-$MYACCOUNTID-in-$AWS_REGION"
 
 Function logit ($Msg, $MsgType='Information', $ID='1') {

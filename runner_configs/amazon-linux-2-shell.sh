@@ -2,8 +2,9 @@
 
 GITLABRunnerExecutor='shell'
 
-MYIP="$(curl http://169.254.169.254/latest/meta-data/local-ipv4)"
-MYACCOUNTID="$(curl http://169.254.169.254/latest/dynamic/instance-identity/document|grep accountId| awk '{print $3}'|sed  's/"//g'|sed 's/,//g')"
+IMDS_TOKEN="$(curl -X PUT http://169.254.169.254/latest/api/token -H X-aws-ec2-metadata-token-ttl-seconds:21600)"
+MYIP="$(curl -H X-aws-ec2-metadata-token:$IMDS_TOKEN http://169.254.169.254/latest/meta-data/local-ipv4)"
+MYACCOUNTID="$(curl -H X-aws-ec2-metadata-token:$IMDS_TOKEN http://169.254.169.254/latest/dynamic/instance-identity/document | grep accountId | awk '{print $3}' | sed  's/"//g' | sed 's/,//g')"
 RunnerName="$MYINSTANCEID-in-$MYACCOUNTID-at-$AWS_REGION"
 
 function logit() {
