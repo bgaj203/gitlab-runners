@@ -2,23 +2,23 @@
 
 All notable changes to this project will be documented in this file.
 
-## [v1.4.9-alpha14] - 2021-11-15
+## [v1.4.9-alpha14] - 2021-11-18
 
-- Fix #49 VPCInfo get's an error on stack update (THANKS for this Community Code Contribution from @dan-lind !)
+- FIXED #49 / !25 VPCInfo get's an error on stack update (THANKS for this Community Code Contribution from @dan-lind !)
 - ADDED: #46 Allow subnets to be specified via 4ASGSpecifySubnets. Also enables control over public versus private subnets when both exist. Auto lookup of AZs for Subnets (THANKS for this Community Code Contribution from @dan-lind !)
-- FIXED: VPCInfo get's an error on stack update (THANKS for this Community Code Contribution from @dan-lind)
 - ADDED: #42 Added s3:DeleteObject permission to S3 cache bucket so that runner cleanup can be done by runners
 - UPDATED:#45  Clearer description for parameter 5SPOTOnDemandPercentageAboveBaseCapacity (THANKS for this Community Feature Suggestion from @dan-lind)
 - UPDATED/REMOVED: Easy button CLI option now directly reuses the CloudFormation templates to eliminate parameter file maintenance.
-- ADDED: new runner configuration script for building any image architecture using [docker buildx](https://docs.docker.com/buildx/working-with-buildx/) : [amazon-linux-2-shell-docker-buildx.sh](runner_configs/amazon-linux-2-shell-docker-buildx.sh) (THANKS for this Community Code Contribution from @jeffersonj !)
+- ADDED: !23 new runner configuration script for building any image architecture using [docker buildx](https://docs.docker.com/buildx/working-with-buildx/) : [amazon-linux-2-shell-docker-buildx.sh](runner_configs/amazon-linux-2-shell-docker-buildx.sh) (THANKS for this Community Code Contribution from @jeffersonj !)
 - FIXED: #44 Jobs are not beeing picked up concurrently on the same machine (THANKS for this Community Feature Suggestion from @JBert !)
 - UPDATED: #52 `pwsh` in shell value specified in config.toml for Windows Server 2019 does not work, must use `powershell` - it is a known behavior that GitLab Runner v14 and later will default to and require a preinstall of PowerShell Core / 7. See the first sentence under [this documentation heading](https://docs.gitlab.com/runner/shells/#powershell). This IaC is being updated to enable transparent backward compatibility to before v14.  If the machine has pwsh preinstalled, it will use the new default. However, if pwsh is not found, the configuration file will be updated to point to Windows PowerShell (`shell = "powershell"`). (THANKS for this Community Feature Suggestion from @JulioPablo !)
 - ADDED: #55 List of compatible AWS Service and Offerings added to [Features Documentation](FEATURES.md)
 - FIXED: #54 Bug: UserData script fails if "needs-restarting -r" exits with exit code 1 (THANKS for this Community Code Contribution from @matthias-pichler !)
-- ADDED: add block public access and default encryption to s3 bucket (THANKS for this Community Code Contribution from @matthias-pichler !)
-- ADDED: #48 - Set EBS volume size via parameter (THANKS for this Community Code Contribution from @svenmilewski !)
+- ADDED: !31 add block public access and default encryption to s3 bucket (THANKS for this Community Code Contribution from @matthias-pichler !)
+- ADDED: !48 - Set EBS volume size via parameter (THANKS for this Community Code Contribution from @svenmilewski !)
+- ADDED: !32 require IMDSv2 via LaunchTemplate (THANKS for this Community Code Contribution from @matthias-pichler !)
 
-Thanks to all community contributors to this release!
+Thanks to the six community contributors to this release!
 - @dan-lind
 - @matthias-pichler
 - @JBert
