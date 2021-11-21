@@ -43,6 +43,8 @@ Metadata:
           - 3GITLABRunnerS3CacheBucket
           - 9AWSSpecifiedIAMRoleNAME
           - 4ASGSpecifyVPC
+          - 4ASGSpecifySubnets
+          - 4ASGSpecifySecurityGroups
           - 4ASGScheduledShutdownCron
           - 4ASGScheduledStartupDesiredInstances
           - 4ASGScheduledStartupCron
@@ -129,10 +131,10 @@ Metadata:
         default: "Number of instances to start for startup schedule."
       4ASGSpecifyVPC:
         default: "The VPC in the account and region should be used."
-      4ASGSpecifySecurityGroups:
-        default: "The security groups to be used in the ASG launch template."
       4ASGSpecifySubnets:
         default: "The subnets in the specified VPC that should be used."
+      4ASGSpecifySecurityGroups:
+        default: "The security groups to be used in the ASG launch template."
       5ASGAutoScalingEnabled:
         default: "Whether to AutoScale the Scaling Group."
       5ASGAutoScalingMaxSize:
