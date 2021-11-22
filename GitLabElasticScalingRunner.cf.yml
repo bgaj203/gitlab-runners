@@ -1436,7 +1436,7 @@ Resources:
   VPCInfoLambda:
     Type: 'AWS::Lambda::Function'
     Properties:
-      Description: Returns the lowercase version of a string
+      Description: Returns VPC Information
       MemorySize: 256
       Runtime: python3.8
       Handler: index.handler
@@ -1464,8 +1464,8 @@ Resources:
                       cfnresponse.send(event, context, "SUCCESS", {
                            "Message": "Resource deletion successful!"})
                       return
-                  elif event['RequestType'] == 'Create':
-                      LOGGER.info('CREATE!')
+                  elif event['RequestType'] == 'Create' or event['RequestType'] == 'Update':
+                      LOGGER.info(event['RequestType'])
                       request_properties = event.get('ResourceProperties', None)
 
                       VpcToGet = event['ResourceProperties'].get('VpcToGet', '')
