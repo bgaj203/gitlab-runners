@@ -357,6 +357,7 @@ Parameters:
       DefaultSG - Use the default security group that belongs to the VPC specified in 4ASGSpecifyVPC.
       Otherwise type in the security group ids (comma delimited) of the SGs that belong to the VPC specified in 4ASGSpecifyVPC.
       Due to dynamic installations during scaling, runner instances must be able to access the internet when using AWS AMIs.
+      The default security group is not added to your list automatically - re-add it if you need it along with additional ones.
     Type: String
     Default: DefaultSG
   4ASGSpecifySubnets:
@@ -1096,8 +1097,8 @@ Resources:
                 if [ $NEEDS_RESTART -gt 0 ]; then
                   logit "Detected that a reboot is required, rebooting..."
                   logit "Resetting userdata semaphore..."
-                  rm /var/lib/cloud/instances/*/sem/config_scripts_user
-                  rm /var/lib/cloud/instance/sem/config_scripts_user
+                  rm -f /var/lib/cloud/instances/*/sem/config_scripts_user || true
+                  rm -f /var/lib/cloud/instance/sem/config_scripts_user || true
                   touch $REBOOTWASDONEFLAG
                   reboot
                   logit "Waiting for reboot to complete..."
