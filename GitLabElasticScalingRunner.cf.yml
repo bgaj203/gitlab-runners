@@ -848,7 +848,7 @@ Resources:
             -   Arn: !GetAtt ASGInstanceProfile.Arn
             -   Arn: !Sub "arn:aws:iam::${AWS::AccountId}:instance-profile/${9AWSSpecifiedIAMRoleNAME}"
         BlockDeviceMappings:
-        - DeviceName: "/dev/xvda"
+        - DeviceName: !If [InstancePlatformLinux,'/dev/xvda','/dev/sda1'] 
           Ebs:
             VolumeType: 'gp2'
             VolumeSize: !Ref 3INSTEbsVolumeSize
