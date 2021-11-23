@@ -31,7 +31,7 @@ Contributors:
 
 ## [v1.4.8-alpha13] - 2021-08-20
 
-- This is ancilliary sample code, so I did not increment the version (I know, I know)
+- This is ancillary sample code, so I did not increment the version (I know, I know)
 - Added EC2 Image Builder components for building Windows Shell Runners AMIs - can be found here: [ec2-image-builder](ec2-image-builder) and information on them can be found in the [README.md](ec2-image-builder/README.md)
 
 ## [v1.4.8-alpha13] - 2021-09-18
