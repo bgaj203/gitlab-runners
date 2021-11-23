@@ -6,6 +6,14 @@
 
 [[_TOC_]]
 
+### Accessing Specific Versions For Testing - Including Prereleases
+
+The S3 bucket containing the templates has the version number as a key.  This allows for prerelease availability as well as pegging to older versions. This key equates to a git tag. When a prerelease is in progress, the tag will usually be pointed to a commit in the develop branch.
+
+To test a release simply load the [README.md](README.md) or [easybuttons.md](easybuttons.md) and change to the tag or develop branch. The CF icons in the Easy Buttons now point to the correct S3 bucket. At the bottom of the easy buttons table is access to the full versioned template near the text `Not an easy button person?`.
+
+Here is an example link to [v1.4.8-alpha13 of easybuttons.md](https://gitlab.com/guided-explorations/aws/gitlab-runner-autoscaling-aws-asg/-/blob/v1.4.8-alpha13/easybuttons.md). If you hover the icons you can see that the s3 path includes the version number as well.
+
 ### Scaling Troubleshooting and Testing
 
 #### AWS ASG Scaling Configuration Flexibility

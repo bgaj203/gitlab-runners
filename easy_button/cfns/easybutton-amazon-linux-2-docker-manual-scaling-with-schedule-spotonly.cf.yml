@@ -52,6 +52,7 @@ Metadata:
           - 5ASGInstanceType2
           - 5ASGInstanceType3
           - 5ASGInstanceType4
+          - 3INSTEbsVolumeSize
           - 8DBGKeypairName
       - 
         Label: 
@@ -150,6 +151,8 @@ Metadata:
         default: "Third priority instance type to be used - if previous priorities are exhausted. Used for Ec2 Fleet when not using spot."
       5ASGInstanceType4:
         default: "Fourth priority instance type to be used - if previous priorities are exhausted. Used for Ec2 Fleet when not using spot."
+      3INSTEbsVolumeSize:
+        default: "EBS Volume size in GiB."
       5SPOTSpotAllocationStrategy:
         default: "Focus spot request strategy on price or lower terminations."  
       5SPOTOnDemandBaseCapacity:
@@ -244,25 +247,30 @@ Parameters:
     Type: String
     Default: "c5.large"
     AllowedPattern: ^[A-Za-z0-9.]+$
+  3INSTEbsVolumeSize:
+    Description: >
+      Specify the volume size of the EBS volume attached to the instance in GiB. Must be between 1 and 16384.
+    Type: Number
+    Default: 30
 Resources:
   RnrASG:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: https://gl-public-templates.s3.amazonaws.com/cfn/v1.4.8-alpha13/GitLabElasticScalingRunner.cf.yml
+      TemplateURL: https://gl-public-templates.s3.amazonaws.com/cfn/v1.4.9-alpha14/GitLabElasticScalingRunner.cf.yml
       Tags:
         - Key: Product
           Value: GitLab
         - Key: Function
           Value: GitLabRunner
       Parameters:
-      Parameters:
         1OSPeggedAMIID: AlwaysUseLatest
         1OSInstanceOSPlatform: Linux
         1OSPatchScope: NoPatching
         3GITLABRunnerInstanceURL: !Ref 3GITLABRunnerInstanceURL
         3GITLABRunnerRegTokenList: !Ref 3GITLABRunnerRegTokenList
-        3INSTConfigurationScript: https://gitlab.com/guided-explorations/aws/gitlab-runner-autoscaling-aws-asg/-/raw/v1.4.8-alpha13/runner_configs/amazon-linux-2-docker.sh
+        3INSTConfigurationScript: https://gitlab.com/guided-explorations/aws/gitlab-runner-autoscaling-aws-asg/-/raw/v1.4.9-alpha14/runner_configs/amazon-linux-2-docker.sh
         3GITLABRunnerTagList: !Ref 3GITLABRunnerTagList
+        3INSTEbsVolumeSize: !Ref 3INSTEbsVolumeSize
         4ASGDesiredCapacity: !Ref 4ASGDesiredCapacity
         4ASGScheduledShutdownCron: !Ref 4ASGScheduledShutdownCron
         4ASGScheduledStartupCron: !Ref 4ASGScheduledStartupCron
