@@ -16,7 +16,7 @@ All notable changes to this project will be documented in this file.
 - FIXED: #54 Bug: UserData script fails if "needs-restarting -r" exits with exit code 1 (THANKS for this Community Code Contribution from @matthias-pichler !)
 - ADDED: !31 add block public access and default encryption to s3 bucket (THANKS for this Community Code Contribution from @matthias-pichler !)
 - ADDED: !48 - Set EBS volume size via parameter (THANKS for this Community Code Contribution from @svenmilewski !)
-- ADDED: !32 require IMDSv2 via LaunchTemplate (THANKS for this Community Code Contribution from @matthias-pichler !)
+- ADDED: !32 require IMDSv2 for instance metadata operations (THANKS for this Community Code Contribution from @matthias-pichler !)
 - FIXED: #57 Windows device name mismatch, should be sda1 not xvda (@DarwinJS)
 
 Thanks to the six community contributors to this release!
