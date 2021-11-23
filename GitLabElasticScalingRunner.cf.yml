@@ -2,47 +2,49 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Description: >
   Creates a GitLab Runner Scaling Group / Cluster.
-Metadata: 
-  AWS::CloudFormation::Interface: 
-    ParameterGroups: 
-      - 
-        Label: 
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      -
+        Label:
           default: "Template Information"
-        Parameters: 
+        Parameters:
           - 1AAASourceProject
           - 1AAAATemplateVersion
-      - 
-        Label: 
+      -
+        Label:
           default: "Runner Base Platform"
-        Parameters: 
+        Parameters:
           - 1OSInstanceOSPlatform
           - 1OSInstanceLinuxArch
           - 1OSPeggedAMIID
           - 9AWSRetrieveLatestAWSOSAmiIdFromSSM
-      - 
-        Label: 
+      -
+        Label:
           default: "GitLab Instance Registration Details"
-        Parameters: 
+        Parameters:
           - 3GITLABRunnerInstanceURL
           - 3GITLABRunnerRegTokenList
-      - 
-        Label: 
+      -
+        Label:
           default: "GitLab Runner Configuration Details"
-        Parameters: 
+        Parameters:
           - 3GITLABRunnerVersion
           - 3GITLABRunnerTagList
           - 3INSTConfigurationScript
           - 3GITLABRunnerS3CacheBucket
-          - 3GITLABRunnerConcurrentJobs          
-      - 
-        Label: 
+          - 3GITLABRunnerConcurrentJobs
+      -
+        Label:
           default: "Scaling Group / Cluster Size, HA Type, Instance Type, VPC Location, Security and Scheduling"
-        Parameters: 
+        Parameters:
           - 4ASGDesiredCapacity
-          - 3GITLABRunnerConcurrentJobs           
+          - 3GITLABRunnerConcurrentJobs
           - 3GITLABRunnerS3CacheBucket
           - 9AWSSpecifiedIAMRoleNAME
           - 4ASGSpecifyVPC
+          - 4ASGSpecifySubnets
+          - 4ASGSpecifySecurityGroups
           - 4ASGScheduledShutdownCron
           - 4ASGScheduledStartupDesiredInstances
           - 4ASGScheduledStartupCron
@@ -50,11 +52,12 @@ Metadata:
           - 5ASGInstanceType2
           - 5ASGInstanceType3
           - 5ASGInstanceType4
+          - 3INSTEbsVolumeSize
           - 8DBGKeypairName
-      - 
-        Label: 
+      -
+        Label:
           default: "Scaling Group / Cluster Optional AutoScaling Parameters"
-        Parameters: 
+        Parameters:
           - 5ASGAutoScalingEnabled
           - 5ASGAutoScalingMaxSize
           - 5ASGAutoScalingMetricTypeToMonitor
@@ -63,24 +66,24 @@ Metadata:
           - 5ASGAutoScalingSetScaleOutUtilizationThreshold
           - 5ASGAutoScalingSetScaleOutUtilizationThresholdSeconds
           - 5ASGSelfMonitorTerminationInterval
-      - 
-        Label: 
+      -
+        Label:
           default: "Scaling Group / Cluster Optional Spot Configuration"
-        Parameters: 
+        Parameters:
           - 5SPOTOnDemandBaseCapacity
           - 5SPOTOnDemandPercentageAboveBaseCapacity
           - 5SPOTSpotAllocationStrategy
-      - 
-        Label: 
+      -
+        Label:
           default: "Maintenance Built-In"
-        Parameters: 
+        Parameters:
           - 1OSLastManagedUpdate
           - 1OSPatchScope
           - 4ASGUpdateType
-    ParameterLabels: 
-      1AAASourceProject: 
+    ParameterLabels:
+      1AAASourceProject:
         default: "Location of the source for this project."
-      1AAAATemplateVersion: 
+      1AAAATemplateVersion:
         default: "Version of this template."
       1OSPeggedAMIID:
         default: "Peg the AMI ID to a specific one or use the latest AWS prepared AMI?"
@@ -128,6 +131,10 @@ Metadata:
         default: "Number of instances to start for startup schedule."
       4ASGSpecifyVPC:
         default: "The VPC in the account and region should be used."
+      4ASGSpecifySubnets:
+        default: "The subnets in the specified VPC that should be used."
+      4ASGSpecifySecurityGroups:
+        default: "The security groups to be used in the ASG launch template."
       5ASGAutoScalingEnabled:
         default: "Whether to AutoScale the Scaling Group."
       5ASGAutoScalingMaxSize:
@@ -152,8 +159,10 @@ Metadata:
         default: "Third priority instance type to be used - if previous priorities are exhausted. Used for Ec2 Fleet when not using spot."
       5ASGInstanceType4:
         default: "Fourth priority instance type to be used - if previous priorities are exhausted. Used for Ec2 Fleet when not using spot."
+      3INSTEbsVolumeSize:
+        default: "EBS Volume size in GiB."
       5SPOTSpotAllocationStrategy:
-        default: "Focus spot request strategy on price or lower terminations."  
+        default: "Focus spot request strategy on price or lower terminations."
       5SPOTOnDemandBaseCapacity:
         default: "OnDemandBaseCapacity - Number of non-spot instances to always start with."
       5SPOTOnDemandPercentageAboveBaseCapacity:
@@ -168,8 +177,8 @@ Parameters:
   1AAAATemplateVersion:
     Description: "Version of this template. Read only."
     Type: String
-    Default: "v1.4.8-alpha13"
-    AllowedValues: [ "v1.4.8-alpha13" ]
+    Default: "v1.4.9-alpha14"
+    AllowedValues: [ "v1.4.9-alpha14" ]
     ConstraintDescription: "1AAAATemplateVersion is the template version number and cannot be changed at runtime."
   1AAASourceProject:
     Description: >
@@ -203,7 +212,7 @@ Parameters:
     Default: amd64
     AllowedValues:
       - amd64
-      - arm64      
+      - arm64
   1OSLastManagedUpdate:
     Description: >
       Enter update date - changing this is required to force a rolling replacement for patching.
@@ -236,10 +245,10 @@ Parameters:
       The instance must have a network route and permission to any remote locations.
       The code you write must be idempotent so that it does the correct thing when run again after a patching reboot.
       Runner examples provided in this project are: amazon-linux-2-shell.sh, amazon-linux-2-docker.sh, windows-shell.ps1 and windows-docker-windows.ps1 at
-      git raw url: https://gitlab.com/guided-explorations/aws/gitlab-runner-autoscaling-aws-asg/-/raw/v1.4.8-alpha13/runner_configs/
+      git raw url: https://gitlab.com/guided-explorations/aws/gitlab-runner-autoscaling-aws-asg/-/raw/v1.4.9-alpha14/runner_configs/
     Type: String
-    Default: https://gitlab.com/guided-explorations/aws/gitlab-runner-autoscaling-aws-asg/-/raw/v1.4.8-alpha13/runner_configs/amazon-linux-2-docker.sh
-    #Reset above to: https://gitlab.com/guided-explorations/aws/gitlab-runner-autoscaling-aws-asg/-/raw/v1.4.8-alpha13/runner_configs/amazon-linux-2-docker.sh
+    Default: https://gitlab.com/guided-explorations/aws/gitlab-runner-autoscaling-aws-asg/-/raw/v1.4.9-alpha14/runner_configs/amazon-linux-2-docker.sh
+    #Reset above to: https://gitlab.com/guided-explorations/aws/gitlab-runner-autoscaling-aws-asg/-/raw/v1.4.9-alpha14/runner_configs/amazon-linux-2-docker.sh
   3GITLABRunnerConcurrentJobs:
     Description: >
       How many desired concurrent jobs can this runner take at a time.
@@ -297,16 +306,16 @@ Parameters:
       - RollingThroughInstances
   4ASGUpdateMinInstancesInService:
     Description: >
-      (Only Applies To Updates) Minimum number of instances that should be available during an update. 
+      (Only Applies To Updates) Minimum number of instances that should be available during an update.
       Consider about 75% of full capacity as a guideline.
     Type: Number
     Default: 1
   4ASGUpdateMaxBatchSize:
     Description: >
-      (Only Applies To Updates) Maximum number of instances to update at one time. 
+      (Only Applies To Updates) Maximum number of instances to update at one time.
       Consider about 25% of full capacity as a guideline.
     Type: Number
-    Default: 2  
+    Default: 2
   4ASGScheduledShutdownCron:
     Description: >
       Cron format when ASG should scale to 0 for Min and Desired. to completely stop all instances. This is UTC, so adjust for your timezone.
@@ -336,13 +345,30 @@ Parameters:
     Default: 1
   4ASGSpecifyVPC:
     Description: >
-      DefaultVPC - finds the VPC and configures all of its subnets for you. Otherwise type in the VPC id of a VPC in the same region where you run the template. 
-      All subnets and azs of the chosen vpc will be used.
+      DefaultVPC - finds the VPC and by default configures all of its subnets for you (See 4ASGSpecifySubnets). Otherwise type in the VPC id of a VPC in the same region where you run the template. 
+      By default, all subnets and AZs of the chosen vpc will be used.
       The VPC and chosen subnets must be setup in a way that allows the runner instances to resolve the DNS name and connect
       to port 443 on the GitLab instance URL you provide.
     Type: String
     Default: DefaultVPC
     #While it is tempting to make the above parameter of type "AWS::EC2::VPC::Id" this prevents automatic discovery and usage of the DefaultVPC.
+  4ASGSpecifySecurityGroups:
+    Description: >
+      DefaultSG - Use the default security group that belongs to the VPC specified in 4ASGSpecifyVPC.
+      Otherwise type in the security group ids (comma delimited) of the SGs that belong to the VPC specified in 4ASGSpecifyVPC.
+      Due to dynamic installations during scaling, runner instances must be able to access the internet when using AWS AMIs.
+      The default security group is not added to your list automatically - re-add it if you need it along with additional ones.
+    Type: String
+    Default: DefaultSG
+  4ASGSpecifySubnets:
+    Description: >
+      AllSubnets - finds and configures all of the specified VPC subnets for you. Otherwise type in the subnet ids (comma delimited) of
+      the subnets that belong to the VPC specified in 4ASGSpecifyVPC. The chosen subnets must be setup in a way that allows the runner
+      instances to resolve the DNS name and connect to port 443 on the GitLab instance URL you provide. This is how you select less than
+      all subnets and how you specify public or only private subnets if both exist in the target VPC.
+      Due to dynamic installations during scaling, runner instances must be able to access the internet when using AWS AMIs.
+    Type: String
+    Default: AllSubnets
   5ASGAutoScalingEnabled:
     Description: >
       Setting to false still allows for High Availability - either HOT/Warm HA with 1 instance or HOT/HOT HA for 2 or more instances.
@@ -403,22 +429,27 @@ Parameters:
     ConstraintDescription: At least one instancetype is required, use at least 2 to demonstrate spot.
   5ASGInstanceType2:
     Description: >
-      Specify the instance type to be used.  Do not use bursty instance types like t2 or t3. Four types required for 
+      Specify the instance type to be used.  Do not use bursty instance types like t2 or t3. Four types required for
       spot configuration to avoid rebalancing churn. Selecting instances that all have the same size name will ensure similar costs.
       More information: https://docs.aws.amazon.com/autoscaling/ec2/APIReference/API_InstancesDistribution.html
     Type: String
   5ASGInstanceType3:
     Description: >
-      Specify the instance type to be used.  Do not use bursty instance types like t2 or t3. Four types required for 
+      Specify the instance type to be used.  Do not use bursty instance types like t2 or t3. Four types required for
       spot configuration to avoid rebalancing churn. Selecting instances that all have the same size name will ensure similar costs.
       More information: https://docs.aws.amazon.com/autoscaling/ec2/APIReference/API_InstancesDistribution.html
     Type: String
   5ASGInstanceType4:
     Description: >
-      Specify the instance type to be used.  Do not use bursty instance types like t2 or t3. Four types required for 
+      Specify the instance type to be used.  Do not use bursty instance types like t2 or t3. Four types required for
       spot configuration to avoid rebalancing churn. Selecting instances that all have the same size name will ensure similar costs.
       More information: https://docs.aws.amazon.com/autoscaling/ec2/APIReference/API_InstancesDistribution.html
     Type: String
+  3INSTEbsVolumeSize:
+    Description: >
+      Specify the volume size of the EBS volume attached to the instance in GiB. Must be between 1 and 16384.
+    Type: Number
+    Default: 30
   5SPOTSpotAllocationStrategy:
     Description: >
       Determines which allocation strategy to use. 'capacity-optimized' helps reduce spot terminations.
@@ -437,12 +468,10 @@ Parameters:
     Default: 0
   5SPOTOnDemandPercentageAboveBaseCapacity:
     Description: >
-      ATTENTION: Brand new AWS accounts have a spot quota of zero - request a limit increase before testing this.
-      ATTENTION: DISABLING SPOT *instance usage* is achieved by setting this value to 100 (zero). It still results in a spot setup, but none of
-      the instances will be spot instances.
-      What percent of the cluster should be Spot (with the remainder being on demand).  Percentage only applied to instances started after
-      count in 5SPOTOnDemandBaseCapacity.
-      Set to 0 for a 100% spot cluster.
+      The percent of the cluster instances that should be on-demand instances (with the remainder being spot). This parameter also used to control whether an ASG is 
+      completely spot (set to 0%) or completely on-demand (set to 100%). A completely on-demand ASG gives "instance type exhaustion protection" in AZs because 
+      the provided set of instance types is still used as a selection list when spinning up new instances. Specify your instance type list in the
+      parameters starting with "5ASGInstanceType"
     Type: Number
     Default: 100
   8DBGKeypairName:
@@ -560,6 +589,7 @@ Resources:
             - 's3:GetObjectVersion'
             - 's3:GetBucketVersioning'
             - 's3:PutObject'
+            - 's3:DeleteObject' #needed for runner cache cleanup
           Resource:
             !If
               - CreateS3BucketAndPermissions
@@ -605,6 +635,15 @@ Resources:
       BucketName: !GetAtt S3BucketNameLower.OutputString
       VersioningConfiguration:
         Status: Suspended
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
 
   InstanceASG:
     Type: AWS::AutoScaling::AutoScalingGroup
@@ -796,19 +835,23 @@ Resources:
                 Ref: 9AWSRetrieveLatestAWSOSAmiIdFromSSM
             -
                 Ref: 1OSPeggedAMIID
+        MetadataOptions:
+          HttpPutResponseHopLimit: 2
+          HttpTokens: required
         #InstanceType is overridden by spot parameters
         InstanceType: t2.micro
         KeyName: !If [UseKeypair,!Ref 8DBGKeypairName,!Ref "AWS::NoValue"]
+        SecurityGroupIds: !Split [",",!GetAtt LookupVPCInfo.SgIdList]
         IamInstanceProfile:
           !If
             - BuildInstanceRoleToUse
             -   Arn: !GetAtt ASGInstanceProfile.Arn
             -   Arn: !Sub "arn:aws:iam::${AWS::AccountId}:instance-profile/${9AWSSpecifiedIAMRoleNAME}"
         BlockDeviceMappings:
-        - DeviceName: "/dev/xvda"
+        - DeviceName: !If [InstancePlatformLinux,'/dev/xvda','/dev/sda1']
           Ebs:
             VolumeType: 'gp2'
-            VolumeSize: 30
+            VolumeSize: !Ref 3INSTEbsVolumeSize
         Placement:
           Tenancy: default
         UserData:
@@ -859,8 +902,9 @@ Resources:
                   yum install -y https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-latest.amzn1.noarch.rpm
                   sudo ln -s /usr/local/lib/python2.7/site-packages/cfnbootstrap /usr/lib/python2.7/site-packages/cfnbootstrap
                 fi
-                AWS_REGION="$(curl -s 169.254.169.254/latest/meta-data/placement/availability-zone | sed 's/.$//')"
-                MYINSTANCEID="$(curl http://169.254.169.254/latest/meta-data/instance-id)"
+                IMDS_TOKEN="$(curl -X PUT http://169.254.169.254/latest/api/token -H X-aws-ec2-metadata-token-ttl-seconds:21600)"
+                AWS_REGION="$(curl -s -H X-aws-ec2-metadata-token:$IMDS_TOKEN 169.254.169.254/latest/meta-data/placement/availability-zone | sed 's/.$//')"
+                MYINSTANCEID="$(curl -H X-aws-ec2-metadata-token:$IMDS_TOKEN http://169.254.169.254/latest/meta-data/instance-id)"
                 NAMEOFASG=$(aws ec2 describe-tags --region $AWS_REGION --filters {"Name=resource-id,Values=$MYINSTANCEID","Name=key,Values=aws:autoscaling:groupName"} --output=text | cut -f5)
                 NAMEOFSTACK=${AWS::StackName}
                 REBOOTWASDONEFLAG=/root/finishuprebootwasdone.flg
@@ -1048,12 +1092,13 @@ Resources:
                 # END OF "RUNNING CUSTOM INSTANCE CONFIGURATION CODE"
                 # ###################################################
 
-                needs-restarting -r
-                if [ $? -gt 0 ]; then
+                NEEDS_RESTART=0
+                needs-restarting -r || NEEDS_RESTART=$?
+                if [ $NEEDS_RESTART -gt 0 ]; then
                   logit "Detected that a reboot is required, rebooting..."
                   logit "Resetting userdata semaphore..."
-                  rm /var/lib/cloud/instances/*/sem/config_scripts_user
-                  rm /var/lib/cloud/instance/sem/config_scripts_user
+                  rm -f /var/lib/cloud/instances/*/sem/config_scripts_user || true
+                  rm -f /var/lib/cloud/instance/sem/config_scripts_user || true
                   touch $REBOOTWASDONEFLAG
                   reboot
                   logit "Waiting for reboot to complete..."
@@ -1130,8 +1175,9 @@ Resources:
                   ((get-itemproperty 'HKLM:SYSTEM\CurrentControlSet\Control\ComputerName\ComputerName\' | Select-Object -Expand 'ComputerName') -ine (get-itemproperty 'HKLM:SYSTEM\CurrentControlSet\Control\ComputerName\ComputerName\' | Select-Object -Expand 'ComputerName')) -OR
                   ((Test-Path "HKLM:SYSTEM\CurrentControlSet\Services\Netlogon\JoinDomain") -OR (Test-Path "HKLM:SYSTEM\CurrentControlSet\Services\Netlogon\AvoidSpnSet")))
                 }
-                $AWS_REGION="$($(invoke-restmethod 169.254.169.254/latest/meta-data/placement/availability-zone) -replace '.$')"
-                $MYINSTANCEID="$(invoke-restmethod http://169.254.169.254/latest/meta-data/instance-id)"
+                $IMDS_TOKEN="$(invoke-restmethod -method PUT -headers @{'X-aws-ec2-metadata-token-ttl-seconds'=21600} http://169.254.169.254/latest/api/token)"
+                $AWS_REGION="$($(invoke-restmethod -headers @{'X-aws-ec2-metadata-token'=$IMDS_TOKEN} 169.254.169.254/latest/meta-data/placement/availability-zone) -replace '.$')"
+                $MYINSTANCEID="$(invoke-restmethod -headers @{'X-aws-ec2-metadata-token'=$IMDS_TOKEN} http://169.254.169.254/latest/meta-data/instance-id)"
                 $NAMEOFASG=$(aws ec2 describe-tags --region $AWS_REGION --filters Name=resource-id,Values=$MYINSTANCEID Name=key,Values=aws:autoscaling:groupName | convertfrom-json).tags.value
                 $NAMEOFSTACK="${AWS::StackName}"
                 if (Test-Path $REBOOTWASDONEFLAG) {
@@ -1363,8 +1409,8 @@ Resources:
               try:
                   LOGGER.info('REQUEST RECEIVED:\n %s', event)
                   LOGGER.info('REQUEST RECEIVED:\n %s', context)
-                  if event['RequestType'] == 'Create':
-                      LOGGER.info('CREATE!')
+                  if event['RequestType'] == 'Create' or event['RequestType'] == 'Update':
+                      LOGGER.info(event['RequestType'])
                       randstring = ''.join(random.SystemRandom().choice(string.ascii_lowercase + string.digits) for _ in range(5))
                       output = event['ResourceProperties'].get('InputString', '').lower() + '-' + randstring
                       responseData = {'OutputString': output}
@@ -1382,15 +1428,15 @@ Resources:
               '''Handle SIGALRM'''
               raise Exception('Time exceeded')
 
-          signal.signal(signal.SIGALRM, timeout_handler)               
+          signal.signal(signal.SIGALRM, timeout_handler)
 
   #Arguments: Vpc-id or "DefaultVPC"
-  #Returns: vpc-id, number of subnets and ordered list of subnetids and az ids.  
+  #Returns: vpc-id, number of subnets and ordered list of subnetids and az ids.
   # The index of these two return lists are correlated if it is desirable to choose less than the whole list.
   VPCInfoLambda:
     Type: 'AWS::Lambda::Function'
     Properties:
-      Description: Returns the lowercase version of a string
+      Description: Returns VPC Information
       MemorySize: 256
       Runtime: python3.8
       Handler: index.handler
@@ -1418,8 +1464,8 @@ Resources:
                       cfnresponse.send(event, context, "SUCCESS", {
                            "Message": "Resource deletion successful!"})
                       return
-                  elif event['RequestType'] == 'Create':
-                      LOGGER.info('CREATE!')
+                  elif event['RequestType'] == 'Create' or event['RequestType'] == 'Update':
+                      LOGGER.info(event['RequestType'])
                       request_properties = event.get('ResourceProperties', None)
 
                       VpcToGet = event['ResourceProperties'].get('VpcToGet', '')
@@ -1441,23 +1487,47 @@ Resources:
                         subidlist = []
                         zoneidlist = []
                         subnets = list(TargetVPC.subnets.all())
+
+                        SubnetsToGet = event['ResourceProperties'].get('SubnetsToGet', '')
+                        subidfilterlist = []
+                        if SubnetsToGet != 'AllSubnets':
+                           subidfilterlist = [subid.strip() for subid in SubnetsToGet.split(',')]
+                           subnets = [subnet for subnet in subnets if subnet.id in subidfilterlist]
+                           if len(subnets) != len(subidfilterlist):
+                             raise Exception(f'Expected to find the {len(subidfilterlist)} provided subnets ({", ".join(subidfilterlist)}) in VPC {VpcToGet}, but found {len(subnets)} ({", ".join(subnets)})')
+
                         for subnet in subnets:
                           subidlist.append(subnet.id)
                           zoneidlist.append(subnet.availability_zone)
                         subidOutput = ",".join(subidlist)
                         zoneidOutput = ",".join(zoneidlist)
                         if not subnets:
-                          raise Exception(f'There are no subnets in VPC: {VpcToGet}')
+                          raise Exception(f'There are no subnets in VPC: {VpcToGet}, or the subnets provided {SubnetsToGet} do not belong to this VPC')
                         LOGGER.info('subnet ids are: %s', subidOutput)
                         LOGGER.info('zone ids are: %s', zoneidOutput)
+
+                        SgsToGet = event['ResourceProperties'].get('SgsToGet', '')
+                        sgs = list(TargetVPC.security_groups.all())
+                        if SgsToGet == 'DefaultSG':
+                          for sg in sgs:
+                            if sg.group_name == 'default':
+                              sgIds = [sg.id]
+                              break
+                        else:
+                          sgidfilterlist = [sgid.strip() for sgid in SgsToGet.split(',')]
+                          sgIds = [sg.id for sg in sgs if sg.id in sgidfilterlist]
+                          if len(sgIds) != len(sgidfilterlist):
+                            raise Exception(f'Expected to find the {len(sgidfilterlist)} provided security groups ({", ".join(sgidfilterlist)}) in VPC {VpcToGet}, but found {len(sgIds)} ({", ".join(sgIds)})')
+                        sgOutput = ",".join(sgIds)
 
                       responseData = {}
                       responseData['VPC_id'] = VPCOutput
                       responseData['OrderedSubnetIdList'] = subidOutput
                       responseData['OrderedZoneIdList'] = zoneidOutput
                       responseData['SubnetCount'] = len(subidlist)
-                      cfnresponse.send(event, context, cfnresponse.SUCCESS, responseData)                                  
-              
+                      responseData['SgIdList'] = sgOutput
+                      cfnresponse.send(event, context, cfnresponse.SUCCESS, responseData)
+
               except Exception as err:
                   AccountRegionInfo=f'Occured in Account {context.invoked_function_arn.split(":")[4]} in region {context.invoked_function_arn.split(":")[3]}'
                   FinalMsg=str(err) + ' ' + AccountRegionInfo
@@ -1492,7 +1562,7 @@ Resources:
               - Effect: "Allow"
                 Action:
                   - "logs:CreateLogGroup"
-                  - "logs:CreateLogStream"  
+                  - "logs:CreateLogStream"
                   - "logs:PutLogEvents"
                 Resource: "arn:aws:logs:*:*"
         - PolicyName: "describe-vpcs-and-subnets"
@@ -1503,6 +1573,7 @@ Resources:
                 Action:
                   - "ec2:DescribeVpcs"
                   - "ec2:DescribeSubnets"
+                  - "ec2:DescribeSecurityGroups"
                 Resource: "*"
 
   LookupVPCInfo:
@@ -1510,6 +1581,8 @@ Resources:
     Properties:
       ServiceToken: !GetAtt VPCInfoLambda.Arn
       VpcToGet: !Ref 4ASGSpecifyVPC
+      SgsToGet: !Ref 4ASGSpecifySecurityGroups
+      SubnetsToGet: !Ref 4ASGSpecifySubnets
 
   S3BucketNameLower:
     Type: Custom::Lowercase

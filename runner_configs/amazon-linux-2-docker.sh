@@ -2,8 +2,9 @@
 
 GITLABRunnerExecutor='docker'
 
-MYIP="$(curl http://169.254.169.254/latest/meta-data/local-ipv4)"
-MYACCOUNTID="$(curl http://169.254.169.254/latest/dynamic/instance-identity/document|grep accountId| awk '{print $3}'|sed  's/"//g'|sed 's/,//g')"
+IMDS_TOKEN="$(curl -X PUT http://169.254.169.254/latest/api/token -H X-aws-ec2-metadata-token-ttl-seconds:21600)"
+MYIP="$(curl -H X-aws-ec2-metadata-token:$IMDS_TOKEN http://169.254.169.254/latest/meta-data/local-ipv4)"
+MYACCOUNTID="$(curl -H X-aws-ec2-metadata-token:$IMDS_TOKEN http://169.254.169.254/latest/dynamic/instance-identity/document | grep accountId | awk '{print $3}' | sed  's/"//g' | sed 's/,//g')"
 RunnerName="$MYINSTANCEID-in-$MYACCOUNTID-at-$AWS_REGION"
 
 function logit() {
@@ -42,7 +43,8 @@ elif [[ -n "$(command -v apt-get)" ]] ; then
   PKGMGR='apt-get'
 fi
 
-set -ex
+set -e
+
 if [[ -z "$(command -v docker)" ]] ; then
   echo "Docker not present, installing..."
   amazon-linux-extras install docker
@@ -75,7 +77,6 @@ do
     --config $RunnerConfigToml \
     --url "$GITLABRunnerInstanceURL" \
     --registration-token "$RunnerRegToken" \
-    --request-concurrency "$GITLABRunnerConcurrentJobs" \
     --executor "$GITLABRunnerExecutor" \
     --run-untagged="true" \
     --tag-list "$RunnerCompleteTagList" \
@@ -93,6 +94,8 @@ do
     --docker-disable-cache="false" \
     --docker-shm-size 0
 done
+
+sed -i "s/^\s*concurrent.*/concurrent = $GITLABRunnerConcurrentJobs/g" $RunnerConfigToml
 
 $RunnerInstallRoot/gitlab-runner start
 

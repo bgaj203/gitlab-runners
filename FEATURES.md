@@ -20,6 +20,8 @@
 - Developer Self-Service through CloudFormation Direct Launch and Compatiblity with AWS Service Catalog for Enterprises.
 - Flexible leveraging of spot compute.
 - Configurable scheduled shutdown and/or startup for runners that do not need to run 24x7. For instance, you save 76% when a runner is scheduled for 40 hours a week ((168-40/168)=76%)
+- Configurable to use AWS Graviton (arm) for Linux OS based runners.
+- Blog post on savings using spot, arm and scheduling: [How to provision 100 AWS Graviton GitLab Spot Runners in 10 Minutes for $2/hour](https://about.gitlab.com/blog/2021/08/17/100-runners-in-less-than-10mins-and-less-than-10-clicks/)
 
 ## Runner Configuration Best Practices
 
@@ -34,6 +36,8 @@
 - Configurable IAM Instance Profile to avoid having to pass credentials to runner jobs.
 - Least privilege when using built-in security configuration.
 - Least configuration - does not configure items that are not needed to fulfill functionality indicated by configured parameters.
+- The ability to choose subnets allows only private ones to be selected.
+- The ability to specify security groups allows custom control of runner ingress / egress security.
 
 ## High Availability
 
@@ -62,6 +66,13 @@
 - Mixed Instances Policy support.
 - These templates can be loaded into AWS Service Catalog to be a part of your internal self-service cloud automation.
 - Stackname is used in all created resources so that all related resources can be quickly identified as related.
+- Compatible with the following AWS Services and Offerings
+    - [AWS Quick Starts](https://aws.amazon.com/quickstart/)
+    - [AWS Service Catalog](https://aws.amazon.com/servicecatalog/) (Direct Import)
+        - [ServiceNow via an AWS Service Catalog Connector](https://docs.aws.amazon.com/servicecatalog/latest/adminguide/integrations-servicenow.html#integrations-servicenow)
+        - [Jira Service Manager via an AWS Service Catalog Connector](https://docs.aws.amazon.com/servicecatalog/latest/adminguide/integrations-jiraservicedesk.html#integrations-jiraservicedesk)
+    - [AWS Control Tower](https://docs.aws.amazon.com/controltower/)
+    - [AWS SaaS Factory](https://aws.amazon.com/partners/programs/saas-factory/)
 
 ## Extensibility, Reusability and Troubleshooting
 
