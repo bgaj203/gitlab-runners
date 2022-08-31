@@ -144,7 +144,7 @@ EndOfScript
 fi
 
 echo "Settings up CloudWatch Metrics to Enable Scaling on Memory Utilization"
-yum install amazon-cloudwatch-agent
+yum install -y amazon-cloudwatch-agent
 systemctl stop amazon-cloudwatch-agent
 cat << 'EndOfCWMetricsConfig' > /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json
 {
