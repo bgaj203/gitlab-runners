@@ -74,12 +74,14 @@ There is a project with a runner stressing utility here: https://gitlab.com/gitl
 
 ##### Linux Userdata (includes download and execution of runner configuraiton script)
 
-* **Userdata Execution Log**: `cat /var/log/cloud-init-output.log`
-* **Resolved Script (CF Variables Expanded)**: `cat /var/lib/cloud/instance/scripts/part-00`
+* **Userdata Execution Log**: `sudo cat /var/log/cloud-init-output.log`
+* **Resolved Script (CF Variables Expanded)**: `sudo cat /var/lib/cloud/instance/scripts/part-001`
+* **Resolved cfn-init "commands"**: `sudo cat /var/lib/cfn-init/data/metadata.json`
+* **Cloud Init log messages**: `sudo cat /var/log/messages | grep "cloud-init:"`
 
 ##### Linux Runner Configuration
 
-- **Rendered Custom Runner Configuration Script**: `cat /custom_instance_configuration_script.sh`
+- **Rendered Custom Runner Configuration Script**: `sudo cat /custom_instance_configuration_script.sh`
 
 ##### Linux Termination Monitoring
 
