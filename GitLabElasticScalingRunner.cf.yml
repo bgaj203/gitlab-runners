@@ -1323,7 +1323,7 @@ Resources:
                   logit "CUSTOM CONFIG: Running custom instance configuration script in the local file named $INSTConfigurationScript"
                   if (!(Test-Path $DefaultLocalCachedConfigScript)) {
                     logit "Pointing \$DefaultLocalCachedConfigScript to $INSTConfigurationScript"
-                    DefaultLocalCachedConfigScript=$INSTConfigurationScript
+                    $DefaultLocalCachedConfigScript=$INSTConfigurationScript
                   } else {
                     logit "$DefaultLocalCachedConfigScript was not found, will error out."
                   }
