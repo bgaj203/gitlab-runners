@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v1.5.0-beta1] - 2022-11-02
+
+- FIXED Fix typo in local config script functionality for Windows (THANKS for this Community Code Contribution from @gavin.stolk !) !42
+- FIXED Yum auto approve when installing cloudwatch agent (THANKS for this Community Code Contribution from @Senevri !) !39
+- UPDATED documentation clarifications (THANKS for this Community Code Contribution from @Eslatt !) !40
+
 ## [v1.4.9-alpha14] - 2021-11-23
 
 - FIXED #49 / !25 VPCInfo get's an error on stack update (THANKS for this Community Code Contribution from @dan-lind !)
