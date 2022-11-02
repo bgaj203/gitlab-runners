@@ -217,7 +217,7 @@ Resources:
         1OSPatchScope: NoPatching
         3GITLABRunnerInstanceURL: !Ref 3GITLABRunnerInstanceURL
         3GITLABRunnerRegTokenList: !Ref 3GITLABRunnerRegTokenList
-        3INSTConfigurationScript: https://gitlab.com/guided-explorations/aws/gitlab-runner-autoscaling-aws-asg/-/raw/v1.5.0-beta1/runner_configs/windows-shell.ps1
+        3INSTConfigurationScript: https://gl-public-templates.s3.us-west-2.amazonaws.com/cfn/v1.5.0-beta1/runner_configs/windows-shell.ps1
         3GITLABRunnerTagList: !Ref 3GITLABRunnerTagList
         3INSTEbsVolumeSize: !Ref 3INSTEbsVolumeSize
         4ASGDesiredCapacity: 2
