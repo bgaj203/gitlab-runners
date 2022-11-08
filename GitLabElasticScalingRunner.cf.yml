@@ -266,7 +266,8 @@ Parameters:
     Description: One or more runner tokens to register (semicolon delimited) from the instance identified by the GitLab URL.
     Type: String
     NoEcho: true
-    AllowedPattern: .+
+    MinLength: 5
+    ConstraintDescription: You must provide at least one runner registration token.
   3GITLABRunnerS3CacheBucket:
     Description: >
       A bucket to which all instances will be given read and write permissions for a shared S3 Cache.

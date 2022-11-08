@@ -174,7 +174,8 @@ Parameters:
     Description: One or more runner tokens to register (semicolon delimited)
     Type: String
     NoEcho: true
-    AllowedPattern: .+
+    MinLength: 5
+    ConstraintDescription: You must provide at least one runner registration token.
   3GITLABRunnerTagList:
     Description: >
       Optional tags to identify the runner (comma delimited) in GitLab and AWS Instance tags to identify things like what team or person the runner is for.

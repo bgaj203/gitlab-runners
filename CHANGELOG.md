@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file.
 - FIXED Yum auto approve when installing cloudwatch agent (THANKS for this Community Code Contribution from @Senevri !) !39
 - UPDATED documentation clarifications (THANKS for this Community Code Contribution from @Eslatt !) !40
 - ADDED initial .gitignore (@DarwinJS)
+- UPDATED prevent empty value for 3GITLABRunnerRegTokenList: (@DarwinJS)
 
 ## [v1.4.9-alpha14] - 2021-11-23
 
