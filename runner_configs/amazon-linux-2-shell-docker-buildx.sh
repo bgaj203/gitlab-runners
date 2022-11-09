@@ -15,7 +15,7 @@ function logit() {
   LOGSTRING="$(date +"%_b %e %H:%M:%S") $(hostname) USERDATA_SCRIPT: $1"
   #For CloudFormation, if you already collect /var/log/cloud-init-output.log or /var/log/messsages (non amazon linux), then you could mute the next logging line
   echo "$LOGSTRING" >> /var/log/messages
-}                     
+}
 
 logit "Preflight checks for required endpoints..."
 urlportpairlist="$(echo $GITLABRunnerInstanceURL | cut -d'/' -f3 | cut -d':' -f1)=443 gitlab-runner-downloads.s3.amazonaws.com=443"
@@ -34,7 +34,7 @@ done
 
 if [ $failurecount -gt 0 ]; then
  logit "$failurecount tcp connect tests failed. Please check all networking configuration for problems."
-  if [ -f /opt/aws/bin/cfn-signal ]; then 
+  if [ -f /opt/aws/bin/cfn-signal ]; then
     /opt/aws/bin/cfn-signal --success false --stack ${AWS::StackName} --resource InstanceASG --region $AWS_REGION --reason "Cant connect to GitLab or other endpoints"
   fi
   exit $failurecount
@@ -104,7 +104,7 @@ if [ ! -z "$NAMEOFASG" ] && [ "$ASGSelfMonitorTerminationInterval" != "Disabled"
   SCRIPTNAME=/etc/cron.d/MonitorTerminationHook.sh
   SCRIPTFOLDER=$(dirname $SCRIPTNAME)
   SCRIPTBASENAME=$(basename $SCRIPTNAME)
-  
+
   #Heredoc script
   cat << EndOfScript > $SCRIPTNAME
     function logit() {
@@ -223,7 +223,7 @@ if [[ -z "$(command -v docker)" ]] ; then
   systemctl enable docker.service --now
 fi
 
-#Enabling BuildKit builds 
+#Enabling BuildKit builds
 export DOCKER_BUILDKIT=1
 
 #Building image w/local platform & downloading latest buildx binaries
@@ -258,7 +258,7 @@ chown gitlab-runner:gitlab-runner -R /home/gitlab-runner/.docker/
 #amazon-linux-extras install -y epel; yum install -y stress-ng
 #stress-ng --vm 1 --vm-bytes 75% --vm-method all --verify -t 10m -v
 #stress-ng --vm-hang 2 --vm-keep --verify --timeout 600 --verbose --vm 2 --vm-bytes $(awk '/MemTotal/{printf "%d\n", $2;}' < /proc/meminfo)k
-# --vm-method all 
+# --vm-method all
 #stress-ng --vm-hang 2 --vm-keep --verify --timeout 600 --verbose --vm 2 --vm-bytes $(awk '/MemAvailable/{printf "%d\n", $2 * 0.9;}' < /proc/meminfo)k
 
 

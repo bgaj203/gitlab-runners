@@ -72,7 +72,7 @@ pushd $RunnerInstallRoot
 .\gitlab-runner.exe install
 
 foreach ($RunnerRegToken in $GITLABRunnerRegTokenList.split(';')) {
- 
+
   .\gitlab-runner.exe register `
      --config $RunnerConfigToml `
      --name $RunnerName `
