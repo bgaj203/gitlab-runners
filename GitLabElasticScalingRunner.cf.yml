@@ -273,8 +273,8 @@ Parameters:
       A bucket to which all instances will be given read and write permissions for a shared S3 Cache.
       Values: "none" - do not create bucket or permissions.
       "CreateOneForMe" - create a new, ASG unique bucket and permissions.
-      "SpecificName" - presumed to be a preexisting bucket to which read / write permissions are already present. Generally used
-      with a customer override IAM Instance Profile Role which must already have access to this bucket.
+      "SpecificName" - presumed to be a preexisting bucket to which read / write permissions are already present.
+      Providing a bucket name will cause bucket permissions to be updated to allow access from the new runner.
     Type: String
     Default: CreateOneForMe
   3GITLABRunnerTagList:
