@@ -23,7 +23,7 @@ failurecount=0
 for urlportpair in $urlportpairlist; do
   set -- $(echo $urlportpair | tr '=' ' ') ; url=$1 ; port=$2
   logit "TCP Test of $url on $port"
-  timeout 3 bash -c "cat < /dev/null > /dev/tcp/$url/$port"
+  timeout 20 bash -c "cat < /dev/null > /dev/tcp/$url/$port"
   if [ "$?" -ne 0 ]; then
     logit "  Connection to $url on port $port failed"
     ((failurecount++))

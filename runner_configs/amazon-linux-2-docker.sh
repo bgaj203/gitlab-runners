@@ -19,7 +19,7 @@ failurecount=0
 for urlportpair in $urlportpairlist; do
   set -- $(echo $urlportpair | tr '=' ' ') ; url=$1 ; port=$2
   logit "TCP Test of $url on $port"
-  timeout 3 bash -c "cat < /dev/null > /dev/tcp/$url/$port"
+  timeout 20 bash -c "cat < /dev/null > /dev/tcp/$url/$port"
   if [ "$?" -ne 0 ]; then
     logit "  Connection to $url on port $port failed"
     ((failurecount++))
@@ -227,7 +227,7 @@ systemctl restart amazon-cloudwatch-agent
 #amazon-linux-extras install -y epel; yum install -y stress-ng
 #stress-ng --vm 1 --vm-bytes 75% --vm-method all --verify -t 10m -v
 #stress-ng --vm-hang 2 --vm-keep --verify --timeout 600 --verbose --vm 2 --vm-bytes $(awk '/MemTotal/{printf "%d\n", $2;}' < /proc/meminfo)k
-# --vm-method all 
+# --vm-method all
 #stress-ng --vm-hang 2 --vm-keep --verify --timeout 600 --verbose --vm 2 --vm-bytes $(awk '/MemAvailable/{printf "%d\n", $2 * 0.9;}' < /proc/meminfo)k
 
 

@@ -1,7 +1,7 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Description: >
   Windows 2019 Shell Manual Scaling Spot Instances. 
-  Two Window Shell executors, scaling based on fixed instance count, only spot.
+  Two Window Shell executors, scaling based on fixed instance count, only OnDemand.
   Instance scaling updated by editing the AutoScaling Group parameters.
 Metadata: 
   AWS::CloudFormation::Interface: 
