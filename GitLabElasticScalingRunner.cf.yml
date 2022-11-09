@@ -511,7 +511,7 @@ Conditions:
   Provided5ASGInstanceType4: !Not [ !Equals [ !Ref 5ASGInstanceType4, "" ]]
   UseKeypair: !Not [ !Equals [ !Ref 8DBGKeypairName, "" ]]
   EnableSelfTerminationMonitoring: !Not [ !Equals [ !Ref 5ASGSelfMonitorTerminationInterval, "Disabled" ]]
-  CreateS3BucketAndPermissions: !Equals [ !Ref 3GITLABRunnerS3CacheBucket, "CreateOneForMe" ]
+  CreateS3Bucket: !Equals [ !Ref 3GITLABRunnerS3CacheBucket, "CreateOneForMe" ]
   CreateStartSchedule: !Not [ !Equals [ !Ref 4ASGScheduledStartupCron, "Disabled" ]]
   CreateStopSchedule: !Not [ !Equals [ !Ref 4ASGScheduledShutdownCron, "Disabled" ]]
   UseCPUUtilizationMetric: !Equals [ !Ref 5ASGAutoScalingMetricTypeToMonitor, "CPU" ]
@@ -593,7 +593,7 @@ Resources:
             - 's3:DeleteObject' #needed for runner cache cleanup
           Resource:
             !If
-              - CreateS3BucketAndPermissions
+              - CreateS3Bucket
               -
                 - !Sub 'arn:${AWS::Partition}:s3:::${ASGBucket}'
                 - !Sub 'arn:${AWS::Partition}:s3:::${ASGBucket}/*'
@@ -631,7 +631,7 @@ Resources:
 
   ASGBucket:
     Type: AWS::S3::Bucket
-    Condition: CreateS3BucketAndPermissions
+    Condition: CreateS3Bucket
     Properties:
       BucketName: !GetAtt S3BucketNameLower.OutputString
       VersioningConfiguration:
@@ -1114,9 +1114,9 @@ Resources:
                 fi
               - BucketName:
                   !If [
-                    CreateS3BucketAndPermissions,
+                    CreateS3Bucket,
                     !Ref ASGBucket,
-                    !Ref 3GITLABRunnerS3CacheBucket,
+                    !Ref 3GITLABRunnerS3CacheBucket
                   ]
           - # **************
             # Windows UserData
@@ -1389,9 +1389,9 @@ Resources:
                 </powershell>
               - BucketName:
                   !If [
-                    CreateS3BucketAndPermissions,
+                    CreateS3Bucket,
                     !Ref ASGBucket,
-                    !Ref 3GITLABRunnerS3CacheBucket,
+                    !Ref 3GITLABRunnerS3CacheBucket
                   ]
 
   # Custom resource to transform input to lowercase.

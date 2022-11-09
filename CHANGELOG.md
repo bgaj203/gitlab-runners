@@ -4,6 +4,7 @@ All notable changes to this project will be documented in this file.
 
 ## [v1.5.0-beta1] - 2022-11-02
 
+- FIXED Custom Bucket was generating error (THANKS for this Community Code Contribution from @matthias-pichler !) !33
 - UPDATED runner_configs to be sourced from S3 rather than GitLab Raw. `https://gitlab.com/guided-explorations/aws/gitlab-runner-autoscaling-aws-asg/-/raw/v1.5.0-beta1/runner_configs/` was updated to `https://gl-public-templates.s3.us-west-2.amazonaws.com/cfn/v1.5.0-beta1/runner_configs/` (@DarwinJS)
 - FIXED Fix typo in local config script functionality for Windows (THANKS for this Community Code Contribution from @gavin.stolk !) !42
 - FIXED Yum auto approve when installing cloudwatch agent (THANKS for this Community Code Contribution from @Senevri !) !39
