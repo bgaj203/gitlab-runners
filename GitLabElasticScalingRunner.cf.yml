@@ -855,13 +855,12 @@ Resources:
             VolumeSize: !Ref 3INSTEbsVolumeSize
         Placement:
           Tenancy: default
-        UserData:
-          !If
-            - InstancePlatformLinux
-            -
-              # **************
-              # Linux UserData
-              Fn::Base64: !Sub |
+        UserData: !If
+          - InstancePlatformLinux
+          - # **************
+            # Linux UserData
+            Fn::Base64: !Sub
+              - |
                 #!/bin/bash
                 #set -xv
                 ThisTemplateVersion="${1AAAATemplateVersion}"
@@ -921,7 +920,7 @@ Resources:
                 fi
                 OSInstanceLinuxArch="${1OSInstanceLinuxArch}"
                 GITLABRunnerS3CacheBucket="${3GITLABRunnerS3CacheBucket}"
-                if [ "${3GITLABRunnerS3CacheBucket}" == "CreateOneForMe" ]; then GITLABRunnerS3CacheBucket="${ASGBucket}"; fi
+                if [ "${3GITLABRunnerS3CacheBucket}" == "CreateOneForMe" ]; then GITLABRunnerS3CacheBucket="${BucketName}"; fi
                 GITLABRunnerConcurrentJobs="${3GITLABRunnerConcurrentJobs}"
                 GITLABRunnerInstanceURL="${3GITLABRunnerInstanceURL}"
                 GITLABRunnerRegTokenList="${3GITLABRunnerRegTokenList}"
@@ -1113,10 +1112,16 @@ Resources:
                 logit "Cfn-signaling success..."
                 /opt/aws/bin/cfn-signal --success true --stack ${AWS::StackName} --resource InstanceASG --region $AWS_REGION
                 fi
-            -
-              # **************
-              # Windows UserData
-              Fn::Base64: !Sub |
+              - BucketName:
+                  !If [
+                    CreateS3BucketAndPermissions,
+                    !Ref ASGBucket,
+                    !Ref 3GITLABRunnerS3CacheBucket,
+                  ]
+          - # **************
+            # Windows UserData
+            Fn::Base64: !Sub
+              - |
                 <powershell>
                 $ThisTemplateVersion="${1AAAATemplateVersion}"
                 Function lc-success {aws autoscaling complete-lifecycle-action --region $AWS_REGION --lifecycle-action-result CONTINUE --instance-id $MYINSTANCEID --lifecycle-hook-name instance-patching-reboot --auto-scaling-group-name $NAMEOFASG}
@@ -1190,7 +1195,7 @@ Resources:
                   exit 0
                 }
                 $GITLABRunnerS3CacheBucket="${3GITLABRunnerS3CacheBucket}"
-                If ( "${3GITLABRunnerS3CacheBucket}" -ieq "CreateOneForMe" ) { $GITLABRunnerS3CacheBucket="${ASGBucket}" }
+                If ( "${3GITLABRunnerS3CacheBucket}" -ieq "CreateOneForMe" ) { $GITLABRunnerS3CacheBucket="${BucketName}" }
                 $GITLABRunnerConcurrentJobs="${3GITLABRunnerConcurrentJobs}"
                 $GITLABRunnerInstanceURL="${3GITLABRunnerInstanceURL}"
                 $GITLABRunnerRegTokenList="${3GITLABRunnerRegTokenList}"
@@ -1310,7 +1315,7 @@ Resources:
                   logit "CUSTOM CONFIG: Retrieving custom instance configuration script from $INSTConfigurationScript"
                   if (!(Test-Path $DefaultLocalCachedConfigScript)) {
                       logit "Pulling and executing from `"$INSTConfigurationScript`""
-                      [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12,[Net.SecurityProtocolType]::Tls11,[Net.SecurityProtocolType]::Tls; 
+                      [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12,[Net.SecurityProtocolType]::Tls11,[Net.SecurityProtocolType]::Tls;
                       Invoke-RestMethod -UseBasicParsing -OutFile $DefaultLocalCachedConfigScript -Uri $INSTConfigurationScript
                     }
                 } elseif ( $INSTConfigurationScript -ilike "s3://*" ) {
@@ -1382,6 +1387,12 @@ Resources:
                     cf-success
                   }
                 </powershell>
+              - BucketName:
+                  !If [
+                    CreateS3BucketAndPermissions,
+                    !Ref ASGBucket,
+                    !Ref 3GITLABRunnerS3CacheBucket,
+                  ]
 
   # Custom resource to transform input to lowercase.
   LowerCasePlusRandomLambda:
