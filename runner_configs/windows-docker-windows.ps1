@@ -31,7 +31,7 @@ logit "****ATTENTION: Windows Docker Executor support for this template is exper
 
 logit "Preflight checks for required endpoints..."
 $UrlPortPairList="$(([system.uri]$GITLABRunnerInstanceURL).DnsSafeHost)=443 gitlab-runner-downloads.s3.amazonaws.com=443"
-$FailureCount=0 ; $ConnectTimeoutMS = '3000'
+$FailureCount=0 ; $ConnectTimeoutMS = '20000'
 foreach ($UrlPortPair in $UrlPortPairList.split(' '))
 {
   $array=$UrlPortPair.split('='); $url=$array[0]; $port=$array[1]
@@ -72,7 +72,7 @@ pushd $RunnerInstallRoot
 .\gitlab-runner.exe install
 
 foreach ($RunnerRegToken in $GITLABRunnerRegTokenList.split(';')) {
- 
+
   .\gitlab-runner.exe register `
      --config $RunnerConfigToml `
      --name $RunnerName `

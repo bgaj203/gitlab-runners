@@ -175,7 +175,8 @@ Parameters:
     Description: One or more runner tokens to register (semicolon delimited)
     Type: String
     NoEcho: true
-    AllowedPattern: .+
+    MinLength: 5
+    ConstraintDescription: You must provide at least one runner registration token.
   3GITLABRunnerTagList:
     Description: >
       Optional tags to identify the runner (comma delimited) in GitLab and AWS Instance tags to identify things like what team or person the runner is for.
@@ -205,7 +206,7 @@ Resources:
   RnrASG:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: https://gl-public-templates.s3.amazonaws.com/cfn/v1.4.9-alpha14/GitLabElasticScalingRunner.cf.yml
+      TemplateURL: https://gl-public-templates.s3.amazonaws.com/cfn/v1.5.0-beta1/GitLabElasticScalingRunner.cf.yml
       Tags:
         - Key: Product
           Value: GitLab
@@ -217,7 +218,7 @@ Resources:
         1OSPatchScope: NoPatching
         3GITLABRunnerInstanceURL: !Ref 3GITLABRunnerInstanceURL
         3GITLABRunnerRegTokenList: !Ref 3GITLABRunnerRegTokenList
-        3INSTConfigurationScript: https://gitlab.com/guided-explorations/aws/gitlab-runner-autoscaling-aws-asg/-/raw/v1.4.9-alpha14/runner_configs/windows-shell.ps1
+        3INSTConfigurationScript: https://gl-public-templates.s3.us-west-2.amazonaws.com/cfn/v1.5.0-beta1/runner_configs/windows-shell.ps1
         3GITLABRunnerTagList: !Ref 3GITLABRunnerTagList
         3INSTEbsVolumeSize: !Ref 3INSTEbsVolumeSize
         4ASGDesiredCapacity: 2

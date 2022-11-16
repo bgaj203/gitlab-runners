@@ -11,7 +11,7 @@ function logit() {
   LOGSTRING="$(date +"%_b %e %H:%M:%S") $(hostname) USERDATA_SCRIPT: $1"
   #For CloudFormation, if you already collect /var/log/cloud-init-output.log or /var/log/messsages (non amazon linux), then you could mute the next logging line
   echo "$LOGSTRING" >> /var/log/messages
-}                     
+}
 
 logit "Preflight checks for required endpoints..."
 urlportpairlist="$(echo $GITLABRunnerInstanceURL | cut -d'/' -f3 | cut -d':' -f1)=443 gitlab-runner-downloads.s3.amazonaws.com=443"
@@ -19,7 +19,7 @@ failurecount=0
 for urlportpair in $urlportpairlist; do
   set -- $(echo $urlportpair | tr '=' ' ') ; url=$1 ; port=$2
   logit "TCP Test of $url on $port"
-  timeout 3 bash -c "cat < /dev/null > /dev/tcp/$url/$port"
+  timeout 20 bash -c "cat < /dev/null > /dev/tcp/$url/$port"
   if [ "$?" -ne 0 ]; then
     logit "  Connection to $url on port $port failed"
     ((failurecount++))
@@ -30,7 +30,7 @@ done
 
 if [ $failurecount -gt 0 ]; then
  logit "$failurecount tcp connect tests failed. Please check all networking configuration for problems."
-  if [ -f /opt/aws/bin/cfn-signal ]; then 
+  if [ -f /opt/aws/bin/cfn-signal ]; then
     /opt/aws/bin/cfn-signal --success false --stack ${AWS::StackName} --resource InstanceASG --region $AWS_REGION --reason "Cant connect to GitLab or other endpoints"
   fi
   exit $failurecount
@@ -100,7 +100,7 @@ if [ ! -z "$NAMEOFASG" ] && [ "$ASGSelfMonitorTerminationInterval" != "Disabled"
   SCRIPTNAME=/etc/cron.d/MonitorTerminationHook.sh
   SCRIPTFOLDER=$(dirname $SCRIPTNAME)
   SCRIPTBASENAME=$(basename $SCRIPTNAME)
-  
+
   #Heredoc script
   cat << EndOfScript > $SCRIPTNAME
     function logit() {
@@ -131,7 +131,7 @@ EndOfScript
 fi
 
 echo "Settings up CloudWatch Metrics to Enable Scaling on Memory Utilization"
-yum install amazon-cloudwatch-agent
+yum install -y amazon-cloudwatch-agent
 systemctl stop amazon-cloudwatch-agent
 cat << 'EndOfCWMetricsConfig' > /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json
 {
@@ -218,7 +218,7 @@ yum -y install git
 #amazon-linux-extras install -y epel; yum install -y stress-ng
 #stress-ng --vm 1 --vm-bytes 75% --vm-method all --verify -t 10m -v
 #stress-ng --vm-hang 2 --vm-keep --verify --timeout 600 --verbose --vm 2 --vm-bytes $(awk '/MemTotal/{printf "%d\n", $2;}' < /proc/meminfo)k
-# --vm-method all 
+# --vm-method all
 #stress-ng --vm-hang 2 --vm-keep --verify --timeout 600 --verbose --vm 2 --vm-bytes $(awk '/MemAvailable/{printf "%d\n", $2 * 0.9;}' < /proc/meminfo)k
 
 
