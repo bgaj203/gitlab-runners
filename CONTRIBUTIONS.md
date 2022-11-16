@@ -25,24 +25,36 @@ For your initial submission, please:
 
 1. The version string embedded throughout the code will stay as is to enable version safety
 2. `develop` will be merged into `main`
-3. the templates will be pushed to the existing s3 key that contains the versoin string
+3. the templates will be pushed to the existing s3 key that contains the version string
 4. the Git version tag will be pointed at the tip of the `main` branch
 5. A GitLab Release will be created from the Git tag.
 
 The above results in the default view of the README.md and easybuttons.md pointing to the S3 bucket.
 
 ## Setting up a new development tag
-1. Name the branch exactly as the new version with  (e.g. v1.4.5-alpha10)
-2. Search and replace all occurances of the old branch to the new (e.g. v1.4.2-alpha9 == replace with ==> v1.4.5-alpha10)
-3. Files under "runner_configs" use raw file retrieval from gitlab to pull these files, if they might change on this branch, the retrieval must be updated to isolate to the branch by replacing occurances of `/-/raw/main/` with `/-/raw/v1.4.5-alpha10/`
+1. Determine the next version number (e.g. increment v1.4.2-alpha9 == to ==> v1.4.5-alpha10)
+
+2. In the develop branch, **EXCLUDING** CHANGELOG.md, search and replace all occurrences of the old version to the new (e.g. v1.4.2-alpha9 == replace with ==> v1.4.5-alpha10)
+
+3. Add the release heading and current known changes to CHANGELOG.md
+
+3. Files under "runner_configs" use raw file retrieval from gitlab to pull these files, if they might change on this branch, the retrieval must be updated to isolate to the branch by replacing occurrences of `/-/raw/main/` with `/-/raw/v1.4.5-alpha10/`
+
 4. In the public S3 bucket that houses the templates, create a new version key (subdirectory) with the same name (e.g. v1.4.5-alpha10)
+
+5. Copy or update files to s3 as such:
+
+   | Relative Repo Path                 | Relative Bucket Destination |
+   | ---------------------------------- | --------------------------- |
+   | /GitLabElasticScalingRunner.cf.yml | /v1.4.5-alpha10/                           |
+   | easy_button/cfn/*                  | /v1.4.5-alpha10/                           |
+   | runner_configs/*                   | /v1.4.5-alpha10/runner_configs/            |
 
 ## Releasing
 1. Ensure that 5ASGAutoScalingMaxSize, Default: 20 is set - to prevent overrun of tests against Gitlab.com
-1. Merge to main WITHOUT deleting the branch.  If you accidentally delete it, immediately recreate it from the merge to main.
-2. Apply the git tag "latest" to this version on the local git repository and force push tags.
+1. Merge develop to main WITHOUT deleting the develop branch.  If you accidentally delete it, immediately recreate it from the tag merged to main.
+2. Apply the git tag "latest" and "[The lastest version Number]" (e.g. v1.4.5-alpha10) to this version on the local git repository and force push tags.
 3. Create a GitLab release and tag from the default branch using the version tag.
 4. Merge to any special releases WITHOUT deleting the branch (e.g. "experimental" for the experiment that links GitLab Runner UI to this project).
-
 
 Technically when files are loaded from main (like easy button markdowns or cloudformation templates) - key parts are pointing to the branch and the S3 url by the same name. The reference to the runner script will refer back to the branch you merged from.

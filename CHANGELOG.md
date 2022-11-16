@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v1.5.0-beta1] - 2022-11-02
+
+- UPDATED Extended TCP Preflight connection testing from 3 to 20 seconds to address #70 (@DarwinJS)
+- ADDED LICENSE (file) to match runner: https://gitlab.com/gitlab-org/gitlab-runner/-/blob/main/LICENSE - closes #68 (@katana_)
+- FIXED Custom Bucket was generating error (THANKS for this Community Code Contribution from @matthias-pichler !) !33
+- UPDATED runner_configs to be sourced from S3 rather than GitLab Raw. `https://gitlab.com/guided-explorations/aws/gitlab-runner-autoscaling-aws-asg/-/raw/v1.5.0-beta1/runner_configs/` was updated to `https://gl-public-templates.s3.us-west-2.amazonaws.com/cfn/v1.5.0-beta1/runner_configs/` (@DarwinJS)
+- FIXED Fix typo in local config script functionality for Windows (THANKS for this Community Code Contribution from @gavin.stolk !) !42
+- FIXED Yum auto approve when installing cloudwatch agent (THANKS for this Community Code Contribution from @Senevri !) !39
+- UPDATED documentation clarifications (THANKS for this Community Code Contribution from @Eslatt !) !40
+- ADDED initial .gitignore (@DarwinJS)
+- UPDATED prevent empty value for 3GITLABRunnerRegTokenList: (@DarwinJS)
+
 ## [v1.4.9-alpha14] - 2021-11-23
 
 - FIXED #49 / !25 VPCInfo get's an error on stack update (THANKS for this Community Code Contribution from @dan-lind !)

@@ -177,8 +177,8 @@ Parameters:
   1AAAATemplateVersion:
     Description: "Version of this template. Read only."
     Type: String
-    Default: "v1.4.9-alpha14"
-    AllowedValues: [ "v1.4.9-alpha14" ]
+    Default: "v1.5.0-beta1"
+    AllowedValues: [ "v1.5.0-beta1" ]
     ConstraintDescription: "1AAAATemplateVersion is the template version number and cannot be changed at runtime."
   1AAASourceProject:
     Description: >
@@ -245,10 +245,10 @@ Parameters:
       The instance must have a network route and permission to any remote locations.
       The code you write must be idempotent so that it does the correct thing when run again after a patching reboot.
       Runner examples provided in this project are: amazon-linux-2-shell.sh, amazon-linux-2-docker.sh, windows-shell.ps1 and windows-docker-windows.ps1 at
-      git raw url: https://gitlab.com/guided-explorations/aws/gitlab-runner-autoscaling-aws-asg/-/raw/v1.4.9-alpha14/runner_configs/
+      url: https://gl-public-templates.s3.us-west-2.amazonaws.com/cfn/v1.5.0-beta1/runner_configs/
     Type: String
-    Default: https://gitlab.com/guided-explorations/aws/gitlab-runner-autoscaling-aws-asg/-/raw/v1.4.9-alpha14/runner_configs/amazon-linux-2-docker.sh
-    #Reset above to: https://gitlab.com/guided-explorations/aws/gitlab-runner-autoscaling-aws-asg/-/raw/v1.4.9-alpha14/runner_configs/amazon-linux-2-docker.sh
+    Default: https://gl-public-templates.s3.us-west-2.amazonaws.com/cfn/v1.5.0-beta1/runner_configs/amazon-linux-2-docker.sh
+    #Reset above to: https://gl-public-templates.s3.us-west-2.amazonaws.com/cfn/v1.5.0-beta1/runner_configs/amazon-linux-2-docker.sh
   3GITLABRunnerConcurrentJobs:
     Description: >
       How many desired concurrent jobs can this runner take at a time.
@@ -266,14 +266,15 @@ Parameters:
     Description: One or more runner tokens to register (semicolon delimited) from the instance identified by the GitLab URL.
     Type: String
     NoEcho: true
-    AllowedPattern: .+
+    MinLength: 5
+    ConstraintDescription: You must provide at least one runner registration token.
   3GITLABRunnerS3CacheBucket:
     Description: >
       A bucket to which all instances will be given read and write permissions for a shared S3 Cache.
       Values: "none" - do not create bucket or permissions.
       "CreateOneForMe" - create a new, ASG unique bucket and permissions.
-      "SpecificName" - presumed to be a preexisting bucket to which read / write permissions are already present. Generally used
-      with a customer override IAM Instance Profile Role which must already have access to this bucket.
+      "SpecificName" - presumed to be a preexisting bucket to which read / write permissions are already present.
+      Providing a bucket name will cause bucket permissions to be updated to allow access from the new runner.
     Type: String
     Default: CreateOneForMe
   3GITLABRunnerTagList:
@@ -510,7 +511,7 @@ Conditions:
   Provided5ASGInstanceType4: !Not [ !Equals [ !Ref 5ASGInstanceType4, "" ]]
   UseKeypair: !Not [ !Equals [ !Ref 8DBGKeypairName, "" ]]
   EnableSelfTerminationMonitoring: !Not [ !Equals [ !Ref 5ASGSelfMonitorTerminationInterval, "Disabled" ]]
-  CreateS3BucketAndPermissions: !Equals [ !Ref 3GITLABRunnerS3CacheBucket, "CreateOneForMe" ]
+  CreateS3Bucket: !Equals [ !Ref 3GITLABRunnerS3CacheBucket, "CreateOneForMe" ]
   CreateStartSchedule: !Not [ !Equals [ !Ref 4ASGScheduledStartupCron, "Disabled" ]]
   CreateStopSchedule: !Not [ !Equals [ !Ref 4ASGScheduledShutdownCron, "Disabled" ]]
   UseCPUUtilizationMetric: !Equals [ !Ref 5ASGAutoScalingMetricTypeToMonitor, "CPU" ]
@@ -592,7 +593,7 @@ Resources:
             - 's3:DeleteObject' #needed for runner cache cleanup
           Resource:
             !If
-              - CreateS3BucketAndPermissions
+              - CreateS3Bucket
               -
                 - !Sub 'arn:${AWS::Partition}:s3:::${ASGBucket}'
                 - !Sub 'arn:${AWS::Partition}:s3:::${ASGBucket}/*'
@@ -630,7 +631,7 @@ Resources:
 
   ASGBucket:
     Type: AWS::S3::Bucket
-    Condition: CreateS3BucketAndPermissions
+    Condition: CreateS3Bucket
     Properties:
       BucketName: !GetAtt S3BucketNameLower.OutputString
       VersioningConfiguration:
@@ -854,13 +855,12 @@ Resources:
             VolumeSize: !Ref 3INSTEbsVolumeSize
         Placement:
           Tenancy: default
-        UserData:
-          !If
-            - InstancePlatformLinux
-            -
-              # **************
-              # Linux UserData
-              Fn::Base64: !Sub |
+        UserData: !If
+          - InstancePlatformLinux
+          - # **************
+            # Linux UserData
+            Fn::Base64: !Sub
+              - |
                 #!/bin/bash
                 #set -xv
                 ThisTemplateVersion="${1AAAATemplateVersion}"
@@ -920,7 +920,7 @@ Resources:
                 fi
                 OSInstanceLinuxArch="${1OSInstanceLinuxArch}"
                 GITLABRunnerS3CacheBucket="${3GITLABRunnerS3CacheBucket}"
-                if [ "${3GITLABRunnerS3CacheBucket}" == "CreateOneForMe" ]; then GITLABRunnerS3CacheBucket="${ASGBucket}"; fi
+                if [ "${3GITLABRunnerS3CacheBucket}" == "CreateOneForMe" ]; then GITLABRunnerS3CacheBucket="${BucketName}"; fi
                 GITLABRunnerConcurrentJobs="${3GITLABRunnerConcurrentJobs}"
                 GITLABRunnerInstanceURL="${3GITLABRunnerInstanceURL}"
                 GITLABRunnerRegTokenList="${3GITLABRunnerRegTokenList}"
@@ -1112,10 +1112,16 @@ Resources:
                 logit "Cfn-signaling success..."
                 /opt/aws/bin/cfn-signal --success true --stack ${AWS::StackName} --resource InstanceASG --region $AWS_REGION
                 fi
-            -
-              # **************
-              # Windows UserData
-              Fn::Base64: !Sub |
+              - BucketName:
+                  !If [
+                    CreateS3Bucket,
+                    !Ref ASGBucket,
+                    !Ref 3GITLABRunnerS3CacheBucket
+                  ]
+          - # **************
+            # Windows UserData
+            Fn::Base64: !Sub
+              - |
                 <powershell>
                 $ThisTemplateVersion="${1AAAATemplateVersion}"
                 Function lc-success {aws autoscaling complete-lifecycle-action --region $AWS_REGION --lifecycle-action-result CONTINUE --instance-id $MYINSTANCEID --lifecycle-hook-name instance-patching-reboot --auto-scaling-group-name $NAMEOFASG}
@@ -1189,7 +1195,7 @@ Resources:
                   exit 0
                 }
                 $GITLABRunnerS3CacheBucket="${3GITLABRunnerS3CacheBucket}"
-                If ( "${3GITLABRunnerS3CacheBucket}" -ieq "CreateOneForMe" ) { $GITLABRunnerS3CacheBucket="${ASGBucket}" }
+                If ( "${3GITLABRunnerS3CacheBucket}" -ieq "CreateOneForMe" ) { $GITLABRunnerS3CacheBucket="${BucketName}" }
                 $GITLABRunnerConcurrentJobs="${3GITLABRunnerConcurrentJobs}"
                 $GITLABRunnerInstanceURL="${3GITLABRunnerInstanceURL}"
                 $GITLABRunnerRegTokenList="${3GITLABRunnerRegTokenList}"
@@ -1309,7 +1315,7 @@ Resources:
                   logit "CUSTOM CONFIG: Retrieving custom instance configuration script from $INSTConfigurationScript"
                   if (!(Test-Path $DefaultLocalCachedConfigScript)) {
                       logit "Pulling and executing from `"$INSTConfigurationScript`""
-                      [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12,[Net.SecurityProtocolType]::Tls11,[Net.SecurityProtocolType]::Tls; 
+                      [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12,[Net.SecurityProtocolType]::Tls11,[Net.SecurityProtocolType]::Tls;
                       Invoke-RestMethod -UseBasicParsing -OutFile $DefaultLocalCachedConfigScript -Uri $INSTConfigurationScript
                     }
                 } elseif ( $INSTConfigurationScript -ilike "s3://*" ) {
@@ -1323,7 +1329,7 @@ Resources:
                   logit "CUSTOM CONFIG: Running custom instance configuration script in the local file named $INSTConfigurationScript"
                   if (!(Test-Path $DefaultLocalCachedConfigScript)) {
                     logit "Pointing \$DefaultLocalCachedConfigScript to $INSTConfigurationScript"
-                    DefaultLocalCachedConfigScript=$INSTConfigurationScript
+                    $DefaultLocalCachedConfigScript=$INSTConfigurationScript
                   } else {
                     logit "$DefaultLocalCachedConfigScript was not found, will error out."
                   }
@@ -1381,6 +1387,12 @@ Resources:
                     cf-success
                   }
                 </powershell>
+              - BucketName:
+                  !If [
+                    CreateS3Bucket,
+                    !Ref ASGBucket,
+                    !Ref 3GITLABRunnerS3CacheBucket
+                  ]
 
   # Custom resource to transform input to lowercase.
   LowerCasePlusRandomLambda:
