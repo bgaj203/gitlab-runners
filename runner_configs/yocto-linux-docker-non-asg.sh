@@ -1,4 +1,9 @@
 
+#Commands to run this:
+# wget https://gitlab.com/guided-explorations/aws/gitlab-runner-autoscaling-aws-asg/-/raw/yocto/runner_configs/yocto-linux-docker-non-asg.sh
+# chmod +x yocto-linux-docker-non-asg.sh
+# ./yocto-linux-docker-non-asg.sh -r <your runner registration token> -g <gitlab url> - optional, defaults to https://gitlab.com
+
 # ******************
 # Begin Yocto specific
 
