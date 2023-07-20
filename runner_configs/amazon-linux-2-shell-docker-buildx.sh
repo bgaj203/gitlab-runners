@@ -61,29 +61,34 @@ curl https://gitlab-runner-downloads.s3.amazonaws.com/${GITLABRunnerVersion,,}/b
 chmod +x $RunnerInstallRoot/gitlab-runner
 if ! id -u "gitlab-runner" >/dev/null 2>&1; then
   useradd --comment 'GitLab Runner' --create-home gitlab-runner --shell /bin/bash
-  #sudo usermod -a -G docker gitlab-runner
+  usermod -a -G docker gitlab-runner
 fi
 $RunnerInstallRoot/gitlab-runner install --user="gitlab-runner" --working-directory="/home/gitlab-runner"
 echo -e "\nRunning scripts as '$(whoami)'\n\n"
 
 for RunnerRegToken in ${GITLABRunnerRegTokenList//;/ }
-do
-  $RunnerInstallRoot/gitlab-runner register \
-    --non-interactive \
-    --name $RunnerName \
-    --config $RunnerConfigToml \
-    --url "$GITLABRunnerInstanceURL" \
-    --registration-token "$RunnerRegToken" \
-    --executor "$GITLABRunnerExecutor" \
-    --run-untagged="true" \
-    --tag-list "$RunnerCompleteTagList" \
-    --locked="false" \
-    --cache-type "s3" \
-    --cache-path "/" \
-    --cache-shared="true" \
-    --cache-s3-server-address "s3.amazonaws.com" \
-    --cache-s3-bucket-name $GITLABRunnerS3CacheBucket \
-    --cache-s3-bucket-location $AWS_REGION
+  do
+
+    if [[ $RunnerRegToken == *"glrt-"* ]]; then 
+        TokenParameters="--token $RunnerRegToken"
+        logit "New Runner Authentication Token used, the following parameters will be ignored because they are part of the runner registration process: tags, locked, run untagged"
+    else
+        TokenParameters="--registration-token $RunnerRegToken --tag-list $RunnerCompleteTagList --locked=false --run-untagged=true "
+    fi
+
+    $RunnerInstallRoot/gitlab-runner register \
+      --non-interactive \
+      --name $RunnerName \
+      --config $RunnerConfigToml \
+      --url "$GITLABRunnerInstanceURL" \
+      $TokenParameters \
+      --executor "$GITLABRunnerExecutor" \
+      --cache-type "s3" \
+      --cache-path "/" \
+      --cache-shared="true" \
+      --cache-s3-server-address "s3.amazonaws.com" \
+      --cache-s3-bucket-name $GITLABRunnerS3CacheBucket \
+      --cache-s3-bucket-location $AWS_REGION
 done
 
 sed -i "s/^\s*concurrent.*/concurrent = $GITLABRunnerConcurrentJobs/g" $RunnerConfigToml

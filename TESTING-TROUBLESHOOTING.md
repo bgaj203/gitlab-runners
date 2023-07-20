@@ -91,7 +91,7 @@ There is a project with a runner stressing utility here: https://gitlab.com/gitl
 ##### Linux CloudWatch Metrics
 
 * Config file created by script (get's translated to a TOML): `cat /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json`
-* Check running status: 
+* Check running status:
   * `sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -m ec2 -a status`
   * `systemctl status amazon-cloudwatch-agent`
   * start: `systemctl start amazon-cloudwatch-agent`
@@ -106,28 +106,39 @@ There is a project with a runner stressing utility here: https://gitlab.com/gitl
 
   `cat somefile.txt`
 
-* Use this oneliner to install the console based text file editor 'nano' on headless windows: 
+* Use this oneliner to install the console based text file editor 'nano' on headless windows:
 
-  `If (!(Test-Path env:chocolateyinstall)) {iwr https://chocolatey.org/install.ps1 -UseBasicParsing | iex} ; cinst -y nano`
+  `If (!(Test-Path env:chocolateyinstall)) {iwr https://chocolatey.org/install.ps1 -UseBasicParsing | iex} ; choco install -y nano`
 
 * Use this oneliner to create a function to tail windows event logs in the console (similar to `tail -f /var/log/messages`):
 
   `Function Tail ($logspec="Application",$pastmins=5,[switch]$f,$computer=$env:computername) {$lastdate=$(Get-date).addminutes(-$pastmins); Do {$newdate=get-date;get-winevent $logspec -ComputerName $computer -ea 0 | ? {$_.TimeCreated -ge $lastdate -AND $_.TimeCreated -le $newdate} | Sort-Object TimeCreated;$lastdate=$newdate;start-sleep -milliseconds 330} while ($f)}; Tail`
 
-  Tail takes positional parameters the first one is a log spec which can contain a comma seperated list and wildcards like this (for Appliation and Security logs for the last 10 minutes and waiting for more):
+  Tail takes positional parameters the first one is a log spec which can contain a comma separated list and wildcards like this (for Application and Security logs for the last 10 minutes and waiting for more):
 
   `Tail Applica\*,Securi\* 10`
 
   Note: This is useful for tailing the Application log to watch whether the termination script is processing as desired.
 
+##### Helpful Windows Event Log Queries
+  `get-winevent -ProviderName gitlab-runner | fl *` - get the actual gitlab-runner logs if it is running.
+  `get-winevent -ProviderName UserScript.ps1 | format-list *` - logit statements from code in UserData of GitLabElasticScalingRunner.cf.yml.
+  `get-winevent -ProviderName custom_instance_configuration_script.ps1 | fl *` - logit statements from code in the scripts under "runner_configs"
+  `get-winevent -ProviderName MonitorTerminationHook.ps1 | fl *` - logit statements from code in the MonitorTerminationHook.ps1 which does runner draining and deregistration for spot and ondemand instances.
+
+
 ##### Windows Userdata
 
 * **Userdata Execution Log**: `cat C:\programdata\Amazon\EC2-Windows\Launch\Log\UserdataExecution.log`
+* **Ec2 Agent Operations**: `cat C:\programdata\Amazon\EC2-Windows\Launch\Log\Ec2Launch.log` - can help if userdata does not seem to be processing at all.
 * **Resolved Script (CF Variables Expanded)**: `cat C:\Windows\TEMP\UserScript.ps1`
 
 ##### Windows Runner Configuration
 
 * **Rendered Custom Runner Configuration Script**: `cat $env:public\custom_instance_configuration_script.ps1`
+* **Show Exact Service Command**: `gwmi win32_process | where ExecutablePath -ilike *gitlab-runner.exe* | select Commandline`
+* **Completely Remove Runner**: `cd \ ; C:\GitLab-Runner\gitlab-runner.exe unregister --all-runners ; C:\GitLab-Runner\gitlab-runner.exe stop ; C:\GitLab-Runner\gitlab-runner.exe uninstall ; get-service gitlab-runner ; rm -rf C:\GitLab-Runner\ ; rm -recurse -force C:\GitLab-Runner\ ; rm C:\Users\Public\custom_instance_configuration_script.ps1 l rm $env:PUBLIC/finishuprebootwasdone.flg`
+* **Rerun UserData After Clean-off**: `. C:\Windows\TEMP\UserScript.ps1`
 
 ##### Windows Termination Monitoring
 
@@ -137,10 +148,9 @@ There is a project with a runner stressing utility here: https://gitlab.com/gitl
 ##### Windows CloudWatch Metrics
 
 * Config file created by script (get's translated to a TOML and deleted - so if it is actually here that is a problem): `cat $env:ProgramFiles\Amazon\AmazonCloudWatchAgent\config.json`
-* Check running status: 
-  * `sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -m ec2 -a status`
-  * `systemctl status amazon-cloudwatch-agent`
-  * start: `systemctl start amazon-cloudwatch-agent`
-  * stop: `systemctl stop amazon-cloudwatch-agent`
+* Check running status:
+  * `get-service AmazonCloudWatchAgent`
+  * start: `start-service AmazonCloudWatchAgent`
+  * stop: `stop-service AmazonCloudWatchAgent`
 * Tail operational Log: `cat C:\ProgramData\Amazon\AmazonCloudWatchAgent\Logs\amazon-cloudwatch-agent.log`
 * Configuration validation log: `cat C:\ProgramData\Amazon\AmazonCloudWatchAgent\Logs\configuration-validation.log`

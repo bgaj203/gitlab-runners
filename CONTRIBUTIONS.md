@@ -24,10 +24,11 @@ For your initial submission, please:
 ## Release Procedures
 
 1. The version string embedded throughout the code will stay as is to enable version safety
-2. `develop` will be merged into `main`
-3. the templates will be pushed to the existing s3 key that contains the version string
-4. the Git version tag will be pointed at the tip of the `main` branch
-5. A GitLab Release will be created from the Git tag.
+2. Feature development may be done by creating a branch from develop and merged into develop where other feature branches would be merged and tested in prepartion for release
+3. `develop` will be merged into `main`
+4. the templates will be pushed to the existing s3 key that contains the version string
+5. the Git version tag will be pointed at the tip of the `main` branch at release time
+6. A GitLab Release will be created from the Git tag.
 
 The above results in the default view of the README.md and easybuttons.md pointing to the S3 bucket.
 

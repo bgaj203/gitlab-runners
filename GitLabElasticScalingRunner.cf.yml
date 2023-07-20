@@ -34,6 +34,7 @@ Metadata:
           - 3INSTConfigurationScript
           - 3GITLABRunnerS3CacheBucket
           - 3GITLABRunnerConcurrentJobs
+          - 3GITLABRunnerDockerImage
       -
         Label:
           default: "Scaling Group / Cluster Size, HA Type, Instance Type, VPC Location, Security and Scheduling"
@@ -106,13 +107,17 @@ Metadata:
       3GITLABRunnerInstanceURL:
         default: "GitLab Instance URL."
       3GITLABRunnerRegTokenList:
-        default: "One or more runner Registration tokens from the target instance."
+        default: "One or more runner tokens from GitLab. Can be either Legacy Runner Registration Tokens or newer Runner Authentication Tokens."
       3GITLABRunnerS3CacheBucket:
         default: "The S3 bucket that will be used for a shared runner cache."
       3GITLABRunnerTagList:
         default: "An optional list of additional tags for the GitLab Runner."
       3GITLABRunnerVersion:
         default: "Version of the GitLab runner.  Generally should match your GitLab instance."
+      3GITLABRunnerDockerImage:
+        default: >
+      Default docker image for docker runner - ignored for other types.  Example Linux options: ruby
+      Example Windows Options: mcr.microsoft.com/windows/servercore:ltsc2019, mcr.microsoft.com/windows/servercore:ltsc2022
       9AWSRetrieveLatestAWSOSAmiIdFromSSM:
         default: "The SSM Parameter used to lookup the latest Amazon AMI when not pegging one. The SSM parameter must point to an AMI that contains the proper OS indicated in 'OS Platform for Runner'"
       4ASGDesiredCapacity:
@@ -177,8 +182,8 @@ Parameters:
   1AAAATemplateVersion:
     Description: "Version of this template. Read only."
     Type: String
-    Default: "v1.5.0-beta1"
-    AllowedValues: [ "v1.5.0-beta1" ]
+    Default: "v1.5.5"
+    AllowedValues: [ "v1.5.5" ]
     ConstraintDescription: "1AAAATemplateVersion is the template version number and cannot be changed at runtime."
   1AAASourceProject:
     Description: >
@@ -239,16 +244,16 @@ Parameters:
       limit of 16Kb - this method gets around that.
       1) "Embedded" uses the code right in this template and does not use external files at all.
       2) Enter a URL starting with s3://, http:// or https:// to dynamically source one during instance provisioning.
-      s3 allows easy private file storage.  http/s enables usage of git raw urls (whether public or private).
+      s3 allows easy private file storage.  http/s enables usage of git raw urls (whether public or private) and any other URL to a plain file.
       3) Enter a file pathname on the local instance. The file must be present in the location by the time Userdata processes
       (e.g. via a custom AMI)
       The instance must have a network route and permission to any remote locations.
       The code you write must be idempotent so that it does the correct thing when run again after a patching reboot.
       Runner examples provided in this project are: amazon-linux-2-shell.sh, amazon-linux-2-docker.sh, windows-shell.ps1 and windows-docker-windows.ps1 at
-      url: https://gl-public-templates.s3.us-west-2.amazonaws.com/cfn/v1.5.0-beta1/runner_configs/
+      url: https://gl-public-templates.s3.us-west-2.amazonaws.com/cfn/v1.5.5/runner_configs/
     Type: String
-    Default: https://gl-public-templates.s3.us-west-2.amazonaws.com/cfn/v1.5.0-beta1/runner_configs/amazon-linux-2-docker.sh
-    #Reset above to: https://gl-public-templates.s3.us-west-2.amazonaws.com/cfn/v1.5.0-beta1/runner_configs/amazon-linux-2-docker.sh
+    Default: https://gl-public-templates.s3.us-west-2.amazonaws.com/cfn/v1.5.5/runner_configs/amazon-linux-2-docker.sh
+    #Reset above to: https://gl-public-templates.s3.us-west-2.amazonaws.com/cfn/v1.5.5/runner_configs/amazon-linux-2-docker.sh
   3GITLABRunnerConcurrentJobs:
     Description: >
       How many desired concurrent jobs can this runner take at a time.
@@ -263,7 +268,7 @@ Parameters:
     Type: String
     Default: https://gitlab.com/
   3GITLABRunnerRegTokenList:
-    Description: One or more runner tokens to register (semicolon delimited) from the instance identified by the GitLab URL.
+    Description: "One or more runner tokens from GitLab. Can be either Legacy Runner Registration Tokens or newer Runner Authentication Tokens. (semi-colon delimited)"
     Type: String
     NoEcho: true
     MinLength: 5
@@ -282,6 +287,7 @@ Parameters:
       Optional tags to identify the runner (comma delimited) in GitLab and AWS Instance tags to identify things like what team or person the runner is for.
       The runner will automatically have tags for the operating system platform, whether compute is spot or ondemand and the executor type.
       Ec2 tags will also include the runner name and the gitlab instance url. Except for Linux Docker, other runner types will require tags to be specified in jobs.
+      Ingored when utilizing new Runner Authentication Tokens.
     Type: String
   3GITLABRunnerVersion:
     Description: >
@@ -289,6 +295,17 @@ Parameters:
       For example: 'v13.7.0' or 'v13.8.0-rc1' (without quotes) You can actually see the version number in the download path of all the built packages.
     Type: String
     Default: latest
+  3GITLABRunnerDockerImage:
+    Description: >
+      Default docker image for docker runner - ignored for other types.  Example Linux options: ruby
+      Example Windows Options: mcr.microsoft.com/dotnet/sdk:7.0-windowsservercore-ltsc2019, mcr.microsoft.com/dotnet/sdk:7.0-nanoserver-1809
+      Windows options must have pwsh installed and must match the kernel version of the host (e.g. 2019, 2022) 
+      - the Microsoft public SDK images for .NET SDKs version 6 or later contain powershell 6 or later.
+      Many options here: https://hub.docker.com/_/microsoft-dotnet-sdk/ - including server core and nanoserver.
+      Images containing only Windows Powershell (powershell.exe) can be used if the runner config.toml is updated
+      to make the shell "powershell"
+    Type: String
+    Default: ruby
   4ASGDesiredCapacity:
     Description: >
       This template uses ASGs for HA - even if you choose not to autoscale.
@@ -461,6 +478,7 @@ Parameters:
       - lowest-price
       - capacity-optimized
       - capacity-optimized-prioritized
+      - price-capacity-optimized
   5SPOTOnDemandBaseCapacity:
     Description: >
       Sets a minimum number of always on on-demand (non-spot) base capacity.  The number of instances here will benefit from InstanceType
@@ -491,11 +509,9 @@ Parameters:
       Get LATEST AMI Build by AWS as of Template run. Set to SSM parameter path. Only used if 1OSPeggedAMIID is set to 'latest'.
       PARAMETER STORE PATHS HAVE MANY MORE OPTIONS FOR WINDOWS AND QUITE A FEW FOR AMAZON LINUX
       COMMAND TO FIND WINDOWS OPTIONS (You are NOT restricted to ones that have docker preinstalled): aws ssm get-parameters-by-path --path '/aws/service/ami-windows-latest' --region us-east-1 | grep 'Server.*English.*Containers'
-      COMMON WINDOWS OPTIONS: /aws/service/ami-windows-latest/Windows_Server-2012-R2_RTM-English-64Bit-Base,
-      /aws/service/ami-windows-latest/Windows_Server-2012-R2_RTM-English-64Bit-Core,/aws/service/ami-windows-latest/Windows_Server-2016-English-Core-ContainersLatest,
-      /aws/service/ami-windows-latest/Windows_Server-2016-English-Full-ContainersLatest,/aws/service/ami-windows-latest/Windows_Server-2019-English-Core-ContainersLatest,
-      /aws/service/ami-windows-latest/Windows_Server-2019-English-Full-ContainersLatest,/aws/service/ami-windows-latest/Windows_Server-2019-English-Core-ContainersLatest
-      COMMON LINUX OPTIONS: /aws/service/ecs/optimized-ami/amazon-linux-2/recommended/image_id (with docker), /aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2 (no docker)
+      COMMON WINDOWS OPTIONS: /aws/service/ami-windows-latest/Windows_Server-2019-English-Core-ContainersLatest,
+      /aws/service/ami-windows-latest/Windows_Server-2019-English-Full-ContainersLatest,/aws/service/ami-windows-latest/Windows_Server-2019-English-Core-ContainersLatest,
+      COMMON LINUX OPTIONS: /aws/service/ecs/optimized-ami/amazon-linux-2/recommended/image_id (with docker), /aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2 (no docker),
       /aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-arm64-gp2 (ARM)
     Type: 'AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>'
     Default: '/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2'
@@ -925,6 +941,7 @@ Resources:
                 GITLABRunnerInstanceURL="${3GITLABRunnerInstanceURL}"
                 GITLABRunnerRegTokenList="${3GITLABRunnerRegTokenList}"
                 GITLABRunnerVersion="${3GITLABRunnerVersion}"
+                GITLABRunnerDockerImage="${3GITLABRunnerDockerImage}"
                 if [[ -n "${3GITLABRunnerTagList}" ]]; then GITLABRunnerTagList="${3GITLABRunnerTagList}"; fi
                 INSTANCEOSPLATFORM="${1OSInstanceOSPlatform}"
                 RunnerOSTags="$(echo $INSTANCEOSPLATFORM | awk '{print tolower($0)}' )"
@@ -1200,13 +1217,14 @@ Resources:
                 $GITLABRunnerInstanceURL="${3GITLABRunnerInstanceURL}"
                 $GITLABRunnerRegTokenList="${3GITLABRunnerRegTokenList}"
                 $GITLABRunnerVersion="${3GITLABRunnerVersion}"
+                $GITLABRunnerDockerImage="${3GITLABRunnerDockerImage}"
                 $Tags="${3GITLABRunnerTagList}"
                 if ($Tags) { $GITLABRunnerTagList="${3GITLABRunnerTagList}" }
                 $INSTANCEOSPLATFORM="${1OSInstanceOSPlatform}"
                 $RunnerOSTags="$($INSTANCEOSPLATFORM.ToLower())"
                 $RunnerConfigTomlTemplate #(Embedded, local or s3:// or http*://)
                 $RunnerInstallRoot='C:\GitLab-Runner'
-                $RunnerConfigToml="$RunnerInstallRoot\config.toml"
+                #$RunnerConfigToml="$RunnerInstallRoot\config.toml"
                 $LAST_CF_PATCH_RUN="${1OSLastManagedUpdate}" #Forces change for patching rolling replacement and documents last CF triggered patching
                 $ACTUAL_PATCH_DATE="$(date -format 'yyyy-MM-dd')"
                 If (("${4ASGScheduledStartupCron}" -ine "Disabled") -OR ("${4ASGScheduledShutdownCron}" -ine "Disabled")) { $GITLABRunnerTagList = "$GITLABRunnerTagList, UsesAWSASGScheduledAvailability"}

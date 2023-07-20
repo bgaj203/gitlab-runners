@@ -30,6 +30,7 @@
 - Shared Runner Cache per-asg is automatically configured and uses S3 object storage. Can override bucket name to share cache across multiple ASGs if it makes sense to do so.
 - Runner deregistration and draining (for non-spot) during scale-in to prevent many dead tokens in GitLab.
 - Runners are tagged when any AWS scaling schedule is in use - this helps everyone understand why a specific runner might go offline at certain times.
+- Runner Tokens or Legacy Runner Registration Tokens can be used.
 
 ## Security
 

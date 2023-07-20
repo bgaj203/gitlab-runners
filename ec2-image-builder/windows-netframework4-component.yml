@@ -29,7 +29,7 @@ phases:
                 $applog.WriteEntry("From: $SourcePathName : $Msg", $MsgType, $ID)
               }
               #Must have already installed chocolatey for this script to work.
-              if (-not (Get-Command cinst -ErrorAction SilentlyContinue)) { logit "Chocolatey must be installed before this component runs"; exit 5 }
+              if (-not (Get-Command choco install -ErrorAction SilentlyContinue)) { logit "Chocolatey must be installed before this component runs"; exit 5 }
               logit "Installing requirements for all GitLab Runners"
               choco install -y git --version=2.30.0 -params '"/GitOnlyOnPath"' -force
               choco install -y powershell-core

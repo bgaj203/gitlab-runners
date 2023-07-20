@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v1.5.5] - 2023-07-XX
+
+- ADDED new allocation strategy price-capacity-optimized as per contribution by @arichtman-srt.
+- ADDED 3GITLABRunnerDockerImage - New parameter to control default docker image for docker executors.
+- UPDATED linux docker runner for certificates and pegged version of docker container.
+- UPDATED expanded references to cinst to choco install as per [Chocolatey Deprecation of Shims](https://gitlab.com/guided-explorations/aws/gitlab-runner-autoscaling-aws-asg/-/issues/73)
+- ADDED ability to use new Runner Tokens and Legacy Runner Registration tokens. For compatibility the parameter name remains the same (3GITLABRunnerRegTokenList)
+  - NOTE - as of GitLab Runner 16.2.0, the new token can be used with the legacy parameter and it will simply ignore the registration parameters that are now a fixed part of the runner authentication token generation. This is documented here: [Legacy-compatible registration processing](https://docs.gitlab.com/runner/register/#legacy-compatible-registration-processing) This means that as long as you are using runner 16.2.0 or later, you can keep using automation forked from an earlier version of this code as long as your automation does not depend on dynamic tagging or creating other parameters dynamically that are a fixed part of the new token creation process. This ability will be retired with the legacy tokens are retired (slated for 16.6.0 as of this writing)
+  - NOTE: One key benefit to leveraging the new tokens is that as the ASG Scaling runner scales up and down, you no longer end up with many runner tokens being added and removed in the UI. All ASG instances now appear under one GitLab runner in the GitLab UI.
+  - [READ MORE about this change](README.md#new-and-legacy-runner-tokens)
+- NEW KNOWN ISSUE: [Amazon Linux 2023 Does Not Work](https://gitlab.com/guided-explorations/aws/gitlab-runner-autoscaling-aws-asg/-/issues/74)
+- NEW KNOWN ISSUE: [Windows 2022 Does Not Work](https://gitlab.com/guided-explorations/aws/gitlab-runner-autoscaling-aws-asg/-/issues/75)
+
 ## [v1.5.0-beta1] - 2022-11-02
 
 - UPDATED Extended TCP Preflight connection testing from 3 to 20 seconds to address #70 (@DarwinJS)

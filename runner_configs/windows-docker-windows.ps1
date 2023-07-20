@@ -30,25 +30,26 @@ Function logit ($Msg, $MsgType='Information', $ID='1') {
 logit "****ATTENTION: Windows Docker Executor support for this template is experimental."
 
 logit "Preflight checks for required endpoints..."
-$UrlPortPairList="$(([system.uri]$GITLABRunnerInstanceURL).DnsSafeHost)=443 gitlab-runner-downloads.s3.amazonaws.com=443"
+$UrlPortPairList="$(([system.uri]$GITLABRunnerInstanceURL).DnsSafeHost)=443;gitlab-runner-downloads.s3.amazonaws.com=443"
 $FailureCount=0 ; $ConnectTimeoutMS = '20000'
-foreach ($UrlPortPair in $UrlPortPairList.split(' '))
+foreach ($UrlPortPair in $UrlPortPairList.split(';'))
 {
   $array=$UrlPortPair.split('='); $url=$array[0]; $port=$array[1]
-  logit "TCP Test of $url on $port"
+  logit "TCP Test of '$url' on '$port'"
   $ErrorActionPreference = 'SilentlyContinue'
   $conntest = (new-object net.sockets.tcpclient).BeginConnect($url,$port,$null,$null)
   $conntestwait = $conntest.AsyncWaitHandle.WaitOne($ConnectTimeoutMS,$False)
   if (!$conntestwait)
-  { logit "  Connection to $url on port $port failed"
+  { logit "  Connection to '$url' on port '$port' failed"
     $conntest.close()
     $FailureCount++
   }
   else
-  { logit "  Connection to $url on port $port succeeded" }
+  { logit "  Connection to '$url' on port '$port' succeeded" }
 }
 If ($FailureCount -gt 0)
 { logit "$failurecount tcp connect tests failed. Please check all networking configuration for problems."
+  start-sleep -Seconds 2
   cfn-signal --success false --stack ${AWS::StackName} --resource InstanceASG --region $AWS_REGION --reason "Cant connect to GitLab or other endpoints"
   Exit $FailureCount
 }
@@ -61,50 +62,50 @@ If (!(Test-Path "$RunnerInstallRoot\gitlab-runner.exe")) {
   (New-Object System.Net.WebClient).DownloadFile("https://gitlab-runner-downloads.s3.amazonaws.com/$($GITLABRunnerVersion.tolower())/binaries/gitlab-runner-windows-amd64.exe", "$RunnerInstallRoot\gitlab-runner.exe")
 }
 
-#Write runner config.toml
-set-content $env:public\config.toml -Value @"
-concurrent = 4
-log_level = "warning"
-"@
+$RunnerConfigToml="c:\gitlab-runner\config.toml"
 
+#Write runner config.toml
+#Set-Content -Force $RunnerConfigToml -Value @"
+#concurrent = 4
+#log_level = "warning"
+#"@
 
 pushd $RunnerInstallRoot
-.\gitlab-runner.exe install
-
+.\gitlab-runner.exe install --config "$RunnerConfigToml"
 foreach ($RunnerRegToken in $GITLABRunnerRegTokenList.split(';')) {
 
-  .\gitlab-runner.exe register `
-     --config $RunnerConfigToml `
-     --name $RunnerName `
-     $OptionalParameters `
-     --non-interactive `
-     --url $GITLABRunnerInstanceURL `
-     --registration-token $RunnerRegToken `
-     --tag-list $RunnerCompleteTagList `
-     --executor $GITLABRunnerExecutor `
-     --locked="false" `
-     --maximum-timeout 10800 `
-     --cache-type "s3" `
-     --cache-path "/" `
-     --cache-shared="true" `
-     --cache-s3-server-address "s3.amazonaws.com" `
-     --cache-s3-bucket-name $GITLABRunnerS3CacheBucket `
-     --cache-s3-bucket-location $AWS_REGION `
-     --docker-image "docker:latest" `
-     --docker-tlsverify="false"  `
-     --docker-disable-cache="false" `
-     --docker-shm-size 0 `
-     --docker-pull-policy if-not-present `
-     --docker-privileged
-    }
+  if ($RunnerRegToken -ilike 'glrt-*') {
+      $TokenParameters = "--token $RunnerRegToken"
+      logit "New Runner Authentication Token used, the following parameters will be ignored because they are part of the runner registration process: --tag-list, --locked, --run-untagged --maximum-timeout"
+  } else {
+      $TokenParameters = "--registration-token $RunnerRegToken --tag-list $RunnerCompleteTagList --locked=false --maximum-timeout 10800"
+  }
+
+  $AllRegARGS = " --non-interactive " +
+  "--url `"$GITLABRunnerInstanceURL`" " +
+  "$TokenParameters " +
+  "--config `"$RunnerConfigToml`" " +
+  "--executor `"$GITLABRunnerExecutor`" " +
+  "--name `"$RunnerName`" " +
+  "--cache-type `"s3`" " +
+  "--cache-path `"/`" " +
+  "--cache-shared=true " +
+  "--cache-s3-server-address `"s3.amazonaws.com`" " +
+  "--cache-s3-bucket-name `"$GITLABRunnerS3CacheBucket`" " +
+  "--cache-s3-bucket-location `"$AWS_REGION`" " +
+  "--docker-image `"$GITLABRunnerDockerImage`" " +
+  "--docker-tlsverify=false " +
+  "--docker-disable-cache=false " +
+  "--docker-shm-size 0 " +
+  "--docker-pull-policy if-not-present"
+
+  logit "Registering Runner with .\gitlab-runner.exe register $AllRegARGs"
+
+  Start-Process -NoNewWindow -Wait -FilePath .\gitlab-runner.exe -argumentlist " register $AllRegARGs"
+}
      #--docker-volumes "/var/run/docker.sock:/var/run/docker.sock" `
 
-(Get-Content $RunnerConfigToml -raw) -replace '(?m)^\s*concurrent.*', "concurrent = $GITLABRunnerConcurrentJobs" | Set-Content $RunnerConfigToml
-
-if (!(Get-Command "pwsh" -ErrorAction 0) -AND (Get-Content $RunnerConfigToml -raw) -notmatch '(?m)shell\s*=\s*"powershell".*') {
-  logit "PowerShell Core/7 or later not found, updating default shell to Windows PowerShell"
-  (Get-Content $RunnerConfigToml -raw) -replace '(?m)shell\s*=.*', 'shell = "powershell"' | Set-Content $RunnerConfigToml
-}
+(Get-Content $RunnerConfigToml -raw) -replace '(?m)^\s*concurrent.*', "concurrent = $GITLABRunnerConcurrentJobs" | Set-Content -Force $RunnerConfigToml
 
 aws ec2 create-tags --region $AWS_REGION --resources $MYINSTANCEID --tags "Key=`"GitLabRunnerName`",Value=$RunnerName" "Key=`"GitLabURL`",Value=$GITLABRunnerInstanceURL" "Key=`"GitLabRunnerTags`",`"Value=$($RunnerCompleteTagList.split(',') -join ('\,'))`""
 
@@ -113,7 +114,7 @@ aws ec2 create-tags --region $AWS_REGION --resources $MYINSTANCEID --tags "Key=`
 logit "Creating cleanup script for use with termination hook"
 
 #Termination script hard codes variables to reduce api calls when it runs every minute
-set-content $env:public\MonitorTerminationHook.ps1 -Value @"
+Set-Content -Force $env:public\MonitorTerminationHook.ps1 -Value @"
 Function logit (`$Msg, `$MsgType='Information', `$ID='1') {
   If (`$script:PSCommandPath -ne '' ) { `$SourcePathName = `$script:PSCommandPath ; `$SourceName = split-path -leaf `$SourcePathName } else { `$SourceName = "Automation Code"; `$SourcePathName = "Unknown" }
   Write-Host "[`$(Get-date -format 'yyyy-MM-dd HH:mm:ss zzz')] `$MsgType : From: `$SourcePathName : `$Msg"
@@ -161,7 +162,7 @@ Start-Process msiexec.exe -Wait -ArgumentList "/i $env:public\amazon-cloudwatch-
 
 If (!(Test-Path $env:ProgramData\Amazon\AmazonCloudWatchAgent)) {New-Item $env:ProgramData\Amazon\AmazonCloudWatchAgent -ItemType Directory -Force}
 logit "Writing CloudWatch Agent configuration"
-set-content -Path "$env:ProgramData\Amazon\AmazonCloudWatchAgent\amazon-cloudwatch-agent.json" -Value @'
+Set-Content -Force -Path "$env:ProgramData\Amazon\AmazonCloudWatchAgent\amazon-cloudwatch-agent.json" -Value @'
 {
   "metrics": {
     "aggregation_dimensions" : [["AutoScalingGroupName"], ["InstanceId"], ["InstanceType"], ["InstanceId","InstanceType"]],
