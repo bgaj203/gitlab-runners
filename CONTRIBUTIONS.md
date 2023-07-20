@@ -52,10 +52,11 @@ The above results in the default view of the README.md and easybuttons.md pointi
    | runner_configs/*                   | /v1.4.5-alpha10/runner_configs/            |
 
 ## Releasing
-1. Ensure that 5ASGAutoScalingMaxSize, Default: 20 is set - to prevent overrun of tests against Gitlab.com
-1. Merge develop to main WITHOUT deleting the develop branch.  If you accidentally delete it, immediately recreate it from the tag merged to main.
-2. Apply the git tag "latest" and "[The lastest version Number]" (e.g. v1.4.5-alpha10) to this version on the local git repository and force push tags.
-3. Create a GitLab release and tag from the default branch using the version tag.
-4. Merge to any special releases WITHOUT deleting the branch (e.g. "experimental" for the experiment that links GitLab Runner UI to this project).
+1. Ensure that release date in CHANGELOG.md is updated and accurate
+2. Ensure that 5ASGAutoScalingMaxSize, Default: 20 is set - to prevent overrun of tests against Gitlab.com
+3. Merge develop to main WITHOUT deleting the develop branch.  If you accidentally delete it, immediately recreate it from the tag merged to main.
+4. Apply the git tag "latest" and "[The lastest version Number]" (e.g. v1.4.5-alpha10) to this version on the local git repository and force push tags.
+5. Create a GitLab release and tag from the default branch using the version tag.
+6. Merge to any special releases WITHOUT deleting the branch (e.g. "experimental" for the experiment that links GitLab Runner UI to this project).
 
 Technically when files are loaded from main (like easy button markdowns or cloudformation templates) - key parts are pointing to the branch and the S3 url by the same name. The reference to the runner script will refer back to the branch you merged from.

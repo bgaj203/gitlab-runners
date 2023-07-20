@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [v1.5.5] - 2023-07-XX
+## [v1.5.5] - 2023-07-20
 
 - ADDED new allocation strategy price-capacity-optimized as per contribution by @arichtman-srt.
 - ADDED 3GITLABRunnerDockerImage - New parameter to control default docker image for docker executors.
