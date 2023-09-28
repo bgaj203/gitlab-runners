@@ -275,7 +275,7 @@ Resources:
         1OSPatchScope: NoPatching
         3GITLABRunnerInstanceURL: !Ref 3GITLABRunnerInstanceURL
         3GITLABRunnerRegTokenList: !Ref 3GITLABRunnerRegTokenList
-        3INSTConfigurationScript: https://gl-public-templates.s3.us-west-2.amazonaws.com/cfn/v1.5.5/runner_configs/yocto-linux-docker.sh
+        3INSTConfigurationScript: https://gitlab.com/guided-explorations/aws/gitlab-runner-autoscaling-aws-asg/-/raw/yocto/runner_configs/yocto-linux-docker.sh?ref_type=heads
         3GITLABRunnerTagList: !Ref 3GITLABRunnerTagList
         3INSTEbsVolumeSize: !Ref 3INSTEbsVolumeSize
         4ASGDesiredCapacity: !Ref 4ASGDesiredCapacity
