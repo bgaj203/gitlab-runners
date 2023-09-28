@@ -184,6 +184,7 @@ Parameters:
       Ec2 tags will also include the runner name and the gitlab instance url. Except for Linux Docker, other runner types will require tags to be specified in jobs.
       Ingored when utilizing new Runner Authentication Tokens.
     Type: String
+    Default: "yocto"
   4ASGDesiredCapacity:
     Description: >
       This template uses ASGs for HA - even if you choose not to autoscale.
@@ -276,7 +277,7 @@ Resources:
         1OSPatchScope: NoPatching
         3GITLABRunnerInstanceURL: !Ref 3GITLABRunnerInstanceURL
         3GITLABRunnerRegTokenList: !Ref 3GITLABRunnerRegTokenList
-        3INSTConfigurationScript: https://gitlab.com/guided-explorations/aws/gitlab-runner-autoscaling-aws-asg/-/raw/yocto/runner_configs/yocto-linux-docker.sh?ref_type=heads
+        3INSTConfigurationScript: https://gitlab.com/guided-explorations/aws/gitlab-runner-autoscaling-aws-asg/-/raw/yocto/runner_configs/yocto-linux-shell.sh
         3GITLABRunnerTagList: !Ref 3GITLABRunnerTagList
         3INSTEbsVolumeSize: !Ref 3INSTEbsVolumeSize
         4ASGDesiredCapacity: !Ref 4ASGDesiredCapacity

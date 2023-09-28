@@ -1,10 +1,16 @@
 #!/usr/bin/env bash
 
-GITLABRunnerExecutor='docker'
+GITLABRunnerExecutor='shell'
 
-#manual install of curl on yocto
+echo "Installing curl on Yocto"
 wget https://github.com/moparisthebest/static-curl/releases/download/v8.0.1/curl-aarch64 -O /bin/curl
 chmod +x /bin/curl
+
+echo "Installing AWS CLI on Yocto"
+curl "https://awscli.amazonaws.com/awscli-exe-linux-aarch64.zip" -o "awscliv2.zip"
+unzip awscliv2.zip -x "aws/dist/awscli/examples/*"
+./aws/install
+/usr/local/bin/aws --version
 
 IMDS_TOKEN="$(curl -X PUT http://169.254.169.254/latest/api/token -H X-aws-ec2-metadata-token-ttl-seconds:21600)"
 MYIP="$(curl -H X-aws-ec2-metadata-token:$IMDS_TOKEN http://169.254.169.254/latest/meta-data/local-ipv4)"
@@ -17,20 +23,20 @@ function logit() {
   echo "$LOGSTRING" >> /var/log/messages
 }
 
-logit "Preflight checks for required endpoints..."
-urlportpairlist="$(echo $GITLABRunnerInstanceURL | cut -d'/' -f3 | cut -d':' -f1)=443 gitlab-runner-downloads.s3.amazonaws.com=443"
-failurecount=0
-for urlportpair in $urlportpairlist; do
-  set -- $(echo $urlportpair | tr '=' ' ') ; url=$1 ; port=$2
-  logit "TCP Test of $url on $port"
-  timeout 20 bash -c "cat < /dev/null > /dev/tcp/$url/$port"
-  if [ "$?" -ne 0 ]; then
-    logit "  Connection to $url on port $port failed"
-    ((failurecount++))
-  else
-    logit "  Connection to $url on port $port succeeded"
-  fi
-done
+# logit "Preflight checks for required endpoints..."
+# urlportpairlist="$(echo $GITLABRunnerInstanceURL | cut -d'/' -f3 | cut -d':' -f1)=443 gitlab-runner-downloads.s3.amazonaws.com=443"
+# failurecount=0
+# for urlportpair in $urlportpairlist; do
+#   set -- $(echo $urlportpair | tr '=' ' ') ; url=$1 ; port=$2
+#   logit "TCP Test of $url on $port"
+#   timeout 20 bash -c "cat < /dev/null > /dev/tcp/$url/$port"
+#   if [ "$?" -ne 0 ]; then
+#     logit "  Connection to $url on port $port failed"
+#     ((failurecount++))
+#   else
+#     logit "  Connection to $url on port $port succeeded"
+#   fi
+# done
 
 if [ $failurecount -gt 0 ]; then
  logit "$failurecount tcp connect tests failed. Please check all networking configuration for problems."
@@ -40,22 +46,7 @@ if [ $failurecount -gt 0 ]; then
   exit $failurecount
 fi
 
-#Detect package manager
-if [[ -n "$(command -v yum)" ]] ; then
-  PKGMGR='yum'
-elif [[ -n "$(command -v apt-get)" ]] ; then
-  PKGMGR='apt-get'
-fi
-
 set -e
-
-if [[ -z "$(command -v docker)" ]] ; then
-  echo "Docker not present, installing..."
-  apt install docker.io
-  usermod -a -G docker ec2-user
-  systemctl enable docker.service
-  systemctl start docker.service
-fi
 
 RunnerCompleteTagList="$RunnerOSTags,glexecutor-$GITLABRunnerExecutor,${OSInstanceLinuxArch,,}"
 
@@ -65,38 +56,38 @@ if [[ -n "${COMPUTETYPE}" ]]; then RunnerCompleteTagList="$RunnerCompleteTagList
 # Installing and configuring Gitlab Runner
 if [ ! -d $RunnerInstallRoot ]; then mkdir -p $RunnerInstallRoot; fi
 
-curl --insecure https://gitlab-runner-downloads.s3.amazonaws.com/${GITLABRunnerVersion,,}/binaries/gitlab-runner-linux-${OSInstanceLinuxArch} --output $RunnerInstallRoot/gitlab-runner
+curl https://gitlab-runner-downloads.s3.amazonaws.com/${GITLABRunnerVersion,,}/binaries/gitlab-runner-linux-${OSInstanceLinuxArch} --output $RunnerInstallRoot/gitlab-runner
 chmod +x $RunnerInstallRoot/gitlab-runner
 if ! id -u "gitlab-runner" >/dev/null 2>&1; then
   useradd --comment 'GitLab Runner' --create-home gitlab-runner --shell /bin/bash
+  #sudo usermod -a -G docker gitlab-runner
 fi
-$RunnerInstallRoot/gitlab-runner install --user="gitlab-runner" --working-directory="/gitlab-runner"
+$RunnerInstallRoot/gitlab-runner install --user="gitlab-runner" --working-directory="/home/gitlab-runner"
 echo -e "\nRunning scripts as '$(whoami)'\n\n"
 
 for RunnerRegToken in ${GITLABRunnerRegTokenList//;/ }
-do
-  $RunnerInstallRoot/gitlab-runner register \
-    --non-interactive \
-    --name $RunnerName \
-    --config $RunnerConfigToml \
-    --url "$GITLABRunnerInstanceURL" \
-    --registration-token "$RunnerRegToken" \
-    --executor "$GITLABRunnerExecutor" \
-    --run-untagged="false" \
-    --tag-list "$RunnerCompleteTagList" \
-    --locked="false" \
-    --cache-type "s3" \
-    --cache-path "/" \
-    --cache-shared="true" \
-    --cache-s3-server-address "s3.amazonaws.com" \
-    --cache-s3-bucket-name $GITLABRunnerS3CacheBucket \
-    --cache-s3-bucket-location $AWS_REGION \
-    --docker-volumes "/var/run/docker.sock:/var/run/docker.sock" \
-    --docker-image "docker:latest" \
-    --docker-privileged \
-    --docker-tlsverify="false" \
-    --docker-disable-cache="false" \
-    --docker-shm-size 0
+  do
+
+    if [[ $RunnerRegToken == *"glrt-"* ]]; then 
+        TokenParameters="--token $RunnerRegToken"
+        logit "New Runner Authentication Token used, the following parameters will be ignored because they are part of the runner registration process: tags, locked, run untagged"
+    else
+        TokenParameters="--registration-token $RunnerRegToken --tag-list $RunnerCompleteTagList --locked=false --run-untagged=false "
+    fi
+
+    $RunnerInstallRoot/gitlab-runner register \
+      --non-interactive \
+      --name $RunnerName \
+      --config $RunnerConfigToml \
+      --url "$GITLABRunnerInstanceURL" \
+      $TokenParameters \
+      --executor "$GITLABRunnerExecutor" \
+      --cache-type "s3" \
+      --cache-path "/" \
+      --cache-shared="true" \
+      --cache-s3-server-address "s3.amazonaws.com" \
+      --cache-s3-bucket-name $GITLABRunnerS3CacheBucket \
+      --cache-s3-bucket-location $AWS_REGION
 done
 
 sed -i "s/^\s*concurrent.*/concurrent = $GITLABRunnerConcurrentJobs/g" $RunnerConfigToml
@@ -223,6 +214,10 @@ cat << 'EndOfCWMetricsConfig' > /opt/aws/amazon-cloudwatch-agent/etc/amazon-clou
 EndOfCWMetricsConfig
 systemctl enable amazon-cloudwatch-agent
 systemctl restart amazon-cloudwatch-agent
+
+#Install git for shell runner
+yum -y install git
+
 #Debugging:
 #Check if running: sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -m ec2 -a status
 #config: cat /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json

@@ -47,8 +47,8 @@ chmod +x /bin/curl
 GITLABRunnerInstanceURL="https://gitlab.com" #default
 if [[ -n "$PassedGLURL" ]]; then GITLABRunnerInstanceURL=$PassedGLURL; fi
 
-GITLABRunnerExecutor="docker"
-RunnerName="Yocto-Runner"
+GITLABRunnerExecutor="shell"
+RunnerName="Yocto-Runner-Shell"
 GITLABRunnerConcurrentJobs=1
 RunnerOSTags="yocto-linux"
 RunnerInstallRoot=/gitlab-runner
@@ -126,13 +126,7 @@ do
     --executor "$GITLABRunnerExecutor" \
     --run-untagged="false" \
     --tag-list "$RunnerCompleteTagList" \
-    --locked="false" \
-    --docker-volumes "/var/run/docker.sock:/var/run/docker.sock" \
-    --docker-image $DefaultRunnerImage \
-    --docker-privileged \
-    --docker-tlsverify="false" \
-    --docker-disable-cache="false" \
-    --docker-shm-size 0 "
+    --locked="false"
 
   $RunnerInstallRoot/gitlab-runner --log-level="info" register \
     --non-interactive \
@@ -141,21 +135,9 @@ do
     --url "$GITLABRunnerInstanceURL" \
     --registration-token "$RunnerRegToken" \
     --executor "$GITLABRunnerExecutor" \
-    --run-untagged="true" \
+    --run-untagged="false" \
     --tag-list "$RunnerCompleteTagList" \
-    --locked="false" \
-    --docker-volumes "/var/run/docker.sock:/var/run/docker.sock" \
-    --docker-image $DefaultRunnerImage \
-    --docker-privileged \
-    --docker-tlsverify="false" \
-    --docker-disable-cache="false" \
-    --docker-shm-size 0 
-    #--cache-type "s3" \
-    #--cache-path "/" \
-    #--cache-shared="true" \
-    #--cache-s3-server-address "s3.amazonaws.com" \
-    #--cache-s3-bucket-name $GITLABRunnerS3CacheBucket \
-    #--cache-s3-bucket-location $AWS_REGION \
+    --locked="false"
 done
 
 sed -i "s/^\s*concurrent.*/concurrent = $GITLABRunnerConcurrentJobs/g" $RunnerConfigToml
