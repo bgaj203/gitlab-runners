@@ -65,7 +65,7 @@ if [[ -n "${COMPUTETYPE}" ]]; then RunnerCompleteTagList="$RunnerCompleteTagList
 # Installing and configuring Gitlab Runner
 if [ ! -d $RunnerInstallRoot ]; then mkdir -p $RunnerInstallRoot; fi
 
-curl https://gitlab-runner-downloads.s3.amazonaws.com/${GITLABRunnerVersion,,}/binaries/gitlab-runner-linux-${OSInstanceLinuxArch} --output $RunnerInstallRoot/gitlab-runner
+curl --insecure https://gitlab-runner-downloads.s3.amazonaws.com/${GITLABRunnerVersion,,}/binaries/gitlab-runner-linux-${OSInstanceLinuxArch} --output $RunnerInstallRoot/gitlab-runner
 chmod +x $RunnerInstallRoot/gitlab-runner
 if ! id -u "gitlab-runner" >/dev/null 2>&1; then
   useradd --comment 'GitLab Runner' --create-home gitlab-runner --shell /bin/bash
