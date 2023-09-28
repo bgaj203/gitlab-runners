@@ -57,7 +57,7 @@ if [[ -z "$(command -v docker)" ]] ; then
   systemctl start docker.service
 fi
 
-RunnerCompleteTagList="$RunnerOSTags,glexecutor-$GITLABRunnerExecutor,${OSInstanceLinuxArch,,}"
+RunnerCompleteTagList="$RunnerOSTags,yocto,glexecutor-$GITLABRunnerExecutor,${OSInstanceLinuxArch,,}"
 
 if [[ -n "${GITLABRunnerTagList}" ]]; then RunnerCompleteTagList="$RunnerCompleteTagList,${GITLABRunnerTagList,,}"; fi
 if [[ -n "${COMPUTETYPE}" ]]; then RunnerCompleteTagList="$RunnerCompleteTagList,computetype-${COMPUTETYPE,,}"; fi
@@ -81,7 +81,7 @@ for RunnerRegToken in ${GITLABRunnerRegTokenList//;/ }
         TokenParameters="--token $RunnerRegToken"
         logit "New Runner Authentication Token used, the following parameters will be ignored because they are part of the runner registration process: tags, locked, run untagged"
     else
-        TokenParameters="--registration-token $RunnerRegToken --tag-list $RunnerCompleteTagList --locked=false  --run-untagged=true"
+        TokenParameters="--registration-token $RunnerRegToken --tag-list $RunnerCompleteTagList --locked=false  --run-untagged=false"
     fi
 
     $RunnerInstallRoot/gitlab-runner register \
