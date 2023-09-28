@@ -126,7 +126,7 @@ do
     --executor "$GITLABRunnerExecutor" \
     --run-untagged="false" \
     --tag-list "$RunnerCompleteTagList" \
-    --locked="false"
+    --locked="false" "
 
   $RunnerInstallRoot/gitlab-runner --log-level="info" register \
     --non-interactive \
